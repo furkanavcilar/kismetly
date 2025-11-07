@@ -52,7 +52,6 @@ class LocationService {
       final placemarks = await geo.placemarkFromCoordinates(
         position.latitude,
         position.longitude,
-        localeIdentifier: 'tr_TR',
       );
 
       String? resolvedCity;
