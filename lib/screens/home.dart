@@ -288,11 +288,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final activeNow = _networkTime?.dateTime ?? _now;
-    final dateLabel = DateFormat('d MMMM y EEEE', 'tr_TR').format(activeNow);
+    final dateLabel = DateFormat('d MMMM y', 'tr_TR').format(activeNow);
     final timeLabel = DateFormat('HH:mm', 'tr_TR').format(activeNow);
-    final timezoneLabel = _networkTime?.timeZone ?? 'Yerel saat';
-    final offsetLabel = _networkTime?.utcOffset ?? '';
+    final locationLabel =
+        _city ?? (_locationTried ? 'Konum bulunamadı' : 'Konum belirleniyor...');
+    final headerLine = '$dateLabel · $timeLabel · $locationLabel';
+    final timezoneText = _networkTime != null
+        ? '${_networkTime!.timeZone} · ${_networkTime!.utcOffset}'
+        : 'Yerel saat';
+    final marsInfo = _planetByName('Mars');
+    final venusInfo = _planetByName('Venüs');
+    final suggestions = _buildDailySuggestions();
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -300,9 +308,14 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF0A0912), Color(0xFF1C1A2E)],
+            colors: [
+              Color(0xFF04000C),
+              Color(0xFF120A3A),
+              Color(0xFF2D1C54),
+            ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
+            stops: [0.0, 0.5, 1.0],
           ),
         ),
         child: SafeArea(
@@ -310,88 +323,77 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 child: Row(
                   children: [
                     Builder(
                       builder: (context) => IconButton(
                         icon: const Icon(Icons.menu, color: Colors.white),
+                        tooltip: 'Menüyü aç',
                         onPressed: () => Scaffold.of(context).openDrawer(),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _city ?? (_locationTried ? 'Konum alınamadı' : 'Konum aranıyor...'),
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            'Kozmik akışın',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: Colors.white,
+                              letterSpacing: 0.4,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                           const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Text(
-                                '$dateLabel · $timeLabel',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Colors.white70,
-                                      letterSpacing: 0.4,
-                                    ),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.08),
-                                  borderRadius: BorderRadius.circular(999),
-                                  border: Border.all(color: Colors.white12),
-                                ),
-                                child: Text(
-                                  offsetLabel.isNotEmpty ? '$timezoneLabel · $offsetLabel' : timezoneLabel,
-                                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                        color: Colors.white70,
-                                        letterSpacing: 0.4,
-                                      ),
-                                ),
-                              ),
-                            ],
+                          Text(
+                            '$_sunSign sezonu',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: Colors.white70,
+                              letterSpacing: 0.3,
+                            ),
                           ),
                         ],
                       ),
                     ),
                     IconButton(
                       onPressed: _refreshWeatherAndTime,
-                      icon: const Icon(Icons.refresh, color: Colors.white70),
                       tooltip: 'Verileri yenile',
+                      icon: const Icon(Icons.refresh, color: Colors.white70),
                     ),
+                    const SizedBox(width: 12),
                     CircleAvatar(
-                      backgroundColor: Colors.white.withOpacity(0.15),
+                      backgroundColor: Colors.white.withOpacity(0.18),
+                      radius: 22,
                       child: Text(
                         _sunSign.characters.first,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 250),
                   child: switch (_firebaseStatus) {
                     _FirebaseConnectionState.checking => Container(
                         key: const ValueKey('firebase-checking'),
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white24),
+                          color: Colors.white.withOpacity(0.06),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.white12),
                         ),
                         child: Row(
                           children: const [
@@ -416,23 +418,27 @@ class _HomeScreenState extends State<HomeScreen> {
                     _FirebaseConnectionState.success => Container(
                         key: const ValueKey('firebase-success'),
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
                         decoration: BoxDecoration(
                           color: const Color(0xFF123524),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.greenAccent.withOpacity(0.35)),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: Colors.greenAccent.withOpacity(0.35),
+                          ),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.verified, color: Colors.greenAccent),
+                            const Icon(Icons.verified,
+                                color: Colors.greenAccent),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
                                 'Firebase bağlantısı başarılı ✅',
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                           ],
@@ -441,26 +447,31 @@ class _HomeScreenState extends State<HomeScreen> {
                     _FirebaseConnectionState.failure => Container(
                         key: const ValueKey('firebase-failure'),
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
                         decoration: BoxDecoration(
                           color: const Color(0xFF3D1B1B),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.redAccent.withOpacity(0.4)),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: Colors.redAccent.withOpacity(0.4),
+                          ),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
                               children: [
-                                const Icon(Icons.error_outline, color: Colors.redAccent),
+                                const Icon(Icons.error_outline,
+                                    color: Colors.redAccent),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
                                     'Firebase bağlantısı başarısız ❌',
-                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w600,
-                                        ),
+                                    style:
+                                        theme.textTheme.bodyMedium?.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
                                 TextButton(
@@ -473,9 +484,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               const SizedBox(height: 6),
                               Text(
                                 _firebaseError!,
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Colors.white70,
-                                    ),
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: Colors.white70,
+                                ),
                               ),
                             ],
                           ],
@@ -485,56 +496,358 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final isWide = constraints.maxWidth >= 900;
-                    final mainColumn = _buildMainColumn(context, activeNow);
-                    final sidePanel = _SidePanel(
-                      cityLabel: _city ?? (_locationTried ? 'Konum alınamadı' : 'Konum aranıyor...'),
-                      weather: _weather,
-                      loadingWeather: _loadingWeather,
-                      weatherError: _weatherError,
-                      networkTime: _networkTime,
-                      loadingTime: _loadingTime,
-                      timeError: _timeError,
-                      fallbackNow: activeNow,
-                      onRefresh: _refreshWeatherAndTime,
-                    );
-
-                    if (isWide) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                        child: Row(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _CosmicSectionCard(
+                        title: 'Tarih · Saat · Konum',
+                        subtitle: timezoneText,
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: SingleChildScrollView(
-                                padding: const EdgeInsets.only(right: 24, bottom: 32),
-                                child: mainColumn,
+                            Text(
+                              headerLine,
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                            SizedBox(
-                              width: 320,
-                              child: sidePanel,
-                            ),
+                            const SizedBox(height: 12),
+                            if (_loadingWeather)
+                              const _StatusLine(
+                                icon: Icons.waves,
+                                text: 'Hava durumu yükleniyor...',
+                              )
+                            else if (_weatherError != null)
+                              _StatusLine(
+                                icon: Icons.cloud_off,
+                                text: _weatherError!,
+                                color: Colors.orangeAccent,
+                              )
+                            else if (_weather != null)
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  _InfoBadge(
+                                    label: 'Hava',
+                                    value:
+                                        '${_weather!.description} · ${_weather!.temperature.toStringAsFixed(0)}°C',
+                                  ),
+                                  _InfoBadge(
+                                    label: 'Hissedilen',
+                                    value:
+                                        '${_weather!.apparentTemperature.toStringAsFixed(0)}°C',
+                                  ),
+                                  _InfoBadge(
+                                    label: 'Nem',
+                                    value:
+                                        '%${_weather!.humidity.toStringAsFixed(0)}',
+                                  ),
+                                ],
+                              ),
+                            if (_loadingTime)
+                              const Padding(
+                                padding: EdgeInsets.only(top: 12),
+                                child: _StatusLine(
+                                  icon: Icons.schedule,
+                                  text: 'Ağ saati senkronize ediliyor...',
+                                ),
+                              )
+                            else if (_timeError != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 12),
+                                child: _StatusLine(
+                                  icon: Icons.schedule,
+                                  text: _timeError!,
+                                  color: Colors.orangeAccent,
+                                ),
+                              )
+                            else if (_networkTime != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 12),
+                                child: _InfoBadge(
+                                  label: 'Ağ saati',
+                                  value: timezoneText,
+                                ),
+                              ),
                           ],
                         ),
-                      );
-                    }
-
-                    return SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          mainColumn,
-                          const SizedBox(height: 24),
-                          sidePanel,
-                          const SizedBox(height: 24),
-                        ],
                       ),
-                    );
-                  },
+                      _CosmicSectionCard(
+                        title: 'Burç yorumları',
+                        subtitle: '$_sunSign için günlük yorum',
+                        trailing: _loadingHoroscope
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white70,
+                                ),
+                              )
+                            : IconButton(
+                                onPressed: _loadHoroscope,
+                                icon: const Icon(
+                                  Icons.refresh,
+                                  color: Colors.white70,
+                                ),
+                                tooltip: 'Yorumu yenile',
+                              ),
+                        child: Builder(
+                          builder: (context) {
+                            if (_loadingHoroscope) {
+                              return const _StatusLine(
+                                icon: Icons.auto_awesome,
+                                text: 'Günlük burç yorumu hazırlanıyor...',
+                              );
+                            }
+                            if (_horoscopeError != null) {
+                              return _StatusLine(
+                                icon: Icons.error_outline,
+                                text: _horoscopeError!,
+                                color: Colors.redAccent,
+                              );
+                            }
+                            if (_horoscope == null) {
+                              return const _StatusLine(
+                                icon: Icons.info_outline,
+                                text: 'Burç yorumu bulunamadı.',
+                              );
+                            }
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _horoscope!.daily,
+                                  style: theme.textTheme.bodyLarge?.copyWith(
+                                    color: Colors.white,
+                                    height: 1.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.05),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(color: Colors.white10),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Aylık öne çıkanlar',
+                                        style: theme.textTheme.labelLarge
+                                            ?.copyWith(
+                                          color: Colors.white70,
+                                          letterSpacing: 0.4,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        _horoscope!.monthly,
+                                        style: theme.textTheme.bodyMedium
+                                            ?.copyWith(
+                                          color: Colors.white70,
+                                          height: 1.5,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                      _CosmicSectionCard(
+                        title: 'Günün sözü',
+                        subtitle: 'İlham verici kozmik fısıltı',
+                        trailing: _loadingQuote
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white70,
+                                ),
+                              )
+                            : IconButton(
+                                onPressed: _loadQuote,
+                                icon: const Icon(
+                                  Icons.refresh,
+                                  color: Colors.white70,
+                                ),
+                                tooltip: 'Sözü yenile',
+                              ),
+                        child: Builder(
+                          builder: (context) {
+                            if (_loadingQuote) {
+                              return const _StatusLine(
+                                icon: Icons.auto_fix_high,
+                                text: 'Günün sözü yükleniyor...',
+                              );
+                            }
+                            if (_quoteError != null) {
+                              return _StatusLine(
+                                icon: Icons.error_outline,
+                                text: _quoteError!,
+                                color: Colors.redAccent,
+                              );
+                            }
+                            return Text(
+                              _quote ?? 'Bugünün sözü hazırlanamadı.',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: Colors.white,
+                                height: 1.6,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      _CosmicSectionCard(
+                        title: 'Astroloji bilgileri',
+                        subtitle: 'Yükselen, ay fazı ve gezegen tınıları',
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _InfoRow(
+                              label: 'Yükselen burç',
+                              value: _ascendant,
+                            ),
+                            const SizedBox(height: 12),
+                            _InfoRow(
+                              label: 'Ay fazı',
+                              value: _moonPhaseDescription(activeNow),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Gezegen konumları',
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                color: Colors.white70,
+                                letterSpacing: 0.4,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            if (_loadingPlanets)
+                              const _StatusLine(
+                                icon: Icons.auto_graph,
+                                text: 'Gezegen konumları yükleniyor...',
+                              )
+                            else if (_planetaryError != null)
+                              _StatusLine(
+                                icon: Icons.error_outline,
+                                text: _planetaryError!,
+                                color: Colors.redAccent,
+                              )
+                            else if (_planetary?.planets.isNotEmpty ?? false)
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: _planetary!.planets
+                                    .take(4)
+                                    .map(
+                                      (planet) => Padding(
+                                        padding:
+                                            const EdgeInsets.only(bottom: 10),
+                                        child: _InfoRow(
+                                          label: planet.name,
+                                          value: planet.headline,
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+                              )
+                            else
+                              const _StatusLine(
+                                icon: Icons.info_outline,
+                                text: 'Gezegen bilgisi bulunamadı.',
+                              ),
+                          ],
+                        ),
+                      ),
+                      _CosmicSectionCard(
+                        title: 'Mars & Venüs görünümü',
+                        subtitle: 'Tutku ve uyumun gezegenleri',
+                        child: Builder(
+                          builder: (context) {
+                            if (_loadingPlanets) {
+                              return const _StatusLine(
+                                icon: Icons.auto_graph,
+                                text: 'Gezegen verileri yükleniyor...',
+                              );
+                            }
+                            if (_planetaryError != null) {
+                              return _StatusLine(
+                                icon: Icons.error_outline,
+                                text: _planetaryError!,
+                                color: Colors.redAccent,
+                              );
+                            }
+                            final cards = <Widget>[];
+                            if (marsInfo != null) {
+                              cards.add(
+                                _PlanetLookCard(
+                                  info: marsInfo,
+                                  accent: const Color(0xFFE74C3C),
+                                ),
+                              );
+                            }
+                            if (venusInfo != null) {
+                              cards.add(
+                                _PlanetLookCard(
+                                  info: venusInfo,
+                                  accent: const Color(0xFFED72B8),
+                                ),
+                              );
+                            }
+                            if (cards.isEmpty) {
+                              return const _StatusLine(
+                                icon: Icons.info_outline,
+                                text: 'Mars ve Venüs bilgisi bulunamadı.',
+                              );
+                            }
+                            return Column(
+                              children: [
+                                for (var i = 0; i < cards.length; i++) ...[
+                                  cards[i],
+                                  if (i < cards.length - 1)
+                                    const SizedBox(height: 12),
+                                ],
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                      _CosmicSectionCard(
+                        title: 'Bugün için öneriler',
+                        subtitle: 'Ritüel listeni oluştur',
+                        child: Column(
+                          children: [
+                            for (var i = 0; i < suggestions.length; i++) ...[
+                              _SuggestionTile(
+                                index: i + 1,
+                                text: suggestions[i],
+                              ),
+                              if (i < suggestions.length - 1)
+                                const Divider(
+                                  color: Color(0x22FFFFFF),
+                                  height: 20,
+                                ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -544,103 +857,109 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildMainColumn(BuildContext context, DateTime activeNow) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _HeroCard(
-          sunSign: _sunSign,
-          ascendant: _ascendant,
-          quote: _quote,
-          quoteLoading: _loadingQuote,
-          error: _quoteError,
-          onRefresh: _loadQuote,
-        ),
-        const SizedBox(height: 24),
-        _SectionTitle(label: 'Burç yorumları'),
-        const SizedBox(height: 12),
-        _HoroscopeDeck(
-          bundle: _horoscope,
-          loading: _loadingHoroscope,
-          error: _horoscopeError,
-          sunSign: _sunSign,
-          onRetry: _loadHoroscope,
-        ),
-        const SizedBox(height: 24),
-        _SectionTitle(label: 'Astroloji bilgileri'),
-        const SizedBox(height: 12),
-        _AstroInsights(
-          ascendant: _ascendant,
-          moonPhase: _moonPhaseDescription(activeNow),
-        ),
-        const SizedBox(height: 24),
-        _SectionTitle(label: 'Mars & Venüs görünümü'),
-        const SizedBox(height: 12),
-        _PlanetaryGrid(
-          snapshot: _planetary,
-          loading: _loadingPlanets,
-          error: _planetaryError,
-          onRetry: _loadPlanetary,
-        ),
-        const SizedBox(height: 24),
-        _SectionTitle(label: 'Bugün için öneriler'),
-        const SizedBox(height: 12),
-        const _RecommendationChips(),
-        const SizedBox(height: 48),
-      ],
-    );
+  PlanetInfo? _planetByName(String name) {
+    final planets = _planetary?.planets;
+    if (planets == null) return null;
+    try {
+      return planets.firstWhere((planet) => planet.name == name);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  List<String> _buildDailySuggestions() {
+    final base = <String>[
+      'Gün içinde en az üç derin nefes molası ver.',
+      'Akşam gökyüzüne bakıp kısa bir niyet yaz.',
+      'Su içmeyi ve bedenini nazikçe hareket ettirmeyi unutma.',
+    ];
+
+    const signHints = {
+      'Koç': 'Cesur bir adım at ama kalbini dinlemeyi unutma.',
+      'Boğa': 'Konfor alanını güzelleştir ve sadeliği seç.',
+      'İkizler': 'Merakını besle, kısa bir sohbet sana iyi gelir.',
+      'Yengeç': 'Sevdiklerinden gelen desteği kabul et.',
+      'Aslan': 'Yaratıcılığını sergile, ışığını paylaş.',
+      'Başak': 'Planlarını sadeleştir ve kendine esneklik tanı.',
+      'Terazi': 'Dengeni korumak için minik molalar ekle.',
+      'Akrep': 'Sezgilerine güven ve dönüşüme alan aç.',
+      'Yay': 'Ufuk açıcı bir makale ya da video izle.',
+      'Oğlak': 'Hedeflerine küçük ama kararlı bir adım ekle.',
+      'Kova': 'Farklı fikirleri dinle ve vizyonunu tazele.',
+      'Balık': 'Rüyalarını not al, sezgilerin seni yönlendirsin.',
+    };
+
+    final hint = signHints[_sunSign];
+    if (hint != null && !base.contains(hint)) {
+      base.insert(0, hint);
+    }
+
+    if (_horoscope != null) {
+      final sentences = _horoscope!.daily.split(RegExp(r'[.!?]'));
+      final highlight = sentences.firstWhere(
+        (line) => line.trim().isNotEmpty,
+        orElse: () => '',
+      );
+      final trimmed = highlight.trim();
+      if (trimmed.isNotEmpty) {
+        final formatted = 'Burç mesajın: $trimmed.';
+        if (!base.contains(formatted)) {
+          base.add(formatted);
+        }
+      }
+    }
+
+    return base;
   }
 
   String _moonPhaseDescription(DateTime date) {
     final synodicMonth = 29.530588853;
     final knownNewMoon = DateTime(2000, 1, 6, 18, 14);
     final diff = date.toUtc().difference(knownNewMoon);
-    final days = diff.inHours / 24.0;
-    final phase = (days % synodicMonth) / synodicMonth;
+    final days = diff.inMilliseconds / Duration.millisecondsPerDay;
+    var phase = days % synodicMonth;
+    if (phase < 0) {
+      phase += synodicMonth;
+    }
+    final fraction = phase / synodicMonth;
 
-    if (phase < 0.03 || phase > 0.97) return 'Yeni Ay';
-    if (phase < 0.22) return 'İlk Dördün';
-    if (phase < 0.28) return 'İlk Dördün Zirvesi';
-    if (phase < 0.47) return 'Dolunay Öncesi';
-    if (phase < 0.53) return 'Dolunay';
-    if (phase < 0.72) return 'Dolunay Sonrası';
-    if (phase < 0.78) return 'Son Dördün Zirvesi';
-    return 'Son Dördün';
+    if (fraction < 0.03) return 'Yeni Ay';
+    if (fraction < 0.22) return 'Hilal (büyüyen)';
+    if (fraction < 0.28) return 'İlk Dördün';
+    if (fraction < 0.47) return 'Şişkin Ay (büyüyen)';
+    if (fraction < 0.53) return 'Dolunay';
+    if (fraction < 0.72) return 'Şişkin Ay (azalan)';
+    if (fraction < 0.78) return 'Son Dördün';
+    if (fraction < 0.97) return 'Hilal (azalan)';
+    return 'Yeni Ay';
   }
-}
 
-class _HeroCard extends StatelessWidget {
-  const _HeroCard({
-    required this.sunSign,
-    required this.ascendant,
-    required this.quote,
-    required this.quoteLoading,
-    required this.onRefresh,
-    this.error,
+class _CosmicSectionCard extends StatelessWidget {
+  const _CosmicSectionCard({
+    required this.title,
+    required this.child,
+    this.subtitle,
+    this.trailing,
   });
 
-  final String sunSign;
-  final String ascendant;
-  final String? quote;
-  final bool quoteLoading;
-  final VoidCallback onRefresh;
-  final String? error;
+  final String title;
+  final String? subtitle;
+  final Widget child;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.all(24),
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(28),
-        gradient: const LinearGradient(
-          colors: [Color(0xFF2A2156), Color(0xFF120B2C)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        border: Border.all(color: Colors.white10),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.45),
+            color: Colors.black.withOpacity(0.35),
             blurRadius: 24,
             offset: const Offset(0, 18),
           ),
@@ -657,832 +976,225 @@ class _HeroCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Kozmik pusulan hazır.',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Güneş burcun',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                            color: Colors.white60,
-                            letterSpacing: 0.6,
-                          ),
-                    ),
-                    Text(
-                      sunSign.toUpperCase(),
-                      style: theme.textTheme.displaySmall?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 2,
-                          ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Yükselen',
-                      style: theme.textTheme.titleSmall?.copyWith(color: Colors.white60),
-                    ),
-                    Text(
-                      ascendant,
-                      style: theme.textTheme.headlineSmall?.copyWith(color: Colors.white),
-                    ),
-                  ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  const Icon(Icons.auto_fix_high, color: Colors.white54, size: 32),
-                  const SizedBox(height: 8),
-                  const Icon(Icons.rocket_launch_outlined, color: Colors.white70, size: 36),
-                  const SizedBox(height: 16),
-                  OutlinedButton.icon(
-                    onPressed: quoteLoading ? null : onRefresh,
-                    icon: const Icon(Icons.refresh, size: 18),
-                    label: const Text('Yenile'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      disabledForegroundColor: Colors.white38,
-                      side: BorderSide(color: Colors.white.withOpacity(0.4)),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white12),
-            ),
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: quoteLoading
-                  ? Row(
-                      key: const ValueKey('quote-loading'),
-                      children: const [
-                        SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white70,
-                          ),
-                        ),
-                        SizedBox(width: 12),
-                        Text(
-                          'Günün sözü yükleniyor...',
-                          style: TextStyle(color: Colors.white70),
-                        ),
-                      ],
-                    )
-                  : Text(
-                      quote ?? (error ?? 'Bugünün sözü hazır değil.'),
-                      key: ValueKey(quote ?? error ?? 'quote-empty'),
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                            color: Colors.white,
-                            height: 1.4,
-                          ),
-                    ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HoroscopeDeck extends StatelessWidget {
-  const _HoroscopeDeck({
-    required this.bundle,
-    required this.loading,
-    required this.error,
-    required this.sunSign,
-    required this.onRetry,
-  });
-
-  final HoroscopeBundle? bundle;
-  final bool loading;
-  final String? error;
-  final String sunSign;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    if (loading) {
-      return const _StateMessageCard(
-        icon: Icons.auto_awesome,
-        message: 'Burç yorumları yükleniyor...',
-      );
-    }
-
-    if (bundle == null) {
-      return _StateMessageCard(
-        icon: Icons.warning_amber_outlined,
-        message: error ?? 'Burç yorumları alınamadı.',
-        actionLabel: 'Tekrar dene',
-        onAction: onRetry,
-      );
-    }
-
-    final theme = Theme.of(context);
-    final content = bundle!;
-    return DefaultTabController(
-      length: 3,
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white10),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '$sunSign için kozmik rehber',
-              style: theme.textTheme.titleMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-            ),
-            const SizedBox(height: 12),
-            Theme(
-              data: theme.copyWith(
-                splashColor: Colors.transparent,
-                highlightColor: Colors.transparent,
-              ),
-              child: TabBar(
-                labelColor: Colors.white,
-                indicatorColor: Colors.white,
-                unselectedLabelColor: Colors.white54,
-                tabs: const [
-                  Tab(text: 'Günlük'),
-                  Tab(text: 'Aylık'),
-                  Tab(text: 'Yıllık'),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 180,
-              child: TabBarView(
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  _HoroscopeText(content.daily),
-                  _HoroscopeText(content.monthly),
-                  _HoroscopeText(content.yearly),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _HoroscopeText extends StatelessWidget {
-  const _HoroscopeText(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.only(right: 4),
-      child: Text(
-        text,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.white70,
-              height: 1.45,
-            ),
-      ),
-    );
-  }
-}
-
-class _AstroInsights extends StatelessWidget {
-  const _AstroInsights({
-    required this.ascendant,
-    required this.moonPhase,
-  });
-
-  final String ascendant;
-  final String moonPhase;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isWide = constraints.maxWidth > 600;
-        final double? cardWidth = isWide ? (constraints.maxWidth - 16) / 2 : null;
-        return Wrap(
-          spacing: 16,
-          runSpacing: 16,
-          children: [
-            SizedBox(
-              width: cardWidth,
-              child: _InfoCard(
-                icon: Icons.auto_graph,
-                title: 'Yükselen enerjin',
-                headline: ascendant,
-                description: 'Günün temasını yükselen burcun belirliyor. Sosyal adımlarını sezgilerine göre planla.',
-              ),
-            ),
-            SizedBox(
-              width: cardWidth,
-              child: _InfoCard(
-                icon: Icons.nightlight_round,
-                title: 'Ay fazı',
-                headline: moonPhase,
-                description: 'Ayın fazı duygularını şekillendirir. Ritüellerini bu ritme göre ayarla.',
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _InfoCard extends StatelessWidget {
-  const _InfoCard({
-    required this.icon,
-    required this.title,
-    required this.headline,
-    required this.description,
-  });
-
-  final IconData icon;
-  final String title;
-  final String headline;
-  final String description;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.06),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.08)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(icon, color: Colors.white),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
                       title,
-                      style: theme.textTheme.labelLarge?.copyWith(
-                            color: Colors.white60,
-                            letterSpacing: 0.5,
-                          ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      headline,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            description,
-            style: theme.textTheme.bodyMedium?.copyWith(
-                  color: Colors.white70,
-                  height: 1.5,
-                ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PlanetaryGrid extends StatelessWidget {
-  const _PlanetaryGrid({
-    required this.snapshot,
-    required this.loading,
-    required this.error,
-    required this.onRetry,
-  });
-
-  final PlanetarySnapshot? snapshot;
-  final bool loading;
-  final String? error;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    if (loading) {
-      return const _StateMessageCard(
-        icon: Icons.public_outlined,
-        message: 'Gezegen bilgileri yükleniyor...',
-      );
-    }
-
-    final planets = snapshot?.planets ?? [];
-    if (planets.isEmpty) {
-      return _StateMessageCard(
-        icon: Icons.public,
-        message: error ?? 'Gezegen bilgileri alınamadı.',
-        actionLabel: 'Tekrar dene',
-        onAction: onRetry,
-      );
-    }
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isWide = constraints.maxWidth > 600;
-        final double? cardWidth = isWide ? (constraints.maxWidth - 16) / 2 : null;
-        return Wrap(
-          spacing: 16,
-          runSpacing: 16,
-          children: planets.map((planet) {
-            return SizedBox(
-              width: cardWidth,
-              child: _InfoCard(
-                icon: _planetIconFor(planet.name),
-                title: planet.name,
-                headline: planet.headline,
-                description: planet.detail,
-              ),
-            );
-          }).toList(),
-        );
-      },
-    );
-  }
-
-  IconData _planetIconFor(String name) {
-    switch (name.toLowerCase()) {
-      case 'venüs':
-        return Icons.favorite_border;
-      case 'mars':
-        return Icons.local_fire_department_outlined;
-      case 'merkür':
-        return Icons.bolt_outlined;
-      default:
-        return Icons.public;
-    }
-  }
-}
-
-class _RecommendationChips extends StatelessWidget {
-  const _RecommendationChips();
-
-  @override
-  Widget build(BuildContext context) {
-    const labels = [
-      'Meditasyon 10 dk',
-      'Nefes çalışması',
-      'Astroloji günlüğü',
-      'Mars-Venüs ritüeli',
-      'Su içmeyi unutma',
-    ];
-
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      children: [
-        for (final label in labels) _ChipPill(label: label),
-      ],
-    );
-  }
-}
-
-class _ChipPill extends StatelessWidget {
-  const _ChipPill({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.white24),
-        color: Colors.white.withOpacity(0.05),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70),
-      ),
-    );
-  }
-}
-
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      label,
-      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: Colors.white,
-            letterSpacing: 1.1,
-            fontWeight: FontWeight.w600,
-          ),
-    );
-  }
-}
-
-class _StateMessageCard extends StatelessWidget {
-  const _StateMessageCard({
-    required this.icon,
-    required this.message,
-    this.actionLabel,
-    this.onAction,
-  });
-
-  final IconData icon;
-  final String message;
-  final String? actionLabel;
-  final VoidCallback? onAction;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: Colors.white54),
-          const SizedBox(height: 12),
-          Text(
-            message,
-            style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70),
-          ),
-          if (actionLabel != null && onAction != null) ...[
-            const SizedBox(height: 12),
-            TextButton(
-              onPressed: onAction,
-              child: Text(actionLabel!),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _SidePanel extends StatelessWidget {
-  const _SidePanel({
-    required this.cityLabel,
-    required this.weather,
-    required this.loadingWeather,
-    required this.weatherError,
-    required this.networkTime,
-    required this.loadingTime,
-    required this.timeError,
-    required this.fallbackNow,
-    required this.onRefresh,
-  });
-
-  final String cityLabel;
-  final WeatherSnapshot? weather;
-  final bool loadingWeather;
-  final String? weatherError;
-  final NetworkTimeSnapshot? networkTime;
-  final bool loadingTime;
-  final String? timeError;
-  final DateTime fallbackNow;
-  final VoidCallback onRefresh;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _WeatherCard(
-          cityLabel: cityLabel,
-          weather: weather,
-          loading: loadingWeather,
-          error: weatherError,
-          onRefresh: onRefresh,
-        ),
-        const SizedBox(height: 16),
-        _TimeCard(
-          networkTime: networkTime,
-          loading: loadingTime,
-          error: timeError,
-          fallbackNow: fallbackNow,
-        ),
-        const SizedBox(height: 16),
-        const _ToolsCard(),
-      ],
-    );
-  }
-}
-
-class _WeatherCard extends StatelessWidget {
-  const _WeatherCard({
-    required this.cityLabel,
-    required this.weather,
-    required this.loading,
-    required this.error,
-    required this.onRefresh,
-  });
-
-  final String cityLabel;
-  final WeatherSnapshot? weather;
-  final bool loading;
-  final String? error;
-  final VoidCallback onRefresh;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.cloud_queue, color: Colors.white70),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Hava Durumu',
-                  style: theme.textTheme.titleMedium?.copyWith(
+                      style: theme.textTheme.titleMedium?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
+                        letterSpacing: 0.4,
                       ),
+                    ),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.white60,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
-              TextButton.icon(
-                onPressed: loading ? null : onRefresh,
-                icon: const Icon(Icons.refresh, size: 18),
-                label: const Text('Yenile'),
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  disabledForegroundColor: Colors.white38,
-                ),
-              ),
+              if (trailing != null) ...[
+                const SizedBox(width: 12),
+                trailing!,
+              ],
             ],
           ),
           const SizedBox(height: 16),
-          if (loading)
-            Row(
-              children: const [
-                SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white70),
-                ),
-                SizedBox(width: 12),
-                Text('Hava verileri yükleniyor...', style: TextStyle(color: Colors.white70)),
-              ],
-            )
-          else if (weather == null)
-            Text(
-              error ?? 'Hava durumu alınamadı.',
-              style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white60),
-            )
-          else ...[
-            Text(
-              cityLabel,
-              style: theme.textTheme.labelLarge?.copyWith(color: Colors.white60),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              '${weather!.temperature.toStringAsFixed(1)}°C',
-              style: theme.textTheme.displaySmall?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              weather!.description,
-              style: theme.textTheme.titleSmall?.copyWith(color: Colors.white70),
-            ),
-            const SizedBox(height: 12),
-            Builder(
-              builder: (context) {
-                final data = weather!;
-                return Wrap(
-                  spacing: 12,
-                  runSpacing: 8,
-                  children: [
-                    _WeatherMetric(label: 'Hissedilen', value: '${data.apparentTemperature.toStringAsFixed(1)}°C'),
-                    _WeatherMetric(label: 'Nem', value: '${data.humidity.toStringAsFixed(0)}%'),
-                    _WeatherMetric(label: 'Rüzgar', value: '${data.windSpeed.toStringAsFixed(1)} m/sn'),
-                    _WeatherMetric(label: 'Min/Max', value: '${data.minTemp.toStringAsFixed(0)}° / ${data.maxTemp.toStringAsFixed(0)}°'),
-                  ],
-                );
-              },
-            ),
-          ],
+          child,
         ],
       ),
     );
   }
 }
 
-class _WeatherMetric extends StatelessWidget {
-  const _WeatherMetric({required this.label, required this.value});
+class _InfoRow extends StatelessWidget {
+  const _InfoRow({
+    required this.label,
+    required this.value,
+  });
 
   final String label;
   final String value;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: Colors.white60,
+            letterSpacing: 0.4,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: theme.textTheme.bodyLarge?.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _InfoBadge extends StatelessWidget {
+  const _InfoBadge({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
         color: Colors.white.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white12),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white54)),
-          const SizedBox(height: 2),
-          Text(value, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white)),
-        ],
+      child: RichText(
+        text: TextSpan(
+          text: '$label: ',
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: Colors.white70,
+          ),
+          children: [
+            TextSpan(
+              text: value,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _TimeCard extends StatelessWidget {
-  const _TimeCard({
-    required this.networkTime,
-    required this.loading,
-    required this.error,
-    required this.fallbackNow,
+class _StatusLine extends StatelessWidget {
+  const _StatusLine({
+    required this.icon,
+    required this.text,
+    this.color,
   });
 
-  final NetworkTimeSnapshot? networkTime;
-  final bool loading;
-  final String? error;
-  final DateTime fallbackNow;
+  final IconData icon;
+  final String text;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final active = networkTime?.dateTime ?? fallbackNow;
-    final dateLabel = DateFormat('d MMMM y', 'tr_TR').format(active);
-    final timeLabel = DateFormat('HH:mm', 'tr_TR').format(active);
-    final zone = networkTime?.timeZone ?? 'Yerel saat';
-    final offset = networkTime?.utcOffset ?? '';
+    final resolvedColor = color ?? Colors.white70;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: resolvedColor, size: 20),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            text,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: resolvedColor,
+              height: 1.5,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
 
+class _PlanetLookCard extends StatelessWidget {
+  const _PlanetLookCard({
+    required this.info,
+    required this.accent,
+  });
+
+  final PlanetInfo info;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final icon = info.name == 'Mars'
+        ? Icons.local_fire_department
+        : Icons.spa_outlined;
     return Container(
-      padding: const EdgeInsets.all(20),
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white12),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: accent.withOpacity(0.35)),
+        gradient: LinearGradient(
+          colors: [
+            accent.withOpacity(0.22),
+            Colors.black.withOpacity(0.1),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.access_time, color: Colors.white70),
-              const SizedBox(width: 8),
-              Text(
-                'Ağ Saati',
-                style: theme.textTheme.titleMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: accent.withOpacity(0.2),
+                  border: Border.all(color: accent.withOpacity(0.6)),
+                ),
+                child: Icon(icon, color: Colors.white),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      info.name,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
+                    const SizedBox(height: 4),
+                    Text(
+                      info.headline,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          if (loading)
-            Row(
-              children: const [
-                SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white70),
-                ),
-                SizedBox(width: 12),
-                Text('Ağ zamanı getiriliyor...', style: TextStyle(color: Colors.white70)),
-              ],
-            )
-          else if (networkTime == null)
-            Text(
-              error ?? 'Ağ zamanı alınamadı.',
-              style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white60),
-            )
-          else ...[
-            Text(
-              timeLabel,
-              style: theme.textTheme.displaySmall?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              dateLabel,
-              style: theme.textTheme.titleSmall?.copyWith(color: Colors.white70),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              offset.isNotEmpty ? '$zone · $offset' : zone,
-              style: theme.textTheme.bodySmall?.copyWith(color: Colors.white54),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _ToolsCard extends StatelessWidget {
-  const _ToolsCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+          const SizedBox(height: 14),
           Text(
-            'Spiritüel araçlar',
-            style: theme.textTheme.titleMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
-          const SizedBox(height: 16),
-          const _ToolRow(
-            icon: Icons.bedtime_outlined,
-            title: 'Rüya yorumlama',
-            subtitle: 'Yapay zekâdan kişisel analizler',
-          ),
-          const Divider(color: Colors.white12),
-          const _ToolRow(
-            icon: Icons.auto_awesome,
-            title: 'Burç yorumları',
-            subtitle: 'Günlük · Aylık · Yıllık rehber',
-          ),
-          const Divider(color: Colors.white12),
-          const _ToolRow(
-            icon: Icons.pan_tool_alt_outlined,
-            title: 'El falı',
-            subtitle: 'Avuç içinden karakter analizi',
-          ),
-          const Divider(color: Colors.white12),
-          const _ToolRow(
-            icon: Icons.local_cafe_outlined,
-            title: 'Kahve falı',
-            subtitle: 'Fincandaki sembollerden mesajlar',
+            info.detail,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: Colors.white70,
+              height: 1.5,
+            ),
           ),
         ],
       ),
@@ -1490,46 +1202,42 @@ class _ToolsCard extends StatelessWidget {
   }
 }
 
-class _ToolRow extends StatelessWidget {
-  const _ToolRow({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
+class _SuggestionTile extends StatelessWidget {
+  const _SuggestionTile({
+    required this.index,
+    required this.text,
   });
 
-  final IconData icon;
-  final String title;
-  final String subtitle;
+  final int index;
+  final String text;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: Colors.white70),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: theme.textTheme.bodyLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: theme.textTheme.bodySmall?.copyWith(color: Colors.white54),
-              ),
-            ],
+        Text(
+          index.toString().padLeft(2, '0'),
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: Colors.white54,
+            fontWeight: FontWeight.w600,
           ),
         ),
-        const Icon(Icons.chevron_right, color: Colors.white38),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            text,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: Colors.white,
+              height: 1.5,
+            ),
+          ),
+        ),
       ],
     );
   }
 }
-
 class _HomeDrawer extends StatelessWidget {
   const _HomeDrawer();
 
