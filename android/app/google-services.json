@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "366386022105",
+    "project_id": "kismetlyfal",
+    "storage_bucket": "kismetlyfal.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:366386022105:android:3bd5ae95b1d4977e6ca0c8",
+        "android_client_info": {
+          "package_name": "com.example.kismetly"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "366386022105-8u0d81a6s68992v3tpv0af71bc5cgvkm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.kismetly",
+            "certificate_hash": "190ec62f01cd8a70e09eee341589504834885a5a"
+          }
+        },
+        {
+          "client_id": "366386022105-vgug2024863n7f6p5jh462de7klep08c.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAr-idhj1t5JWYgdTcFhvhmOXSi5G0xpZw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "366386022105-vgug2024863n7f6p5jh462de7klep08c.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "366386022105-7eh5i18jip13ggtecb7gtbpahjbo6c50.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.kismetly"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
