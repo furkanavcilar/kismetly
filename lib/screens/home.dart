@@ -66,23 +66,36 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadLocation() async {
-    final snapshot = await LocationService.currentLocation();
-    if (!mounted) return;
-    setState(() {
-      _location = snapshot;
-      _city = snapshot?.city;
-      _locationTried = true;
-      if (snapshot == null) {
+    try {
+      final snapshot = await LocationService.currentLocation();
+      if (!mounted) return;
+      setState(() {
+        _location = snapshot;
+        _city = snapshot?.city;
+        _locationTried = true;
+        if (snapshot == null) {
+          _loadingWeather = false;
+          _loadingTime = false;
+          _weatherError = 'Konum alınamadı';
+          _timeError = 'Konum alınamadı';
+        }
+      });
+
+      if (snapshot != null) {
+        _fetchWeather(snapshot);
+        _fetchNetworkTime(snapshot);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _location = null;
+        _city = null;
+        _locationTried = true;
         _loadingWeather = false;
         _loadingTime = false;
         _weatherError = 'Konum alınamadı';
         _timeError = 'Konum alınamadı';
-      }
-    });
-
-    if (snapshot != null) {
-      _fetchWeather(snapshot);
-      _fetchNetworkTime(snapshot);
+      });
     }
   }
 
@@ -161,19 +174,28 @@ class _HomeScreenState extends State<HomeScreen> {
       _weatherError = null;
     });
 
-    final weather = await WeatherService.fetchWeather(
-      latitude: snapshot.latitude,
-      longitude: snapshot.longitude,
-    );
+    try {
+      final weather = await WeatherService.fetchWeather(
+        latitude: snapshot.latitude,
+        longitude: snapshot.longitude,
+      );
 
-    if (!mounted) return;
-    setState(() {
-      _weather = weather;
-      _loadingWeather = false;
-      if (weather == null) {
+      if (!mounted) return;
+      setState(() {
+        _weather = weather;
+        _loadingWeather = false;
+        if (weather == null) {
+          _weatherError = 'Hava durumu alınamadı';
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _weather = null;
+        _loadingWeather = false;
         _weatherError = 'Hava durumu alınamadı';
-      }
-    });
+      });
+    }
   }
 
   Future<void> _fetchNetworkTime(LocationSnapshot snapshot) async {
@@ -182,21 +204,30 @@ class _HomeScreenState extends State<HomeScreen> {
       _timeError = null;
     });
 
-    final netTime = await NetworkTimeService.fetchTime(
-      latitude: snapshot.latitude,
-      longitude: snapshot.longitude,
-    );
+    try {
+      final netTime = await NetworkTimeService.fetchTime(
+        latitude: snapshot.latitude,
+        longitude: snapshot.longitude,
+      );
 
-    if (!mounted) return;
-    setState(() {
-      _networkTime = netTime;
-      _loadingTime = false;
-      if (netTime != null) {
-        _now = netTime.dateTime;
-      } else {
+      if (!mounted) return;
+      setState(() {
+        _networkTime = netTime;
+        _loadingTime = false;
+        if (netTime != null) {
+          _now = netTime.dateTime;
+        } else {
+          _timeError = 'Ağ zamanı alınamadı';
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _networkTime = null;
+        _loadingTime = false;
         _timeError = 'Ağ zamanı alınamadı';
-      }
-    });
+      });
+    }
   }
 
   void _refreshWeatherAndTime() {

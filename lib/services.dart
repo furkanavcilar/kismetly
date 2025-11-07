@@ -49,21 +49,29 @@ class LocationService {
       position ??= await Geolocator.getLastKnownPosition();
       if (position == null) return null;
 
-      final placemarks = await geo.placemarkFromCoordinates(
-        position.latitude,
-        position.longitude,
-      );
+      List<geo.Placemark> placemarks = const [];
+      try {
+        placemarks = await geo.placemarkFromCoordinates(
+          position.latitude,
+          position.longitude,
+        );
+      } catch (error) {
+        debugPrint('Geocode alınamadı: $error');
+      }
 
       String? resolvedCity;
       String? resolvedCountry;
       if (placemarks.isNotEmpty) {
         final place = placemarks.first;
-        resolvedCity = place.locality?.isNotEmpty == true
-            ? place.locality
-            : (place.subAdministrativeArea?.isNotEmpty == true
-                ? place.subAdministrativeArea
-                : place.administrativeArea);
-        resolvedCountry = place.country;
+        String? clean(String? value) {
+          final trimmed = value?.trim();
+          return (trimmed?.isNotEmpty ?? false) ? trimmed : null;
+        }
+
+        resolvedCity = clean(place.locality) ??
+            clean(place.subAdministrativeArea) ??
+            clean(place.administrativeArea);
+        resolvedCountry = clean(place.country);
       }
 
       return LocationSnapshot(
