@@ -1,34 +1,51 @@
-import 'dart:math';
-import 'package:flutter/material.dart'; // <-- EKLENDİ
+import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart' as geo;
 import 'package:geolocator/geolocator.dart';
 
 /// Şehir bulma (konum servisleri)
 class LocationService {
   static Future<String?> currentCity() async {
-    final enabled = await Geolocator.isLocationServiceEnabled();
-    if (!enabled) return null;
-
-    LocationPermission perm = await Geolocator.checkPermission();
-    if (perm == LocationPermission.denied) {
-      perm = await Geolocator.requestPermission();
-      if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) {
+    try {
+      final enabled = await Geolocator.isLocationServiceEnabled();
+      if (!enabled) {
         return null;
       }
-    }
 
-    final pos = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.low,
-    );
-    final placemarks = await geo.placemarkFromCoordinates(
-      pos.latitude,
-      pos.longitude,
-      localeIdentifier: 'tr_TR',
-    );
-    if (placemarks.isEmpty) return null;
-    return placemarks.first.locality ??
-        placemarks.first.administrativeArea ??
-        placemarks.first.country;
+      LocationPermission perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+
+      if (perm == LocationPermission.deniedForever || perm == LocationPermission.denied) {
+        return null;
+      }
+
+      Position? pos;
+      try {
+        pos = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.best,
+          timeLimit: const Duration(seconds: 8),
+        );
+      } on Exception catch (err) {
+        debugPrint('Konum alınamadı (anlık): $err');
+      }
+
+      pos ??= await Geolocator.getLastKnownPosition();
+      if (pos == null) return null;
+
+      final placemarks = await geo.placemarkFromCoordinates(
+        pos.latitude,
+        pos.longitude,
+        localeIdentifier: 'tr_TR',
+      );
+
+      if (placemarks.isEmpty) return null;
+      final place = placemarks.first;
+      return place.locality ?? place.subAdministrativeArea ?? place.administrativeArea ?? place.country;
+    } catch (e) {
+      debugPrint('Konum çözümlenemedi: $e');
+      return null;
+    }
   }
 }
 
