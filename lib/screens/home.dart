@@ -307,8 +307,19 @@ class _HomeScreenState extends State<HomeScreen> {
     final activeNow = _networkTime?.dateTime ?? _now;
     final dateLabel = DateFormat('d MMMM y', 'tr_TR').format(activeNow);
     final timeLabel = DateFormat('HH:mm', 'tr_TR').format(activeNow);
-    final locationLabel =
-        _city ?? (_locationTried ? 'Konum bulunamadı' : 'Konum belirleniyor...');
+    final resolvedCity = _city ?? _location?.city;
+    final resolvedCountry = _location?.country;
+    final locationParts = <String>[];
+    if (resolvedCity != null && resolvedCity.isNotEmpty) {
+      locationParts.add(resolvedCity);
+    }
+    if (resolvedCountry != null && resolvedCountry.isNotEmpty) {
+      locationParts.add(resolvedCountry);
+    }
+    final hasResolvedLocation = locationParts.isNotEmpty;
+    final locationLabel = hasResolvedLocation
+        ? locationParts.join(', ')
+        : (_locationTried ? 'Konum bulunamadı' : 'Konum belirleniyor...');
     final headerLine = '$dateLabel · $timeLabel · $locationLabel';
     final timezoneText = _networkTime != null
         ? '${_networkTime!.timeZone} · ${_networkTime!.utcOffset}'
@@ -549,26 +560,48 @@ class _HomeScreenState extends State<HomeScreen> {
                                 color: Colors.orangeAccent,
                               )
                             else if (_weather != null)
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: [
-                                  _InfoBadge(
-                                    label: 'Hava',
-                                    value:
-                                        '${_weather!.description} · ${_weather!.temperature.toStringAsFixed(0)}°C',
-                                  ),
-                                  _InfoBadge(
-                                    label: 'Hissedilen',
-                                    value:
-                                        '${_weather!.apparentTemperature.toStringAsFixed(0)}°C',
-                                  ),
-                                  _InfoBadge(
-                                    label: 'Nem',
-                                    value:
-                                        '%${_weather!.humidity.toStringAsFixed(0)}',
-                                  ),
-                                ],
+                              Builder(
+                                builder: (context) {
+                                  final weather = _weather!;
+                                  final windSpeedText =
+                                      '${weather.windSpeed.toStringAsFixed(0)} km/sa';
+                                  final rangeText =
+                                      '${weather.minTemp.toStringAsFixed(0)}°C / ${weather.maxTemp.toStringAsFixed(0)}°C';
+                                  return Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: [
+                                      if (hasResolvedLocation)
+                                        _InfoBadge(
+                                          label: 'Konum',
+                                          value: locationLabel,
+                                        ),
+                                      _InfoBadge(
+                                        label: 'Hava',
+                                        value:
+                                            '${weather.description} · ${weather.temperature.toStringAsFixed(0)}°C',
+                                      ),
+                                      _InfoBadge(
+                                        label: 'Hissedilen',
+                                        value:
+                                            '${weather.apparentTemperature.toStringAsFixed(0)}°C',
+                                      ),
+                                      _InfoBadge(
+                                        label: 'Nem',
+                                        value:
+                                            '%${weather.humidity.toStringAsFixed(0)}',
+                                      ),
+                                      _InfoBadge(
+                                        label: 'Rüzgar',
+                                        value: windSpeedText,
+                                      ),
+                                      _InfoBadge(
+                                        label: 'Günlük aralık',
+                                        value: rangeText,
+                                      ),
+                                    ],
+                                  );
+                                },
                               ),
                             if (_loadingTime)
                               const Padding(

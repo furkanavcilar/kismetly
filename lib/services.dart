@@ -22,11 +22,17 @@ class LocationSnapshot {
 /// Şehir ve koordinat bilgisi (konum servisleri)
 class LocationService {
   static Future<LocationSnapshot?> currentLocation() async {
+    LocationSnapshot? ipSnapshot;
+    Future<LocationSnapshot?> ensureIpSnapshot() async {
+      ipSnapshot ??= await _fallbackLocationFromIP();
+      return ipSnapshot;
+    }
+
     try {
       final enabled = await Geolocator.isLocationServiceEnabled();
       if (!enabled) {
         debugPrint('Konum servisleri kapalı veya devre dışı.');
-        return null;
+        return await ensureIpSnapshot();
       }
 
       LocationPermission permission = await Geolocator.checkPermission();
@@ -34,9 +40,14 @@ class LocationService {
         permission = await Geolocator.requestPermission();
       }
 
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        return null;
+      if (permission == LocationPermission.denied) {
+        debugPrint('Konum izni reddedildi.');
+        return await ensureIpSnapshot();
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        debugPrint('Konum izni kalıcı olarak reddedildi.');
+        return await ensureIpSnapshot();
       }
 
       Position? position;
@@ -56,7 +67,9 @@ class LocationService {
           debugPrint('Önceki konum alınamadı: $error');
         }
       }
-      if (position == null) return null;
+      if (position == null) {
+        return await ensureIpSnapshot();
+      }
 
       List<geo.Placemark> placemarks = const [];
       try {
@@ -72,15 +85,16 @@ class LocationService {
       String? resolvedCountry;
       if (placemarks.isNotEmpty) {
         final place = placemarks.first;
-        String? clean(String? value) {
-          final trimmed = value?.trim();
-          return (trimmed?.isNotEmpty ?? false) ? trimmed : null;
-        }
+        resolvedCity = _localizePlace(place.locality) ??
+            _localizePlace(place.subAdministrativeArea) ??
+            _localizePlace(place.administrativeArea);
+        resolvedCountry = _localizePlace(place.country);
+      }
 
-        resolvedCity = clean(place.locality) ??
-            clean(place.subAdministrativeArea) ??
-            clean(place.administrativeArea);
-        resolvedCountry = clean(place.country);
+      if (resolvedCity == null || resolvedCountry == null) {
+        await ensureIpSnapshot();
+        resolvedCity ??= ipSnapshot?.city;
+        resolvedCountry ??= ipSnapshot?.country;
       }
 
       return LocationSnapshot(
@@ -91,7 +105,7 @@ class LocationService {
       );
     } catch (error) {
       debugPrint('Konum çözümlenemedi: $error');
-      return null;
+      return await ensureIpSnapshot();
     }
   }
 
@@ -99,6 +113,118 @@ class LocationService {
     final snapshot = await currentLocation();
     return snapshot?.city;
   }
+
+  static String? _localizePlace(String? value) {
+    final cleaned = _cleanPlace(value);
+    if (cleaned == null) return null;
+
+    final lower = cleaned.toLowerCase();
+    if (_placeTranslations.containsKey(lower)) {
+      return _placeTranslations[lower];
+    }
+
+    if (lower.endsWith(' province')) {
+      final base = cleaned.substring(0, cleaned.length - ' province'.length).trim();
+      final translatedBase = _placeTranslations[base.toLowerCase()];
+      return translatedBase ?? base;
+    }
+
+    if (lower.contains('metropolitan municipality')) {
+      final base = cleaned
+          .toLowerCase()
+          .replaceAll('metropolitan municipality', '')
+          .trim();
+      if (base.isNotEmpty) {
+        final translatedBase = _placeTranslations[base];
+        if (translatedBase != null) {
+          return translatedBase;
+        }
+        return base
+            .split(' ')
+            .where((part) => part.isNotEmpty)
+            .map(
+              (part) =>
+                  part.substring(0, 1).toUpperCase() + (part.length > 1 ? part.substring(1) : ''),
+            )
+            .join(' ');
+      }
+    }
+
+    return cleaned;
+  }
+
+  static String? _cleanPlace(String? value) {
+    final trimmed = value?.trim();
+    if (trimmed == null || trimmed.isEmpty) return null;
+
+    final normalized = trimmed.replaceAll(RegExp(r'\s+'), ' ');
+    final lower = normalized.toLowerCase();
+    if (lower == 'null' || lower == 'unknown' || lower == '-' || lower == '--') {
+      return null;
+    }
+
+    return normalized;
+  }
+
+  static Future<LocationSnapshot?> _fallbackLocationFromIP() async {
+    try {
+      final uri = Uri.parse('https://ipapi.co/json/');
+      final response = await http.get(uri).timeout(const Duration(seconds: 6));
+      if (response.statusCode != 200) {
+        return null;
+      }
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final lat = (data['latitude'] as num?)?.toDouble();
+      final lon = (data['longitude'] as num?)?.toDouble();
+      if (lat == null || lon == null) {
+        return null;
+      }
+
+      final city = _localizePlace(data['city'] as String?);
+      final country = _localizePlace(
+        (data['country_name'] as String?) ?? (data['country'] as String?),
+      );
+
+      debugPrint(
+        'IP tabanlı konum kullanılıyor: ${(city ?? 'Bilinmiyor')} / ${(country ?? 'Bilinmiyor')}',
+      );
+
+      return LocationSnapshot(
+        latitude: lat,
+        longitude: lon,
+        city: city,
+        country: country,
+      );
+    } catch (error) {
+      debugPrint('IP tabanlı konum alınamadı: $error');
+      return null;
+    }
+  }
+
+  static const Map<String, String> _placeTranslations = {
+    'turkey': 'Türkiye',
+    'republic of turkey': 'Türkiye',
+    'turkiye': 'Türkiye',
+    'türkiye': 'Türkiye',
+    'ankara': 'Ankara',
+    'ankara province': 'Ankara',
+    'izmir': 'İzmir',
+    'izmir province': 'İzmir',
+    'istanbul': 'İstanbul',
+    'istanbul province': 'İstanbul',
+    'antalya': 'Antalya',
+    'bursa': 'Bursa',
+    'adana': 'Adana',
+    'mersin': 'Mersin',
+    'konya': 'Konya',
+    'kayseri': 'Kayseri',
+    'eskisehir': 'Eskişehir',
+    'eskişehir': 'Eskişehir',
+    'trabzon': 'Trabzon',
+    'edirne': 'Edirne',
+    'gaziantep': 'Gaziantep',
+  };
 }
 
 class HoroscopeBundle {
