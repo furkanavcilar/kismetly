@@ -24,7 +24,10 @@ class LocationService {
   static Future<LocationSnapshot?> currentLocation() async {
     try {
       final enabled = await Geolocator.isLocationServiceEnabled();
-      if (!enabled) return null;
+      if (!enabled) {
+        debugPrint('Konum servisleri kapalı veya devre dışı.');
+        return null;
+      }
 
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
@@ -46,7 +49,13 @@ class LocationService {
         debugPrint('Anlık konum alınamadı: $error');
       }
 
-      position ??= await Geolocator.getLastKnownPosition();
+      if (position == null) {
+        try {
+          position = await Geolocator.getLastKnownPosition();
+        } catch (error) {
+          debugPrint('Önceki konum alınamadı: $error');
+        }
+      }
       if (position == null) return null;
 
       List<geo.Placemark> placemarks = const [];
