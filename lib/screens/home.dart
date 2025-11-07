@@ -43,6 +43,21 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _firebaseError;
   Timer? _ticker;
 
+  String get _firebaseStatusMessage {
+    switch (_firebaseStatus) {
+      case _FirebaseConnectionState.checking:
+        return 'Firebase bağlantısı kontrol ediliyor...';
+      case _FirebaseConnectionState.success:
+        return 'Firebase bağlantısı başarılı ✅';
+      case _FirebaseConnectionState.failure:
+        final detail = _firebaseError;
+        if (detail == null || detail.isEmpty) {
+          return 'Firebase bağlantısı başarısız ❌';
+        }
+        return 'Firebase bağlantısı başarısız ❌ · $detail';
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -242,20 +257,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _checkFirebaseConnection() async {
     try {
-      Firebase.app();
-    } on FirebaseException catch (e) {
-      if (e.code == 'no-app') {
+      if (Firebase.apps.isEmpty) {
         await Firebase.initializeApp(
           options: DefaultFirebaseOptions.currentPlatform,
         );
       } else {
-        if (!mounted) return;
-        setState(() {
-          _firebaseStatus = _FirebaseConnectionState.failure;
-          _firebaseError = e.message ?? e.code;
-        });
-        return;
+        Firebase.app();
       }
+    } on FirebaseException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _firebaseStatus = _FirebaseConnectionState.failure;
+        _firebaseError = e.message ?? e.code;
+      });
+      return;
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -396,8 +411,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           border: Border.all(color: Colors.white12),
                         ),
                         child: Row(
-                          children: const [
-                            SizedBox(
+                          children: [
+                            const SizedBox(
                               width: 18,
                               height: 18,
                               child: CircularProgressIndicator(
@@ -405,11 +420,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                 color: Colors.white70,
                               ),
                             ),
-                            SizedBox(width: 12),
+                            const SizedBox(width: 12),
                             Expanded(
                               child: Text(
-                                'Firebase bağlantısı kontrol ediliyor...',
-                                style: TextStyle(color: Colors.white70),
+                                _firebaseStatusMessage,
+                                style: theme.textTheme.bodyMedium
+                                    ?.copyWith(color: Colors.white70),
                               ),
                             ),
                           ],
@@ -434,7 +450,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
-                                'Firebase bağlantısı başarılı ✅',
+                                _firebaseStatusMessage,
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w600,
@@ -466,7 +482,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
-                                    'Firebase bağlantısı başarısız ❌',
+                                    _firebaseStatusMessage,
                                     style:
                                         theme.textTheme.bodyMedium?.copyWith(
                                       color: Colors.white,
@@ -480,7 +496,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               ],
                             ),
-                            if (_firebaseError != null) ...[
+                            if (_firebaseError != null &&
+                                !_firebaseStatusMessage
+                                    .contains(_firebaseError!)) ...[
                               const SizedBox(height: 6),
                               Text(
                                 _firebaseError!,
