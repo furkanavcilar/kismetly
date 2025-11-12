@@ -71,7 +71,7 @@ class AiContentService {
     final dayKey = _dayStamp(today);
     final prefs = await _prefsFuture;
     final cacheKey =
-        'ai_insight_${locale.languageCode}_${sunSign}_$risingSign_$dayKey';
+        'ai_insight_${locale.languageCode}_${sunSign}_${risingSign}_$dayKey';
     final cached = DailyAiInsights.tryParse(prefs.getString(cacheKey));
     if (cached != null && !forceRefresh) {
       return cached;
@@ -121,7 +121,7 @@ class AiContentService {
     final dayKey = _dayStamp(today);
     final prefs = await _prefsFuture;
     final cacheKey =
-        'ai_compat_${locale.languageCode}_${firstSign}_$secondSign_$dayKey';
+        'ai_compat_${locale.languageCode}_${firstSign}_${secondSign}_$dayKey';
     final cached = prefs.getString(cacheKey);
     if (cached != null && !forceRefresh) {
       try {
