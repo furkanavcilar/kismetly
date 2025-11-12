@@ -15,8 +15,7 @@ class ZodiacCompatibilityScreen extends StatefulWidget {
       _ZodiacCompatibilityScreenState();
 }
 
-class _ZodiacCompatibilityScreenState extends State<ZodiacCompatibilityScreen>
-    with SingleTickerProviderStateMixin {
+class _ZodiacCompatibilityScreenState extends State<ZodiacCompatibilityScreen> {
   late final List<String> _signs = AstroService.signs;
   late String _firstSign = _signs.first;
   late String _secondSign = _signs[5];

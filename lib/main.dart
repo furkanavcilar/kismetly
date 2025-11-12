@@ -1,3 +1,5 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -5,6 +7,18 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'screens/home.dart';
 import 'screens/compatibility.dart';
+import 'firebase_options.dart';
+
+@immutable
+class ShellNavigation {
+  const ShellNavigation({
+    required this.openMenu,
+    required this.openCompatibility,
+  });
+
+  final VoidCallback openMenu;
+  final VoidCallback openCompatibility;
+}
 
 class _ShellPage {
   const _ShellPage({
@@ -15,8 +29,7 @@ class _ShellPage {
 
   final String title;
   final String subtitle;
-  final Widget Function(VoidCallback openMenu, VoidCallback goToCompatibility)
-      builder;
+  final Widget Function(ShellNavigation navigation) builder;
 }
 
 class _MainShell extends StatefulWidget {
@@ -37,16 +50,16 @@ class _MainShellState extends State<_MainShell> {
     _ShellPage(
       title: 'Ana Sayfa',
       subtitle: 'Kişisel astrolojik akış',
-      builder: (openMenu, goToCompatibility) => HomeScreen(
-        onMenuTap: openMenu,
-        onOpenCompatibility: goToCompatibility,
+      builder: (navigation) => HomeScreen(
+        onMenuTap: navigation.openMenu,
+        onOpenCompatibility: navigation.openCompatibility,
       ),
     ),
     _ShellPage(
       title: 'Rüya yorumlama',
       subtitle: 'Yapay zekâ destekli içgörüler',
-      builder: (openMenu, _) => _SimpleInfoScreen(
-        onMenuTap: openMenu,
+      builder: (navigation) => _SimpleInfoScreen(
+        onMenuTap: navigation.openMenu,
         title: 'Rüya yorumlama',
         description:
             'Rüyalarını çözmek için semboller, duygular ve temalar arasında gezin. '
@@ -56,8 +69,8 @@ class _MainShellState extends State<_MainShell> {
     _ShellPage(
       title: 'Burç yorumları',
       subtitle: 'Günlük · Aylık · Yıllık rehber',
-      builder: (openMenu, goToCompatibility) => _SimpleInfoScreen(
-        onMenuTap: openMenu,
+      builder: (navigation) => _SimpleInfoScreen(
+        onMenuTap: navigation.openMenu,
         title: 'Burç yorumları',
         description:
             'Tüm burçlar için güncel yorumlar, element bazlı trendler ve '
@@ -65,15 +78,15 @@ class _MainShellState extends State<_MainShell> {
         highlightAction: (
           icon: Icons.favorite_outline,
           label: 'Uyumluluğu gör',
-          onTap: goToCompatibility,
+          onTap: navigation.openCompatibility,
         ),
       ),
     ),
     _ShellPage(
       title: 'El falı',
       subtitle: 'Avuç içinden karakter',
-      builder: (openMenu, _) => _SimpleInfoScreen(
-        onMenuTap: openMenu,
+      builder: (navigation) => _SimpleInfoScreen(
+        onMenuTap: navigation.openMenu,
         title: 'El falı',
         description:
             'Avuç çizgilerin enerjisi, karakterini ve kaderini anlatır. '
@@ -83,15 +96,15 @@ class _MainShellState extends State<_MainShell> {
     _ShellPage(
       title: 'Zodyak Uyumu',
       subtitle: 'Aşk, arkadaşlık ve ekip enerjileri',
-      builder: (openMenu, _) => ZodiacCompatibilityScreen(
-        onMenuTap: openMenu,
+      builder: (navigation) => ZodiacCompatibilityScreen(
+        onMenuTap: navigation.openMenu,
       ),
     ),
     _ShellPage(
       title: 'Kahve falı',
       subtitle: 'Fincandaki semboller',
-      builder: (openMenu, _) => _SimpleInfoScreen(
-        onMenuTap: openMenu,
+      builder: (navigation) => _SimpleInfoScreen(
+        onMenuTap: navigation.openMenu,
         title: 'Kahve falı',
         description:
             'Fincandaki semboller, ruh hâlini ve geleceğe dair işaretleri '
@@ -150,7 +163,15 @@ class _MainShellState extends State<_MainShell> {
           return AnimatedSwitcher(
             duration: const Duration(milliseconds: 320),
             switchInCurve: Curves.easeOut,
-            child: page.builder(_openDrawer, _goToCompatibility),
+            child: KeyedSubtree(
+              key: ValueKey(page.title),
+              child: page.builder(
+                ShellNavigation(
+                  openMenu: _openDrawer,
+                  openCompatibility: _goToCompatibility,
+                ),
+              ),
+            ),
           );
         },
       ),
@@ -338,12 +359,13 @@ class _SimpleInfoScreen extends StatelessWidget {
 // Firebase varsa çalıştır; yoksa sessizce devam
 Future<void> _tryInitFirebase() async {
   try {
-    // ignore: avoid_dynamic_calls
-    // dart:mirrors yok; doğrudan import etmeden deneyelim:
-    // Eğer projede firebase_core varsa bu satırlar çalışır.
-    // Aksi halde exception yakalanır ve app sorunsuz devam eder.
-    // (İstiyorsan doğrudan firebase importu ekleyip initialize edebilirsin.)
-  } catch (_) {}
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (error, stackTrace) {
+    debugPrint('Firebase başlatma atlandı: $error');
+    debugPrintStack(stackTrace: stackTrace);
+  }
 }
 
 Future<void> main() async {
