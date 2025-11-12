@@ -4,7 +4,7 @@ import '../core/localization/app_localizations.dart';
 import '../core/localization/locale_provider.dart';
 import '../core/utils/locale_collator.dart';
 import '../data/zodiac_signs.dart';
-import '../services.dart';
+import '../services/ai_content_service.dart';
 
 class ZodiacCompatibilityScreen extends StatefulWidget {
   const ZodiacCompatibilityScreen({super.key, required this.onMenuTap});
@@ -20,6 +20,10 @@ class _ZodiacCompatibilityScreenState extends State<ZodiacCompatibilityScreen>
   late TabController _tabController;
   late String _firstSign;
   late String _secondSign;
+  final _aiService = AiContentService();
+  Map<String, String>? _insights;
+  bool _loading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -27,6 +31,7 @@ class _ZodiacCompatibilityScreenState extends State<ZodiacCompatibilityScreen>
     _tabController = TabController(length: 3, vsync: this);
     _firstSign = zodiacSigns.first.id;
     _secondSign = zodiacSigns.last.id;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
   }
 
   @override
@@ -41,6 +46,38 @@ class _ZodiacCompatibilityScreenState extends State<ZodiacCompatibilityScreen>
       _firstSign = _secondSign;
       _secondSign = temp;
     });
+    _load();
+  }
+
+  Future<void> _load() async {
+    final locale = LocaleScope.of(context).locale;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      String label(String id) {
+        final sign = findZodiacById(id);
+        return sign.labelFor(locale.languageCode);
+      }
+
+      final result = await _aiService.fetchCompatibility(
+        firstSign: label(_firstSign),
+        secondSign: label(_secondSign),
+        locale: locale,
+      );
+      if (!mounted) return;
+      setState(() {
+        _insights = result;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = e.toString();
+      });
+    }
   }
 
   @override
@@ -51,7 +88,6 @@ class _ZodiacCompatibilityScreenState extends State<ZodiacCompatibilityScreen>
     final collator = const LocaleCollator();
     final sorted = [...zodiacSigns]
       ..sort((a, b) => collator.compare(a.labelFor(language), b.labelFor(language), locale));
-    final result = calculateCompatibilityResult(_firstSign, _secondSign);
     final firstLabel = findZodiacById(_firstSign)?.labelFor(language) ?? _firstSign;
     final secondLabel = findZodiacById(_secondSign)?.labelFor(language) ?? _secondSign;
     return Scaffold(
@@ -78,18 +114,24 @@ class _ZodiacCompatibilityScreenState extends State<ZodiacCompatibilityScreen>
               signs: sorted,
               first: _firstSign,
               second: _secondSign,
-              onChanged: (a, b) => setState(() {
-                _firstSign = a;
-                _secondSign = b;
-              }),
+              onChanged: (a, b) {
+                setState(() {
+                  _firstSign = a;
+                  _secondSign = b;
+                });
+                _load();
+              },
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: _ScoreRing(
-              score: result.overall,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: _InsightSummary(
+              loading: _loading,
+              error: _error,
+              summary: _insights?['summary'],
               first: firstLabel,
               second: secondLabel,
+              onRetry: _load,
             ),
           ),
           Expanded(
@@ -98,45 +140,18 @@ class _ZodiacCompatibilityScreenState extends State<ZodiacCompatibilityScreen>
               children: [
                 _CompatibilityTab(
                   label: loc.translate('compatibilityLove'),
-                  summary: loc.translate('compatibilityLoveTemplate', params: {
-                    'first': firstLabel,
-                    'second': secondLabel,
-                    'tone': _toneForScore(loc, result.love),
-                  }),
-                  score: result.love,
-                  advice: loc.translate('compatibilityAdviceTemplate', params: {
-                    'first': firstLabel,
-                    'second': secondLabel,
-                    'advice': result.loveAdvice(loc),
-                  }),
+                  summary: _insights?['love'] ?? '',
+                  loading: _loading,
                 ),
                 _CompatibilityTab(
                   label: loc.translate('compatibilityFamily'),
-                  summary: loc.translate('compatibilityFamilyTemplate', params: {
-                    'first': firstLabel,
-                    'second': secondLabel,
-                    'tone': _toneForScore(loc, result.family),
-                  }),
-                  score: result.family,
-                  advice: loc.translate('compatibilityAdviceTemplate', params: {
-                    'first': firstLabel,
-                    'second': secondLabel,
-                    'advice': result.familyAdvice(loc),
-                  }),
+                  summary: _insights?['family'] ?? '',
+                  loading: _loading,
                 ),
                 _CompatibilityTab(
                   label: loc.translate('compatibilityCareer'),
-                  summary: loc.translate('compatibilityCareerTemplate', params: {
-                    'first': firstLabel,
-                    'second': secondLabel,
-                    'tone': _toneForScore(loc, result.career),
-                  }),
-                  score: result.career,
-                  advice: loc.translate('compatibilityAdviceTemplate', params: {
-                    'first': firstLabel,
-                    'second': secondLabel,
-                    'advice': result.careerAdvice(loc),
-                  }),
+                  summary: _insights?['career'] ?? '',
+                  loading: _loading,
                 ),
               ],
             ),
@@ -145,13 +160,6 @@ class _ZodiacCompatibilityScreenState extends State<ZodiacCompatibilityScreen>
       ),
     );
   }
-}
-
-String _toneForScore(AppLocalizations loc, int score) {
-  if (score >= 80) return loc.translate('toneHigh');
-  if (score >= 60) return loc.translate('toneBalanced');
-  if (score >= 40) return loc.translate('toneFlux');
-  return loc.translate('toneTransform');
 }
 
 class _SignSelector extends StatelessWidget {
@@ -219,144 +227,90 @@ class _SignSelector extends StatelessWidget {
   }
 }
 
-class _ScoreRing extends StatelessWidget {
-  const _ScoreRing({
-    super.key,
-    required this.score,
+class _InsightSummary extends StatelessWidget {
+  const _InsightSummary({
+    required this.loading,
+    required this.error,
+    required this.summary,
     required this.first,
     required this.second,
+    required this.onRetry,
   });
 
-  final int score;
+  final bool loading;
+  final String? error;
+  final String? summary;
   final String first;
   final String second;
+  final Future<void> Function() onRetry;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
-      color: theme.colorScheme.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('$first × $second', style: theme.textTheme.titleMedium),
-                  const SizedBox(height: 8),
-                  Text(AppLocalizations.of(context).translate('compatibilitySummary')),
-                ],
-              ),
-            ),
-            SizedBox(
-              width: 100,
-              height: 100,
-              child: TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0, end: score / 100),
-                duration: const Duration(milliseconds: 400),
-                builder: (context, value, _) {
-                  return Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      CircularProgressIndicator(
-                        value: value,
-                        strokeWidth: 6,
-                        color: theme.colorScheme.primary,
-                        backgroundColor: theme.colorScheme.surfaceVariant,
-                      ),
-                      Text('$score', style: theme.textTheme.titleLarge),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
+    final loc = AppLocalizations.of(context);
+    if (loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (error != null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(loc.translate('compatibilityErrorTitle'),
+              style: theme.textTheme.titleMedium),
+          const SizedBox(height: 8),
+          Text(error!, style: theme.textTheme.bodyMedium),
+          const SizedBox(height: 12),
+          TextButton(onPressed: onRetry, child: Text(loc.translate('actionRetry'))),
+        ],
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text('$first • $second', style: theme.textTheme.titleMedium),
+        const SizedBox(height: 12),
+        if (summary != null && summary!.isNotEmpty)
+          Text(
+            summary!,
+            style: theme.textTheme.bodyLarge,
+            textAlign: TextAlign.center,
+          )
+        else
+          Text(
+            loc.translate('compatibilityEmpty'),
+            style: theme.textTheme.bodyMedium,
+          ),
+      ],
     );
   }
 }
 
 class _CompatibilityTab extends StatelessWidget {
   const _CompatibilityTab({
-    super.key,
     required this.label,
     required this.summary,
-    required this.score,
-    required this.advice,
+    required this.loading,
   });
 
   final String label;
   final String summary;
-  final int score;
-  final String advice;
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final loc = AppLocalizations.of(context);
-    return SingleChildScrollView(
+    return Padding(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: theme.textTheme.titleMedium),
-          const SizedBox(height: 8),
-          Text('${loc.translate('compatibilityScore')}: $score/100'),
-          const SizedBox(height: 12),
-          Text(summary, style: theme.textTheme.bodyMedium?.copyWith(height: 1.4)),
-          const SizedBox(height: 12),
-          Text('${loc.translate('compatibilityAdvice')}: $advice',
-              style: theme.textTheme.bodyMedium?.copyWith(height: 1.4)),
-        ],
-      ),
+      child: loading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: theme.textTheme.titleLarge),
+                const SizedBox(height: 12),
+                Text(summary, style: theme.textTheme.bodyLarge),
+              ],
+            ),
     );
   }
-}
-
-CompatibilityResult calculateCompatibilityResult(String firstId, String secondId) {
-  final firstTr = findZodiacById(firstId)?.labelFor('tr') ?? firstId;
-  final secondTr = findZodiacById(secondId)?.labelFor('tr') ?? secondId;
-  final report = AstroService.compatibility(firstTr, secondTr);
-  final baseScore = (report.score * 100).round().clamp(0, 100);
-
-  int derive(String key, int bias) {
-    final seed = key.hashCode ^ firstId.hashCode ^ (secondId.hashCode << 1);
-    final offset = (seed % 17) - 8;
-    return (baseScore + offset + bias).clamp(0, 100);
-  }
-
-  return CompatibilityResult(
-    love: derive('love', 6),
-    family: derive('family', 2),
-    career: derive('career', -4),
-  );
-}
-
-class CompatibilityResult {
-  const CompatibilityResult({
-    required this.love,
-    required this.family,
-    required this.career,
-  });
-
-  final int love;
-  final int family;
-  final int career;
-
-  int get overall => ((love + family + career) / 3).round();
-
-  String loveAdvice(AppLocalizations loc) => _adviceFor(loc, love);
-  String familyAdvice(AppLocalizations loc) => _adviceFor(loc, family);
-  String careerAdvice(AppLocalizations loc) => _adviceFor(loc, career);
-}
-
-String _adviceFor(AppLocalizations loc, int score) {
-  if (score >= 80) return loc.translate('adviceHigh');
-  if (score >= 60) return loc.translate('adviceBalanced');
-  if (score >= 40) return loc.translate('adviceFlux');
-  return loc.translate('adviceTransform');
 }
