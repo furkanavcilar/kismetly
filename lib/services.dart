@@ -96,6 +96,20 @@ class HoroscopeBundle {
   final String yearly;
 }
 
+class CompatibilityReport {
+  const CompatibilityReport({
+    required this.score,
+    required this.tone,
+    required this.summary,
+    required this.highlights,
+  });
+
+  final double score;
+  final String tone;
+  final String summary;
+  final List<String> highlights;
+}
+
 class PlanetInfo {
   const PlanetInfo({required this.name, required this.headline, required this.detail});
   final String name;
@@ -147,11 +161,28 @@ class AstroService {
     'Terazi','Akrep','Yay','Oğlak','Kova','Balık'
   ];
 
+  static const Map<String, String> _elements = {
+    'Koç': 'Ateş',
+    'Boğa': 'Toprak',
+    'İkizler': 'Hava',
+    'Yengeç': 'Su',
+    'Aslan': 'Ateş',
+    'Başak': 'Toprak',
+    'Terazi': 'Hava',
+    'Akrep': 'Su',
+    'Yay': 'Ateş',
+    'Oğlak': 'Toprak',
+    'Kova': 'Hava',
+    'Balık': 'Su',
+  };
+
   static const _signMap = {
     'Koç':'aries','Boğa':'taurus','İkizler':'gemini','Yengeç':'cancer',
     'Aslan':'leo','Başak':'virgo','Terazi':'libra','Akrep':'scorpio',
     'Yay':'sagittarius','Oğlak':'capricorn','Kova':'aquarius','Balık':'pisces',
   };
+
+  static List<String> get signs => List.unmodifiable(_signs);
 
   static String sunSign(DateTime d) {
     final m=d.month, day=d.day;
@@ -172,6 +203,77 @@ class AstroService {
   static String approxAscendant(TimeOfDay t) {
     final slot=((t.hour%24)/2).floor()%12;
     return _signs[slot];
+  }
+
+  static CompatibilityReport compatibility(String first, String second) {
+    final safeFirst = _signs.contains(first) ? first : _signs.first;
+    final safeSecond = _signs.contains(second) ? second : _signs.first;
+    final indexA = _signs.indexOf(safeFirst);
+    final indexB = _signs.indexOf(safeSecond);
+    final diff = (indexA - indexB).abs();
+    final wrappedDiff = diff > 6 ? 12 - diff : diff;
+    final orbitScore = 1 - (wrappedDiff / 6);
+
+    double elementSynergy(String elementA, String elementB) {
+      if (elementA == elementB) return 0.88;
+      const affinities = {
+        'Ateş': {'Hava': 0.78, 'Su': 0.52, 'Toprak': 0.58},
+        'Hava': {'Ateş': 0.78, 'Su': 0.55, 'Toprak': 0.60},
+        'Su': {'Toprak': 0.80, 'Ateş': 0.52, 'Hava': 0.55},
+        'Toprak': {'Su': 0.80, 'Ateş': 0.58, 'Hava': 0.60},
+      };
+      return affinities[elementA]?[elementB] ?? 0.6;
+    }
+
+    final elementA = _elements[safeFirst] ?? 'Element';
+    final elementB = _elements[safeSecond] ?? 'Element';
+    final synergy = elementSynergy(elementA, elementB);
+    final baseScore = ((synergy + orbitScore) / 2).clamp(0.0, 1.0);
+    final score = (baseScore + (elementA == elementB ? 0.08 : 0))
+        .clamp(0.0, 1.0);
+
+    String tone;
+    if (score >= 0.78) {
+      tone = 'Yüksek uyum';
+    } else if (score >= 0.62) {
+      tone = 'Dengeli bağ';
+    } else {
+      tone = 'Öğretici eşleşme';
+    }
+
+    final elementFocus = elementA == elementB
+        ? '$elementA elementinin ortak titreşimi'
+        : '$elementA & $elementB elementlerinin köprüsü';
+
+    final summary =
+        '$safeFirst ile $safeSecond arasındaki bağ $tone düzeyinde. '
+        'Element dengesi $elementFocus üzerinde yoğunlaşıyor.';
+
+    final List<String> highlights = [
+      if (score >= 0.75)
+        'Birlikte hareket etmek doğal geliyor; risk alırken bile birbirinizi destekliyorsunuz.'
+      else if (score >= 0.6)
+        'İletişimi açık tuttuğunuzda, farklı bakış açıları üretkenliğe dönüşüyor.'
+      else
+        'Ritminizi bulmak için net sınırlar ve düzenli check-in’ler belirleyin.',
+      if (elementA == elementB)
+        'Benzer motivasyonlar yaratıcı projeleri hızlandırıyor.'
+      else
+        'Zıt elementler, birbirinizin eksik hissettiği noktaları tamamlamanızı sağlıyor.',
+      if (orbitScore > 0.8)
+        'Gökyüzünde burçlar yan yana olduğu için duygusal tempo hızla uyumlanıyor.'
+      else if (orbitScore < 0.4)
+        'Burçlar uzak konumda; bu da uzun vadeli planlarda ekstra sabır gerektiriyor.'
+      else
+        'Orta seviyede astrolojik mesafe, ilişkide sağlıklı bir dinamizm yaratıyor.',
+    ];
+
+    return CompatibilityReport(
+      score: double.parse(score.toStringAsFixed(2)),
+      tone: tone,
+      summary: summary,
+      highlights: highlights,
+    );
   }
 
   static Future<String> fetchDailyQuote() async {
