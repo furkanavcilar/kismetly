@@ -5,6 +5,8 @@ class WeatherReport {
     required this.icon,
     required this.city,
     required this.lastUpdated,
+    this.narrative,
+    this.vibeTag,
   });
 
   final double temperature;
@@ -12,6 +14,8 @@ class WeatherReport {
   final String icon;
   final String city;
   final DateTime lastUpdated;
+  final String? narrative;
+  final String? vibeTag;
 
   Map<String, dynamic> toJson() {
     return {
@@ -20,6 +24,8 @@ class WeatherReport {
       'icon': icon,
       'city': city,
       'lastUpdated': lastUpdated.toIso8601String(),
+      if (narrative != null) 'narrative': narrative,
+      if (vibeTag != null) 'vibeTag': vibeTag,
     };
   }
 
@@ -31,6 +37,8 @@ class WeatherReport {
       city: json['city'] as String? ?? '',
       lastUpdated:
           DateTime.tryParse(json['lastUpdated'] as String? ?? '') ?? DateTime.now(),
+      narrative: json['narrative'] as String?,
+      vibeTag: json['vibeTag'] as String?,
     );
   }
 }

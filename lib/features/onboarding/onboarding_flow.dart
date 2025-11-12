@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart' as geo;
 
 import '../../core/localization/app_localizations.dart';
 import '../../data/zodiac_signs.dart';
 import '../../services.dart';
+import '../../models/weather_report.dart';
+import '../../services/weather_service.dart';
 import '../profile/user_profile.dart';
 
 class OnboardingFlow extends StatefulWidget {
@@ -25,9 +29,17 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   TimeOfDay? _birthTime;
   bool _submitting = false;
   String? _error;
+  Timer? _cityDebounce;
+  _ResolvedLocation? _resolvedLocation;
+  String? _resolvedQuery;
+  WeatherReport? _weatherPreview;
+  bool _weatherLoading = false;
+  String? _weatherError;
+  final WeatherService _weatherService = WeatherService();
 
   @override
   void dispose() {
+    _cityDebounce?.cancel();
     _nameController.dispose();
     _cityController.dispose();
     _genderController.dispose();
@@ -35,6 +47,103 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   }
 
   void _begin() => setState(() => _step = 1);
+
+  void _scheduleWeatherLookup(String value) {
+    _cityDebounce?.cancel();
+    final trimmed = value.trim();
+    if (trimmed.length < 2) {
+      setState(() {
+        _weatherPreview = null;
+        _weatherError = null;
+        _weatherLoading = false;
+        _resolvedLocation = null;
+        _resolvedQuery = null;
+      });
+      return;
+    }
+
+    _cityDebounce = Timer(const Duration(milliseconds: 650), () async {
+      final location = await _resolveCity(trimmed);
+      if (!mounted) return;
+      if (location == null) {
+        setState(() {
+          _weatherLoading = false;
+          _weatherPreview = null;
+          _weatherError = AppLocalizations.of(context).translate('onboardingCityError');
+          _resolvedLocation = null;
+          _resolvedQuery = null;
+        });
+        return;
+      }
+
+      setState(() {
+        _resolvedLocation = location;
+        _resolvedQuery = trimmed.toLowerCase();
+      });
+      await _loadWeatherPreview(location);
+    });
+  }
+
+  Future<void> _loadWeatherPreview(_ResolvedLocation location) async {
+    if (!mounted) return;
+    setState(() {
+      _weatherLoading = true;
+      _weatherError = null;
+    });
+    final locale = Localizations.localeOf(context);
+    try {
+      final report = await _weatherService.fetchWeather(
+        city: location.city ?? _cityController.text.trim(),
+        latitude: location.latitude,
+        longitude: location.longitude,
+        localeCode: locale.languageCode,
+      );
+      if (!mounted) return;
+      setState(() {
+        _weatherPreview = report;
+        _weatherLoading = false;
+        _weatherError =
+            report == null ? _localizedWeatherUnavailable(locale.languageCode) : null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _weatherLoading = false;
+        _weatherError = e.toString();
+      });
+    }
+  }
+
+  Future<void> _refreshWeather() async {
+    final location = _resolvedLocation;
+    if (location == null) return;
+    await _loadWeatherPreview(location);
+  }
+
+  String _localizedWeatherUnavailable(String languageCode) {
+    return languageCode == 'tr'
+        ? 'Hava verisi şu an alınamadı. Birkaç dakika sonra tekrar dene.'
+        : 'Weather insight is taking a pause. Try again in a moment.';
+  }
+
+  String _contextualSalutation(Locale locale) {
+    final greeting = _timeGreeting(locale);
+    return locale.languageCode == 'tr'
+        ? '$greeting • yolculuğuna kozmik bir dokunuş kat.'
+        : '$greeting • let’s tune your cosmic path.';
+  }
+
+  String _timeGreeting(Locale locale) {
+    final hour = DateTime.now().hour;
+    if (locale.languageCode == 'tr') {
+      if (hour < 12) return 'Günaydın';
+      if (hour < 18) return 'İyi akşamüstü';
+      return 'İyi akşamlar';
+    }
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
+  }
 
   Future<void> _pickDate() async {
     final now = DateTime.now();
@@ -72,13 +181,31 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     });
 
     try {
-      final location = await _resolveCity(_cityController.text.trim());
+      final cityInput = _cityController.text.trim();
+      final normalized = cityInput.toLowerCase();
+      var location = _resolvedLocation;
+      final needsLookup =
+          location == null || _resolvedQuery == null || _resolvedQuery != normalized;
+      if (needsLookup) {
+        location = await _resolveCity(cityInput);
+      }
       if (location == null) {
         setState(() {
           _submitting = false;
           _error = loc.translate('onboardingCityError');
         });
         return;
+      }
+      final shouldFetchWeather =
+          _weatherPreview == null || _resolvedQuery == null || _resolvedQuery != normalized;
+      if (needsLookup && mounted) {
+        setState(() {
+          _resolvedLocation = location;
+          _resolvedQuery = normalized;
+        });
+      }
+      if (shouldFetchWeather) {
+        await _loadWeatherPreview(location);
       }
       final birthDateTime = DateTime(
         _birthDate!.year,
@@ -116,9 +243,14 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   }
 
   Future<_ResolvedLocation?> _resolveCity(String input) async {
-    if (input.isEmpty) return null;
+    final trimmed = input.trim();
+    if (trimmed.isEmpty) return null;
+    final normalized = trimmed.toLowerCase();
+    if (_resolvedLocation != null && _resolvedQuery == normalized) {
+      return _resolvedLocation;
+    }
     try {
-      final results = await geo.locationFromAddress(input);
+      final results = await geo.locationFromAddress(trimmed);
       if (results.isEmpty) return null;
       final loc = results.first;
       String? city;
@@ -162,6 +294,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final locale = Localizations.localeOf(context);
     if (_step == 0) {
       return Scaffold(
         body: Padding(
@@ -170,7 +303,15 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(loc.translate('onboardingGreeting'), style: theme.textTheme.displayMedium),
+              Text(
+                loc.translate('onboardingGreeting'),
+                style: theme.textTheme.displayMedium,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                _contextualSalutation(locale),
+                style: theme.textTheme.titleMedium,
+              ),
               const SizedBox(height: 24),
               Text(loc.translate('onboardingIntro'), style: theme.textTheme.bodyLarge),
               const SizedBox(height: 48),
@@ -243,6 +384,14 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                 validator: (value) => value == null || value.trim().isEmpty
                     ? loc.translate('onboardingCityError')
                     : null,
+                onChanged: _scheduleWeatherLookup,
+              ),
+              const SizedBox(height: 12),
+              _WeatherPeek(
+                loading: _weatherLoading,
+                error: _weatherError,
+                report: _weatherPreview,
+                onRetry: _refreshWeather,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -288,6 +437,131 @@ class _ResolvedLocation {
   final double latitude;
   final double longitude;
   final String? city;
+}
+
+class _WeatherPeek extends StatelessWidget {
+  const _WeatherPeek({
+    required this.loading,
+    required this.error,
+    required this.report,
+    required this.onRetry,
+  });
+
+  final bool loading;
+  final String? error;
+  final WeatherReport? report;
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!loading && error == null && report == null) {
+      return const SizedBox.shrink();
+    }
+    final theme = Theme.of(context);
+    final loc = AppLocalizations.of(context);
+
+    Widget content;
+    String keyLabel;
+    if (loading) {
+      content = Row(
+        children: [
+          const SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              loc.translate('loading'),
+              style: theme.textTheme.bodyMedium,
+            ),
+          ),
+        ],
+      );
+      keyLabel = 'loading';
+    } else if (error != null) {
+      content = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            loc.translate('homeWeatherErrorTitle'),
+            style: theme.textTheme.titleSmall,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            error!,
+            style: theme.textTheme.bodySmall,
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () => onRetry(),
+              child: Text(loc.translate('actionRetry')),
+            ),
+          ),
+        ],
+      );
+      keyLabel = 'error';
+    } else {
+      final narrative = report!.narrative;
+      final vibe = report!.vibeTag;
+      content = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(report!.icon, style: const TextStyle(fontSize: 28)),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${report!.temperature.toStringAsFixed(0)}°',
+                    style: theme.textTheme.titleMedium,
+                  ),
+                  Text(report!.condition, style: theme.textTheme.bodyMedium),
+                  Text(report!.city, style: theme.textTheme.bodySmall),
+                ],
+              ),
+            ],
+          ),
+          if (vibe != null && vibe.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              vibe,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.primary,
+              ),
+            ),
+          ],
+          if (narrative != null && narrative.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              narrative,
+              style: theme.textTheme.bodySmall,
+            ),
+          ],
+        ],
+      );
+      keyLabel = 'content';
+    }
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 250),
+      child: Container(
+        key: ValueKey(keyLabel),
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: theme.dividerColor.withOpacity(0.4)),
+        ),
+        child: content,
+      ),
+    );
+  }
 }
 
 class _OutlineCard extends StatelessWidget {

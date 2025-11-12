@@ -46,10 +46,10 @@ class _ZodiacCompatibilityScreenState extends State<ZodiacCompatibilityScreen>
       _firstSign = _secondSign;
       _secondSign = temp;
     });
-    _load();
+    _load(forceRefresh: true);
   }
 
-  Future<void> _load() async {
+  Future<void> _load({bool forceRefresh = false}) async {
     final locale = LocaleScope.of(context).locale;
     setState(() {
       _loading = true;
@@ -65,6 +65,7 @@ class _ZodiacCompatibilityScreenState extends State<ZodiacCompatibilityScreen>
         firstSign: label(_firstSign),
         secondSign: label(_secondSign),
         locale: locale,
+        forceRefresh: forceRefresh,
       );
       if (!mounted) return;
       setState(() {
@@ -96,6 +97,11 @@ class _ZodiacCompatibilityScreenState extends State<ZodiacCompatibilityScreen>
         title: Text(loc.translate('compatibilityTitle')),
         actions: [
           IconButton(icon: const Icon(Icons.swap_horiz), onPressed: _swap),
+          IconButton(
+            icon: const Icon(Icons.auto_awesome),
+            tooltip: locale.languageCode == 'tr' ? 'Yeni yorum' : 'New reading',
+            onPressed: () => _load(forceRefresh: true),
+          ),
         ],
         bottom: TabBar(
           controller: _tabController,
@@ -119,7 +125,7 @@ class _ZodiacCompatibilityScreenState extends State<ZodiacCompatibilityScreen>
                   _firstSign = a;
                   _secondSign = b;
                 });
-                _load();
+                _load(forceRefresh: true);
               },
             ),
           ),
@@ -249,7 +255,10 @@ class _InsightSummary extends StatelessWidget {
     final theme = Theme.of(context);
     final loc = AppLocalizations.of(context);
     if (loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Padding(
+        padding: EdgeInsets.all(24),
+        child: CircularProgressIndicator(),
+      );
     }
     if (error != null) {
       return Column(
@@ -267,19 +276,30 @@ class _InsightSummary extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text('$first • $second', style: theme.textTheme.titleMedium),
+        Wrap(
+          spacing: 8,
+          alignment: WrapAlignment.center,
+          children: [
+            Chip(label: Text(first)),
+            Chip(label: Text(second)),
+          ],
+        ),
         const SizedBox(height: 12),
-        if (summary != null && summary!.isNotEmpty)
-          Text(
-            summary!,
-            style: theme.textTheme.bodyLarge,
-            textAlign: TextAlign.center,
-          )
-        else
-          Text(
-            loc.translate('compatibilityEmpty'),
-            style: theme.textTheme.bodyMedium,
-          ),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          child: summary != null && summary!.isNotEmpty
+              ? Text(
+                  summary!,
+                  key: ValueKey(summary),
+                  style: theme.textTheme.bodyLarge,
+                  textAlign: TextAlign.center,
+                )
+              : Text(
+                  loc.translate('compatibilityEmpty'),
+                  key: const ValueKey('empty'),
+                  style: theme.textTheme.bodyMedium,
+                ),
+        ),
       ],
     );
   }
@@ -299,6 +319,7 @@ class _CompatibilityTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.all(16),
       child: loading
@@ -308,7 +329,20 @@ class _CompatibilityTab extends StatelessWidget {
               children: [
                 Text(label, style: theme.textTheme.titleLarge),
                 const SizedBox(height: 12),
-                Text(summary, style: theme.textTheme.bodyLarge),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 250),
+                  child: summary.trim().isNotEmpty
+                      ? Text(
+                          summary,
+                          key: ValueKey(summary),
+                          style: theme.textTheme.bodyLarge,
+                        )
+                      : Text(
+                          loc.translate('compatibilityEmpty'),
+                          key: const ValueKey('tab-empty'),
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                ),
               ],
             ),
     );
