@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/localization/app_localizations.dart';
 import '../core/localization/locale_provider.dart';
-import '../core/utils/locale_collator.dart';
-import '../data/horoscope_insights_en.dart';
-import '../data/horoscope_insights_tr.dart';
 import '../data/zodiac_signs.dart';
-import '../features/coffee/coffee_reading_screen.dart';
-import '../features/dreams/dream_interpreter_screen.dart';
-import '../services.dart';
-import 'horoscope_detail.dart';
+import '../features/profile/user_profile_controller.dart';
+import '../features/profile/user_profile_scope.dart';
+import '../models/daily_ai_insights.dart';
+import '../models/weather_report.dart';
+import '../services/ai_content_service.dart';
+import '../services/weather_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -28,250 +26,552 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  static const _sunKey = 'sun_sign';
-  static const _risingKey = 'rising_sign';
-
-  String? _sunSignId;
-  String? _risingSignId;
+  final _aiService = AiContentService();
+  final _weatherService = WeatherService();
+  DailyAiInsights? _insights;
+  WeatherReport? _weather;
   bool _loading = true;
-  String? _matchLeft;
-  String? _matchRight;
-  HoroscopeBundle? _horoscope;
-  bool _loadingHoroscope = false;
-  String? _horoscopeError;
-  int _selectedHoroscopeIndex = 0;
-  String? _quote;
-  bool _loadingQuote = false;
-  String? _quoteError;
+  bool _weatherLoading = false;
+  String? _error;
+  String? _weatherError;
+  late UserProfileController _profileController;
+  bool _initialized = false;
 
   @override
-  void initState() {
-    super.initState();
-    _loadSigns();
-    _loadQuote();
-  }
-
-  Future<void> _loadSigns() async {
-    if (mounted) setState(() => _loading = true);
-    final prefs = await SharedPreferences.getInstance();
-    if (!mounted) return;
-    final sun = prefs.getString(_sunKey);
-    final rising = prefs.getString(_risingKey);
-    setState(() {
-      _sunSignId = sun;
-      _risingSignId = rising;
-      _matchLeft = sun ?? zodiacSigns.first.id;
-      _matchRight = rising ?? zodiacSigns.last.id;
-      _loading = false;
-    });
-    if (sun != null) {
-      _fetchHoroscopeFor(sun);
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      _profileController = UserProfileScope.of(context);
+      _profileController.addListener(_onProfileChanged);
+      _loadAll();
+      _initialized = true;
     }
   }
 
-  Future<void> _updateSun(String? id) async {
-    if (id == null) return;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_sunKey, id);
-    setState(() {
-      _sunSignId = id;
-      _matchLeft = id;
-      _selectedHoroscopeIndex = 0;
-    });
-    _fetchHoroscopeFor(id);
+  @override
+  void dispose() {
+    if (_initialized) {
+      _profileController.removeListener(_onProfileChanged);
+    }
+    super.dispose();
   }
 
-  Future<void> _updateRising(String? id) async {
-    if (id == null) return;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_risingKey, id);
-    setState(() {
-      _risingSignId = id;
-      _matchRight = id;
-    });
+  void _onProfileChanged() {
+    _loadAll();
   }
 
-  Future<void> _loadQuote() async {
+  Future<void> _loadAll() async {
+    final profile = _profileController.profile;
+    if (profile == null) return;
+    final locale = LocaleScope.of(context).locale;
     setState(() {
-      _loadingQuote = true;
-      _quoteError = null;
+      _loading = true;
+      _error = null;
     });
+    String describe(String? id) {
+      if (id == null) return profile.name;
+      final sign = findZodiacById(id);
+      return sign.labelFor(locale.languageCode);
+    }
     try {
-      final value = await AstroService.fetchDailyQuote();
+      final insights = await _aiService.fetchDailyInsights(
+        sunSign: describe(profile.sunSign),
+        risingSign: describe(profile.risingSign),
+        locale: locale,
+      );
       if (!mounted) return;
       setState(() {
-        _quote = value;
-        _loadingQuote = false;
+        _insights = insights;
+        _loading = false;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _loadingQuote = false;
-        _quoteError = e.toString();
+        _loading = false;
+        _error = e.toString();
       });
     }
+    await _loadWeather();
   }
 
-  Future<void> _fetchHoroscopeFor(String sunId) async {
+  Future<void> _loadWeather() async {
+    final profile = _profileController.profile;
+    if (profile == null) return;
+    final locale = LocaleScope.of(context).locale;
     setState(() {
-      _loadingHoroscope = true;
-      _horoscopeError = null;
+      _weatherLoading = true;
+      _weatherError = null;
     });
-    final turkishLabel = findZodiacById(sunId)?.labelFor('tr') ?? sunId;
     try {
-      final bundle = await AstroService.fetchHoroscopeBundle(turkishLabel);
+      final report = await _weatherService.fetchWeather(
+        city: profile.birthCity,
+        latitude: profile.birthLatitude,
+        longitude: profile.birthLongitude,
+        localeCode: locale.languageCode,
+      );
       if (!mounted) return;
       setState(() {
-        _horoscope = bundle;
-        _loadingHoroscope = false;
-        _selectedHoroscopeIndex = 0;
+        _weather = report;
+        _weatherLoading = false;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _loadingHoroscope = false;
-        _horoscopeError = e.toString();
+        _weatherLoading = false;
+        _weatherError = e.toString();
       });
     }
-  }
-
-  double _focusValue(String key, double offset) {
-    final seed = '${_sunSignId ?? 'sun'}-${_risingSignId ?? 'rise'}-$key'.hashCode;
-    final normalized = ((seed & 0x7fffffff) % 51) / 100;
-    final base = 0.35 + normalized + offset;
-    return base.clamp(0.35, 0.95);
-  }
-
-  List<_EnergyFocusData> _energyFocuses(AppLocalizations loc) {
-    return [
-      _EnergyFocusData(label: loc.translate('homeEnergyFocusLove'), strength: _focusValue('love', 0.12), icon: Icons.favorite_outline),
-      _EnergyFocusData(label: loc.translate('homeEnergyFocusCareer'), strength: _focusValue('career', 0.06), icon: Icons.work_outline),
-      _EnergyFocusData(label: loc.translate('homeEnergyFocusSpirit'), strength: _focusValue('spirit', 0.1), icon: Icons.self_improvement),
-      _EnergyFocusData(label: loc.translate('homeEnergyFocusSocial'), strength: _focusValue('social', 0.04), icon: Icons.groups_2),
-    ];
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final loc = AppLocalizations.of(context);
+    final profile = _profileController.profile;
+
+    if (profile == null) {
+      return const SizedBox();
+    }
+
     final locale = LocaleScope.of(context).locale;
-    final language = locale.languageCode;
-    final collator = const LocaleCollator();
-    final sortedSigns = [...zodiacSigns]..sort((a, b) => collator.compare(a.labelFor(language), b.labelFor(language), locale));
     final now = DateTime.now();
+    final dateFormatter = DateFormat.yMMMMEEEEd(locale.toLanguageTag());
+    final timeFormatter = DateFormat.Hm(locale.toLanguageTag());
+    final greeting = _greetingFor(now, locale.languageCode, profile.name);
+    final sun = profile.sunSign != null
+        ? findZodiacById(profile.sunSign!)?.labelFor(locale.languageCode)
+        : profile.sunSign;
+    final rising = profile.risingSign != null
+        ? findZodiacById(profile.risingSign!)?.labelFor(locale.languageCode)
+        : profile.risingSign;
 
     return Scaffold(
+      backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
+        title: Text(loc.translate('homeTitle')),
         leading: IconButton(icon: const Icon(Icons.menu), onPressed: widget.onMenuTap),
-        title: Text(loc.translate('menuHome')),
         actions: [
-          IconButton(icon: const Icon(Icons.favorite_outline), onPressed: widget.onOpenCompatibility),
+          IconButton(
+            icon: const Icon(Icons.favorite_outline),
+            onPressed: widget.onOpenCompatibility,
+          ),
         ],
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: () async {
-                await _loadSigns();
-                await _loadQuote();
-              },
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  if (_loadingQuote)
-                    const _LoaderLine()
-                  else if (_quoteError != null)
-                    _ErrLine(message: loc.translate('homeQuoteError'), onRetry: _loadQuote)
-                  else
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      child: Text(
-                        _quote ?? loc.translate('homeQuoteEmpty'),
-                        key: ValueKey(_quote),
-                        style: theme.textTheme.bodyLarge,
-                      ),
-                    ),
-                  const SizedBox(height: 16),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: _energyFocuses(loc).map((e) => _EnergyFocus(data: e)).toList(),
-                  ),
-                ],
-              ),
+      body: RefreshIndicator(
+        onRefresh: _loadAll,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+          children: [
+            _GreetingHeader(
+              greeting: greeting,
+              date: dateFormatter.format(now),
+              time: timeFormatter.format(now),
             ),
+            const SizedBox(height: 18),
+            _WeatherCard(
+              loading: _weatherLoading,
+              error: _weatherError,
+              report: _weather,
+              onRetry: _loadWeather,
+              loc: loc,
+            ),
+            const SizedBox(height: 18),
+            _DailyZodiacCard(
+              loading: _loading,
+              error: _error,
+              insights: _insights,
+              sun: sun,
+              rising: rising,
+              onRetry: _loadAll,
+            ),
+            const SizedBox(height: 18),
+            _EnergyFocusRow(
+              insights: _insights,
+              loading: _loading,
+              locale: locale.languageCode,
+            ),
+            const SizedBox(height: 18),
+            _CosmicGuideCard(
+              insights: _insights,
+              loading: _loading,
+              loc: loc,
+            ),
+          ],
+        ),
+      ),
     );
+  }
+
+  String _greetingFor(DateTime now, String language, String name) {
+    final hour = now.hour;
+    if (language == 'tr') {
+      if (hour < 12) return 'Günaydın, $name 🌞';
+      if (hour < 18) return 'İyi akşamüstü, $name ✨';
+      return 'İyi geceler, $name 🌙';
+    }
+    if (hour < 12) return 'Good morning, $name 🌞';
+    if (hour < 18) return 'Good afternoon, $name ✨';
+    return 'Good evening, $name 🌙';
   }
 }
 
-class _EnergyFocusData {
-  final String label;
-  final double strength;
-  final IconData icon;
-  const _EnergyFocusData({required this.label, required this.strength, required this.icon});
-}
+class _GreetingHeader extends StatelessWidget {
+  const _GreetingHeader({
+    required this.greeting,
+    required this.date,
+    required this.time,
+  });
 
-class _EnergyFocus extends StatelessWidget {
-  final _EnergyFocusData data;
-  const _EnergyFocus({required this.data, super.key});
+  final String greeting;
+  final String date;
+  final String time;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1E1E28), Color(0xFF101018)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(data.icon, color: theme.colorScheme.primary),
-          const SizedBox(height: 8),
-          Text(data.label, style: theme.textTheme.titleSmall),
-          const SizedBox(height: 8),
-          LinearProgressIndicator(value: data.strength, minHeight: 6),
-          const SizedBox(height: 8),
-          Text('${(data.strength * 100).round()}%', style: theme.textTheme.bodySmall),
+          Text(greeting, style: theme.textTheme.displayMedium),
+          const SizedBox(height: 12),
+          Text(date, style: theme.textTheme.bodyMedium),
+          const SizedBox(height: 4),
+          Text(time, style: theme.textTheme.bodyMedium),
         ],
       ),
     );
   }
 }
 
-class _LoaderLine extends StatelessWidget {
-  const _LoaderLine({super.key});
+class _WeatherCard extends StatelessWidget {
+  const _WeatherCard({
+    required this.loading,
+    required this.error,
+    required this.report,
+    required this.onRetry,
+    required this.loc,
+  });
 
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(999),
-      child: LinearProgressIndicator(minHeight: 6),
-    );
-  }
-}
-
-class _ErrLine extends StatelessWidget {
-  final String message;
-  final VoidCallback? onRetry;
-  const _ErrLine({super.key, required this.message, this.onRetry});
+  final bool loading;
+  final String? error;
+  final WeatherReport? report;
+  final Future<void> Function() onRetry;
+  final AppLocalizations loc;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Row(
-      children: [
-        Icon(Icons.error_outline, color: theme.colorScheme.error),
-        const SizedBox(width: 8),
-        Expanded(child: Text(message, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.error))),
-        if (onRetry != null)
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: onRetry,
+    if (loading) {
+      return _BlurCard(
+        child: Row(
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                loc.translate('loading'),
+                style: theme.textTheme.bodyMedium,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    if (error != null) {
+      return _BlurCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              loc.translate('homeWeatherErrorTitle'),
+              style: theme.textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            Text(error!, style: theme.textTheme.bodyMedium),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: onRetry,
+              child: Text(loc.translate('actionRetry')),
+            ),
+          ],
+        ),
+      );
+    }
+    if (report == null) {
+      return const SizedBox.shrink();
+    }
+    return _BlurCard(
+      child: Row(
+        children: [
+          Text(
+            report.icon,
+            style: const TextStyle(fontSize: 36),
           ),
-      ],
+          const SizedBox(width: 18),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${report.temperature.toStringAsFixed(0)}°',
+                  style: theme.textTheme.titleLarge,
+                ),
+                Text(report.condition, style: theme.textTheme.bodyMedium),
+                Text(report.city, style: theme.textTheme.bodySmall),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DailyZodiacCard extends StatelessWidget {
+  const _DailyZodiacCard({
+    required this.loading,
+    required this.error,
+    required this.insights,
+    required this.sun,
+    required this.rising,
+    required this.onRetry,
+  });
+
+  final bool loading;
+  final String? error;
+  final DailyAiInsights? insights;
+  final String? sun;
+  final String? rising;
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return _BlurCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.auto_awesome, color: theme.colorScheme.primary),
+              const SizedBox(width: 8),
+              Text(loc.translate('homeDailyZodiac'),
+                  style: theme.textTheme.titleMedium),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (sun != null)
+            Text(
+              loc.translate('homeSunRising', params: {
+                'sun': sun,
+                'rising': rising ?? '—',
+              }),
+              style: theme.textTheme.bodyMedium,
+            ),
+          const SizedBox(height: 12),
+          if (loading)
+            const LinearProgressIndicator(minHeight: 3)
+          else if (error != null)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(loc.translate('homeInsightError'),
+                    style: theme.textTheme.bodyMedium),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: onRetry,
+                  child: Text(loc.translate('actionRetry')),
+                ),
+              ],
+            )
+          else if (insights != null)
+            Text(
+              insights!.summary,
+              style: theme.textTheme.bodyLarge,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EnergyFocusRow extends StatelessWidget {
+  const _EnergyFocusRow({
+    required this.insights,
+    required this.loading,
+    required this.locale,
+  });
+
+  final DailyAiInsights? insights;
+  final bool loading;
+  final String locale;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final loc = AppLocalizations.of(context);
+    final focusLabels = {
+      'love': loc.translate('homeEnergyLove'),
+      'career': loc.translate('homeEnergyCareer'),
+      'spiritual': loc.translate('homeEnergySpiritual'),
+      'social': loc.translate('homeEnergySocial'),
+    };
+    final items = focusLabels.keys.toList();
+    return _BlurCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(loc.translate('homeEnergyFocusTitle'),
+              style: theme.textTheme.titleMedium),
+          const SizedBox(height: 12),
+          if (loading)
+            const LinearProgressIndicator(minHeight: 3)
+          else if (insights == null)
+            Text(loc.translate('homeInsightEmpty'),
+                style: theme.textTheme.bodyMedium)
+          else
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                for (final key in items)
+                  _EnergyChip(
+                    label: focusLabels[key]!,
+                    value: insights!.energyFocus[key] ?? '',
+                    detail: insights!.sections[key] ?? '',
+                  ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EnergyChip extends StatelessWidget {
+  const _EnergyChip({
+    required this.label,
+    required this.value,
+    required this.detail,
+  });
+
+  final String label;
+  final String value;
+  final String detail;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return GestureDetector(
+      onTap: () => _showDetail(context),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: theme.dividerColor),
+        ),
+        constraints: const BoxConstraints(minWidth: 120),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: theme.textTheme.labelLarge),
+            const SizedBox(height: 8),
+            Text(value, style: theme.textTheme.bodyMedium),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDetail(BuildContext context) {
+    final theme = Theme.of(context);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: theme.colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: theme.textTheme.titleMedium),
+              const SizedBox(height: 12),
+              Text(detail, style: theme.textTheme.bodyLarge),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _CosmicGuideCard extends StatelessWidget {
+  const _CosmicGuideCard({
+    required this.insights,
+    required this.loading,
+    required this.loc,
+  });
+
+  final DailyAiInsights? insights;
+  final bool loading;
+  final AppLocalizations loc;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return _BlurCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(loc.translate('homeCosmicGuideTitle'),
+              style: theme.textTheme.titleMedium),
+          const SizedBox(height: 12),
+          if (loading)
+            const LinearProgressIndicator(minHeight: 3)
+          else if (insights == null)
+            Text(loc.translate('homeInsightEmpty'),
+                style: theme.textTheme.bodyMedium)
+          else
+            Text(insights!.cosmicGuide, style: theme.textTheme.bodyLarge),
+        ],
+      ),
+    );
+  }
+}
+
+class _BlurCard extends StatelessWidget {
+  const _BlurCard({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        color: theme.colorScheme.surface.withOpacity(0.72),
+        border: Border.all(color: theme.dividerColor.withOpacity(0.3)),
+      ),
+      child: child,
     );
   }
 }
