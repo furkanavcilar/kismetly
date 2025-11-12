@@ -1,195 +1,156 @@
 import 'package:flutter/material.dart';
 
-import '../services.dart';
+import '../core/localization/app_localizations.dart';
+import '../core/localization/locale_provider.dart';
+import '../core/utils/locale_collator.dart';
+import '../data/zodiac_signs.dart';
 
 class ZodiacCompatibilityScreen extends StatefulWidget {
-  const ZodiacCompatibilityScreen({
-    super.key,
-    required this.onMenuTap,
-  });
+  const ZodiacCompatibilityScreen({super.key, required this.onMenuTap});
 
   final VoidCallback onMenuTap;
 
   @override
-  State<ZodiacCompatibilityScreen> createState() =>
-      _ZodiacCompatibilityScreenState();
+  State<ZodiacCompatibilityScreen> createState() => _ZodiacCompatibilityScreenState();
 }
 
-class _ZodiacCompatibilityScreenState extends State<ZodiacCompatibilityScreen> {
-  late final List<String> _signs = AstroService.signs;
-  late String _firstSign = _signs.first;
-  late String _secondSign = _signs[5];
-  late CompatibilityReport _report =
-      AstroService.compatibility(_firstSign, _secondSign);
+class _ZodiacCompatibilityScreenState extends State<ZodiacCompatibilityScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  late String _firstSign;
+  late String _secondSign;
 
-  void _updateReport(String first, String second) {
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _firstSign = zodiacSigns.first.id;
+    _secondSign = zodiacSigns.last.id;
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  void _swap() {
     setState(() {
-      _firstSign = first;
-      _secondSign = second;
-      _report = AstroService.compatibility(first, second);
+      final temp = _firstSign;
+      _firstSign = _secondSign;
+      _secondSign = temp;
     });
   }
 
-  void _swapSigns() => _updateReport(_secondSign, _firstSign);
-
   @override
   Widget build(BuildContext context) {
-    final th = Theme.of(context).textTheme;
-    return SafeArea(
-      child: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.black, Color(0xFF111111)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: widget.onMenuTap,
-                    icon: const Icon(Icons.menu, color: Colors.white),
-                    tooltip: 'Menü',
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Zodyak Uyumu', style: th.titleLarge),
-                        Text(
-                          'Aşk, arkadaşlık ve ekip enerjilerini keşfet',
-                          style:
-                              th.bodySmall?.copyWith(color: Colors.white70),
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: _swapSigns,
-                    tooltip: 'Burçları değiştir',
-                    icon: const Icon(Icons.swap_horiz, color: Colors.white70),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _ScoreCard(report: _report, first: _firstSign, second: _secondSign),
-                    const SizedBox(height: 20),
-                    _SignSelector(
-                      signs: _signs,
-                      first: _firstSign,
-                      second: _secondSign,
-                      onChanged: _updateReport,
-                    ),
-                    const SizedBox(height: 24),
-                    _AstroGames(
-                      onSelect: (a, b) => _updateReport(a, b),
-                    ),
-                    const SizedBox(height: 24),
-                    _InsightPanel(report: _report),
-                  ],
-                ),
-              ),
-            ),
+    final loc = AppLocalizations.of(context);
+    final locale = LocaleScope.of(context).locale;
+    final language = locale.languageCode;
+    final collator = const LocaleCollator();
+    final sorted = [...zodiacSigns]
+      ..sort((a, b) => collator.compare(a.labelFor(language), b.labelFor(language), locale));
+    final result = CompatibilityEngine.calculate(_firstSign, _secondSign);
+    final firstLabel = findZodiacById(_firstSign)?.labelFor(language) ?? _firstSign;
+    final secondLabel = findZodiacById(_secondSign)?.labelFor(language) ?? _secondSign;
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(icon: const Icon(Icons.menu), onPressed: widget.onMenuTap),
+        title: Text(loc.translate('compatibilityTitle')),
+        actions: [
+          IconButton(icon: const Icon(Icons.swap_horiz), onPressed: _swap),
+        ],
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: [
+            Tab(text: loc.translate('compatibilityLove')),
+            Tab(text: loc.translate('compatibilityFamily')),
+            Tab(text: loc.translate('compatibilityCareer')),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _ScoreCard extends StatelessWidget {
-  const _ScoreCard({
-    required this.report,
-    required this.first,
-    required this.second,
-  });
-
-  final CompatibilityReport report;
-  final String first;
-  final String second;
-
-  @override
-  Widget build(BuildContext context) {
-    final th = Theme.of(context).textTheme;
-    final percent = (report.score * 100).round();
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white12),
-        color: Colors.white.withOpacity(0.04),
-      ),
-      child: Row(
+      body: Column(
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('$first × $second', style: th.titleMedium),
-                const SizedBox(height: 6),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
-                  child: Text(
-                    report.tone,
-                    key: ValueKey(report.tone),
-                    style: th.bodyMedium?.copyWith(color: Colors.white70),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  child: Text(
-                    report.summary,
-                    key: ValueKey(report.summary),
-                    style: th.bodySmall?.copyWith(color: Colors.white60),
-                  ),
-                ),
-              ],
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: _SignSelector(
+              signs: sorted,
+              first: _firstSign,
+              second: _secondSign,
+              onChanged: (a, b) => setState(() {
+                _firstSign = a;
+                _secondSign = b;
+              }),
             ),
           ),
-          const SizedBox(width: 18),
-          SizedBox(
-            height: 94,
-            width: 94,
-            child: TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: report.score),
-              duration: const Duration(milliseconds: 400),
-              curve: Curves.easeOut,
-              builder: (context, value, _) {
-                return Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    SizedBox.expand(
-                      child: CircularProgressIndicator(
-                        value: value,
-                        strokeWidth: 6,
-                        color: Colors.amberAccent,
-                        backgroundColor: Colors.white12,
-                      ),
-                    ),
-                    Text('$percent%', style: th.titleLarge),
-                  ],
-                );
-              },
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _ScoreRing(
+              score: result.overall,
+              first: firstLabel,
+              second: secondLabel,
+            ),
+          ),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _CompatibilityTab(
+                  label: loc.translate('compatibilityLove'),
+                  summary: loc.translate('compatibilityLoveTemplate', params: {
+                    'first': firstLabel,
+                    'second': secondLabel,
+                    'tone': _toneForScore(loc, result.love),
+                  }),
+                  score: result.love,
+                  advice: loc.translate('compatibilityAdviceTemplate', params: {
+                    'first': firstLabel,
+                    'second': secondLabel,
+                    'advice': result.loveAdvice(loc),
+                  }),
+                ),
+                _CompatibilityTab(
+                  label: loc.translate('compatibilityFamily'),
+                  summary: loc.translate('compatibilityFamilyTemplate', params: {
+                    'first': firstLabel,
+                    'second': secondLabel,
+                    'tone': _toneForScore(loc, result.family),
+                  }),
+                  score: result.family,
+                  advice: loc.translate('compatibilityAdviceTemplate', params: {
+                    'first': firstLabel,
+                    'second': secondLabel,
+                    'advice': result.familyAdvice(loc),
+                  }),
+                ),
+                _CompatibilityTab(
+                  label: loc.translate('compatibilityCareer'),
+                  summary: loc.translate('compatibilityCareerTemplate', params: {
+                    'first': firstLabel,
+                    'second': secondLabel,
+                    'tone': _toneForScore(loc, result.career),
+                  }),
+                  score: result.career,
+                  advice: loc.translate('compatibilityAdviceTemplate', params: {
+                    'first': firstLabel,
+                    'second': secondLabel,
+                    'advice': result.careerAdvice(loc),
+                  }),
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
   }
+}
+
+String _toneForScore(AppLocalizations loc, int score) {
+  if (score >= 80) return loc.translate('toneHigh');
+  if (score >= 60) return loc.translate('toneBalanced');
+  if (score >= 40) return loc.translate('toneFlux');
+  return loc.translate('toneTransform');
 }
 
 class _SignSelector extends StatelessWidget {
@@ -200,82 +161,55 @@ class _SignSelector extends StatelessWidget {
     required this.onChanged,
   });
 
-  final List<String> signs;
+  final List<ZodiacSign> signs;
   final String first;
   final String second;
-  final void Function(String, String) onChanged;
+  final void Function(String first, String second) onChanged;
 
   @override
   Widget build(BuildContext context) {
+    final language = LocaleScope.of(context).locale.languageCode;
     return Row(
       children: [
         Expanded(
-          child: _SignDropdown(
-            signs: signs,
+          child: DropdownButtonFormField<String>(
             value: first,
-            label: 'Sen',
-            onChanged: (v) => onChanged(v, second),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _SignDropdown(
-            signs: signs,
-            value: second,
-            label: 'Partner',
-            onChanged: (v) => onChanged(first, v),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _SignDropdown extends StatelessWidget {
-  const _SignDropdown({
-    required this.signs,
-    required this.value,
-    required this.label,
-    required this.onChanged,
-  });
-
-  final List<String> signs;
-  final String value;
-  final String label;
-  final ValueChanged<String> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final th = Theme.of(context).textTheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: th.bodySmall?.copyWith(color: Colors.white60)),
-        const SizedBox(height: 6),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white12),
-            color: Colors.white.withOpacity(0.05),
-          ),
-          child: DropdownButton<String>(
-            value: value,
-            isExpanded: true,
-            dropdownColor: Colors.black,
-            icon: const Icon(Icons.expand_more, color: Colors.white70),
-            underline: const SizedBox.shrink(),
-            style: th.titleMedium,
-            onChanged: (v) {
-              if (v != null) onChanged(v);
+            decoration: InputDecoration(
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+              labelText: AppLocalizations.of(context).translate('homeSelectPrompt'),
+            ),
+            items: signs
+                .map(
+                  (sign) => DropdownMenuItem(
+                    value: sign.id,
+                    child: Text(sign.labelFor(language)),
+                  ),
+                )
+                .toList(),
+            onChanged: (value) {
+              if (value != null) onChanged(value, second);
             },
-            items: [
-              for (final sign in signs)
-                DropdownMenuItem(
-                  value: sign,
-                  child: Text(sign),
-                ),
-            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: DropdownButtonFormField<String>(
+            value: second,
+            decoration: InputDecoration(
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+              labelText: AppLocalizations.of(context).translate('homeSelectPrompt'),
+            ),
+            items: signs
+                .map(
+                  (sign) => DropdownMenuItem(
+                    value: sign.id,
+                    child: Text(sign.labelFor(language)),
+                  ),
+                )
+                .toList(),
+            onChanged: (value) {
+              if (value != null) onChanged(first, value);
+            },
           ),
         ),
       ],
@@ -283,99 +217,129 @@ class _SignDropdown extends StatelessWidget {
   }
 }
 
-class _AstroGames extends StatelessWidget {
-  const _AstroGames({required this.onSelect});
+class _ScoreRing extends StatelessWidget {
+  const _ScoreRing({required this.score, required this.first, required this.second});
 
-  final void Function(String, String) onSelect;
-
-  @override
-  Widget build(BuildContext context) {
-    final th = Theme.of(context).textTheme;
-    final prompts = <({String label, String first, String second})>[
-      (label: 'Karşıt burç uyumu', first: 'Koç', second: 'Terazi'),
-      (label: 'Element dengesi', first: 'Boğa', second: 'Başak'),
-      (label: 'Sürpriz ikili', first: 'Kova', second: 'Yengeç'),
-      (label: 'Tutkulu eşleşme', first: 'Aslan', second: 'Akrep'),
-      (label: 'Macera dostları', first: 'Yay', second: 'İkizler'),
-    ];
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white12),
-        color: Colors.white.withOpacity(0.03),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Astroloji oyunları', style: th.titleMedium),
-          const SizedBox(height: 8),
-          Text(
-            'Hızlı kombinasyonlara dokun; ilişkilerin enerjisini keşfet.',
-            style: th.bodySmall?.copyWith(color: Colors.white70),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 12,
-            runSpacing: 10,
-            children: [
-              for (final prompt in prompts)
-                ActionChip(
-                  label: Text(prompt.label),
-                  labelStyle: th.labelLarge?.copyWith(color: Colors.white),
-                  backgroundColor: Colors.white.withOpacity(0.08),
-                  onPressed: () => onSelect(prompt.first, prompt.second),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _InsightPanel extends StatelessWidget {
-  const _InsightPanel({required this.report});
-
-  final CompatibilityReport report;
+  final int score;
+  final String first;
+  final String second;
 
   @override
   Widget build(BuildContext context) {
-    final th = Theme.of(context).textTheme;
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white10),
-        color: Colors.white.withOpacity(0.02),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Uyum öngörüleri', style: th.titleMedium),
-          const SizedBox(height: 12),
-          for (final highlight in report.highlights)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Row(
+    final theme = Theme.of(context);
+    return Card(
+      color: theme.colorScheme.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('•  '),
-                  Expanded(
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 250),
-                      child: Text(
-                        highlight,
-                        key: ValueKey(highlight),
-                        style: th.bodyMedium?.copyWith(color: Colors.white70),
-                      ),
-                    ),
-                  ),
+                  Text('$first × $second', style: theme.textTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  Text(AppLocalizations.of(context).translate('compatibilitySummary')),
                 ],
               ),
             ),
+            SizedBox(
+              width: 100,
+              height: 100,
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: score / 100),
+                duration: const Duration(milliseconds: 400),
+                builder: (context, value, _) {
+                  return Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      CircularProgressIndicator(
+                        value: value,
+                        strokeWidth: 6,
+                        color: theme.colorScheme.primary,
+                        backgroundColor: theme.colorScheme.surfaceVariant,
+                      ),
+                      Text('$score', style: theme.textTheme.titleLarge),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CompatibilityTab extends StatelessWidget {
+  const _CompatibilityTab({
+    required this.label,
+    required this.summary,
+    required this.score,
+    required this.advice,
+  });
+
+  final String label;
+  final String summary;
+  final int score;
+  final String advice;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final loc = AppLocalizations.of(context);
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: theme.textTheme.titleMedium),
+          const SizedBox(height: 8),
+          Text('${loc.translate('compatibilityScore')}: $score/100'),
+          const SizedBox(height: 12),
+          Text(summary, style: theme.textTheme.bodyMedium?.copyWith(height: 1.4)),
+          const SizedBox(height: 12),
+          Text('${loc.translate('compatibilityAdvice')}: $advice',
+              style: theme.textTheme.bodyMedium?.copyWith(height: 1.4)),
         ],
       ),
     );
   }
+}
+
+class CompatibilityResult {
+  const CompatibilityResult({
+    required this.love,
+    required this.family,
+    required this.career,
+  });
+
+  final int love;
+  final int family;
+  final int career;
+
+  int get overall => ((love + family + career) / 3).round();
+
+  String loveAdvice(AppLocalizations loc) => _adviceFor(loc, love);
+  String familyAdvice(AppLocalizations loc) => _adviceFor(loc, family);
+  String careerAdvice(AppLocalizations loc) => _adviceFor(loc, career);
+}
+
+class CompatibilityEngine {
+  static CompatibilityResult calculate(String first, String second) {
+    final base = first.codeUnitAt(0) + second.codeUnitAt(0);
+    final love = 50 + (base % 50);
+    final family = 45 + ((base * 3) % 50);
+    final career = 40 + ((base * 5) % 50);
+    return CompatibilityResult(love: love, family: family, career: career);
+  }
+}
+
+String _adviceFor(AppLocalizations loc, int score) {
+  if (score >= 80) return loc.translate('adviceHigh');
+  if (score >= 60) return loc.translate('adviceBalanced');
+  if (score >= 40) return loc.translate('adviceFlux');
+  return loc.translate('adviceTransform');
 }

@@ -1,354 +1,266 @@
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:google_fonts/google_fonts.dart';
 
-import 'screens/home.dart';
+import 'core/localization/app_localizations.dart';
+import 'core/localization/locale_provider.dart';
+import 'core/utils/locale_collator.dart';
+import 'features/coffee/coffee_reading_screen.dart';
+import 'features/dreams/dream_interpreter_screen.dart';
 import 'screens/compatibility.dart';
+import 'screens/home.dart';
+import 'theme.dart';
 import 'firebase_options.dart';
 
-@immutable
-class ShellNavigation {
-  const ShellNavigation({
-    required this.openMenu,
-    required this.openCompatibility,
-  });
-
-  final VoidCallback openMenu;
-  final VoidCallback openCompatibility;
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('tr_TR');
+  await initializeDateFormatting('en_US');
+  try {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  } catch (_) {
+    debugPrint('Firebase not configured, continuing without it.');
+  }
+  final localeProvider = LocaleProvider();
+  await localeProvider.loadSavedLocale();
+  runApp(
+    LocaleScope(
+      notifier: localeProvider,
+      child: KismetlyApp(localeProvider: localeProvider),
+    ),
+  );
 }
 
-class _ShellPage {
-  const _ShellPage({
-    required this.title,
-    required this.subtitle,
+class KismetlyApp extends StatelessWidget {
+  const KismetlyApp({super.key, required this.localeProvider});
+
+  final LocaleProvider localeProvider;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: localeProvider,
+      builder: (context, _) {
+        return MaterialApp(
+          title: 'Kismetly',
+          theme: AppTheme.theme(),
+          locale: localeProvider.locale,
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: const [
+            AppLocalizationsDelegate(),
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: const MainShell(),
+        );
+      },
+    );
+  }
+}
+
+class ShellPage {
+  const ShellPage({
+    required this.id,
+    required this.titleKey,
+    required this.subtitleKey,
+    required this.icon,
     required this.builder,
   });
 
-  final String title;
-  final String subtitle;
-  final Widget Function(ShellNavigation navigation) builder;
+  final String id;
+  final String titleKey;
+  final String subtitleKey;
+  final IconData icon;
+  final WidgetBuilder builder;
 }
 
-class _MainShell extends StatefulWidget {
-  const _MainShell();
+class MainShell extends StatefulWidget {
+  const MainShell({super.key});
 
   @override
-  State<_MainShell> createState() => _MainShellState();
+  State<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends State<_MainShell> {
+class _MainShellState extends State<MainShell> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
-  late final PageController _pageController;
-  int _pageIndex = 0;
-
-  static const _compatibilityIndex = 4;
-
-  late final List<_ShellPage> _pages = [
-    _ShellPage(
-      title: 'Ana Sayfa',
-      subtitle: 'Kişisel astrolojik akış',
-      builder: (navigation) => HomeScreen(
-        onMenuTap: navigation.openMenu,
-        onOpenCompatibility: navigation.openCompatibility,
-      ),
-    ),
-    _ShellPage(
-      title: 'Rüya yorumlama',
-      subtitle: 'Yapay zekâ destekli içgörüler',
-      builder: (navigation) => _SimpleInfoScreen(
-        onMenuTap: navigation.openMenu,
-        title: 'Rüya yorumlama',
-        description:
-            'Rüyalarını çözmek için semboller, duygular ve temalar arasında gezin. '
-            'Yakında kişiselleştirilmiş analizler de burada olacak.',
-      ),
-    ),
-    _ShellPage(
-      title: 'Burç yorumları',
-      subtitle: 'Günlük · Aylık · Yıllık rehber',
-      builder: (navigation) => _SimpleInfoScreen(
-        onMenuTap: navigation.openMenu,
-        title: 'Burç yorumları',
-        description:
-            'Tüm burçlar için güncel yorumlar, element bazlı trendler ve '
-            'yaklaşan gökyüzü olayları burada toplanıyor.',
-        highlightAction: (
-          icon: Icons.favorite_outline,
-          label: 'Uyumluluğu gör',
-          onTap: navigation.openCompatibility,
-        ),
-      ),
-    ),
-    _ShellPage(
-      title: 'El falı',
-      subtitle: 'Avuç içinden karakter',
-      builder: (navigation) => _SimpleInfoScreen(
-        onMenuTap: navigation.openMenu,
-        title: 'El falı',
-        description:
-            'Avuç çizgilerin enerjisi, karakterini ve kaderini anlatır. '
-            'Yakında bu bölümde detaylı analizler yer alacak.',
-      ),
-    ),
-    _ShellPage(
-      title: 'Zodyak Uyumu',
-      subtitle: 'Aşk, arkadaşlık ve ekip enerjileri',
-      builder: (navigation) => ZodiacCompatibilityScreen(
-        onMenuTap: navigation.openMenu,
-      ),
-    ),
-    _ShellPage(
-      title: 'Kahve falı',
-      subtitle: 'Fincandaki semboller',
-      builder: (navigation) => _SimpleInfoScreen(
-        onMenuTap: navigation.openMenu,
-        title: 'Kahve falı',
-        description:
-            'Fincandaki semboller, ruh hâlini ve geleceğe dair işaretleri '
-            'yansıtır. Fal aracımız için hazırlıklar sürüyor.',
-      ),
-    ),
-  ];
+  late final PageController _controller;
+  int _index = 0;
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController();
+    _controller = PageController();
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   void _openDrawer() => _scaffoldKey.currentState?.openDrawer();
 
-  void _goToPage(int index) {
-    if (index == _pageIndex) {
-      Navigator.of(context).maybePop();
-      _scaffoldKey.currentState?.closeDrawer();
-      return;
-    }
-    setState(() => _pageIndex = index);
-    _pageController.animateToPage(
+  void _goTo(int index) {
+    setState(() => _index = index);
+    _controller.animateToPage(
       index,
       duration: const Duration(milliseconds: 420),
-      curve: Curves.easeOutCubic,
+      curve: Curves.easeInOutCubic,
     );
     _scaffoldKey.currentState?.closeDrawer();
   }
 
-  void _goToCompatibility() => _goToPage(_compatibilityIndex);
-
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
+    final pages = _pages(context);
     return Scaffold(
       key: _scaffoldKey,
-      drawer: _AppDrawer(
-        currentIndex: _pageIndex,
-        pages: _pages,
-        onSelect: _goToPage,
+      drawer: AppDrawer(
+        selectedIndex: _index,
+        pages: pages,
+        onSelect: _goTo,
       ),
       body: PageView.builder(
-        controller: _pageController,
+        controller: _controller,
         physics: const BouncingScrollPhysics(),
-        onPageChanged: (value) => setState(() => _pageIndex = value),
-        itemCount: _pages.length,
+        onPageChanged: (value) => setState(() => _index = value),
+        itemCount: pages.length,
         itemBuilder: (context, index) {
-          final page = _pages[index];
-          return AnimatedSwitcher(
-            duration: const Duration(milliseconds: 320),
-            switchInCurve: Curves.easeOut,
-            child: KeyedSubtree(
-              key: ValueKey(page.title),
-              child: page.builder(
-                ShellNavigation(
-                  openMenu: _openDrawer,
-                  openCompatibility: _goToCompatibility,
-                ),
-              ),
-            ),
-          );
+          final page = pages[index];
+          return page.builder(context);
         },
+      ),
+      floatingActionButton: Visibility(
+        visible: _index != 0,
+        child: FloatingActionButton.extended(
+          onPressed: () => _goTo(0),
+          icon: const Icon(Icons.home_outlined),
+          label: Text(loc.translate('menuHome')),
+        ),
       ),
     );
   }
+
+  List<ShellPage> _pages(BuildContext context) {
+    final loc = AppLocalizations.of(context);
+    return [
+      ShellPage(
+        id: 'home',
+        titleKey: 'menuHome',
+        subtitleKey: 'menuHomeSubtitle',
+        icon: Icons.auto_awesome,
+        builder: (context) => HomeScreen(
+          onMenuTap: _openDrawer,
+          onOpenCompatibility: () => _goTo(4),
+        ),
+      ),
+      ShellPage(
+        id: 'dreams',
+        titleKey: 'menuDreams',
+        subtitleKey: 'menuDreamsSubtitle',
+        icon: Icons.bedtime,
+        builder: (context) => DreamInterpreterScreen(onMenuTap: _openDrawer),
+      ),
+      ShellPage(
+        id: 'horoscopes',
+        titleKey: 'menuHoroscopes',
+        subtitleKey: 'menuHoroscopesSubtitle',
+        icon: Icons.auto_graph,
+        builder: (context) => PlaceholderScreen(
+          onMenuTap: _openDrawer,
+          title: loc.translate('menuHoroscopes'),
+          subtitle: loc.translate('menuHoroscopesSubtitle'),
+        ),
+      ),
+      ShellPage(
+        id: 'palmistry',
+        titleKey: 'menuPalmistry',
+        subtitleKey: 'menuPalmistrySubtitle',
+        icon: Icons.front_hand,
+        builder: (context) => PlaceholderScreen(
+          onMenuTap: _openDrawer,
+          title: loc.translate('menuPalmistry'),
+          subtitle: loc.translate('menuPalmistrySubtitle'),
+        ),
+      ),
+      ShellPage(
+        id: 'compatibility',
+        titleKey: 'menuCompatibility',
+        subtitleKey: 'menuCompatibilitySubtitle',
+        icon: Icons.favorite_outline,
+        builder: (context) => ZodiacCompatibilityScreen(onMenuTap: _openDrawer),
+      ),
+      ShellPage(
+        id: 'coffee',
+        titleKey: 'menuCoffee',
+        subtitleKey: 'menuCoffeeSubtitle',
+        icon: Icons.local_cafe_outlined,
+        builder: (context) => CoffeeReadingScreen(onMenuTap: _openDrawer),
+      ),
+    ];
+  }
 }
 
-class _AppDrawer extends StatelessWidget {
-  const _AppDrawer({
-    required this.currentIndex,
+class AppDrawer extends StatelessWidget {
+  const AppDrawer({
+    super.key,
+    required this.selectedIndex,
     required this.pages,
     required this.onSelect,
   });
 
-  final int currentIndex;
-  final List<_ShellPage> pages;
+  final int selectedIndex;
+  final List<ShellPage> pages;
   final ValueChanged<int> onSelect;
 
   @override
   Widget build(BuildContext context) {
-    final th = Theme.of(context).textTheme;
+    final loc = AppLocalizations.of(context);
+    final locale = LocaleScope.of(context).locale;
+    final collator = const LocaleCollator();
+    final items = List.generate(pages.length, (index) => index);
+    items.sort((a, b) {
+      final titleA = loc.translate(pages[a].titleKey);
+      final titleB = loc.translate(pages[b].titleKey);
+      return collator.compare(titleA, titleB, locale);
+    });
     return Drawer(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).colorScheme.background,
       child: SafeArea(
-        child: ListView.separated(
-          padding: const EdgeInsets.all(16),
-          itemBuilder: (context, index) {
-            if (index == 0) {
-              return Text('Kismetly Menü', style: th.titleLarge);
-            }
-            final page = pages[index - 1];
-            final selected = currentIndex == index - 1;
-            return _DrawerTile(
-              title: page.title,
-              subtitle: page.subtitle,
-              selected: selected,
-              onTap: () => onSelect(index - 1),
-            );
-          },
-          separatorBuilder: (context, index) => const SizedBox(height: 12),
-          itemCount: pages.length + 1,
-        ),
-      ),
-    );
-  }
-}
-
-class _DrawerTile extends StatelessWidget {
-  const _DrawerTile({
-    required this.title,
-    required this.subtitle,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String title;
-  final String subtitle;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final th = Theme.of(context).textTheme;
-    return Material(
-      color: selected ? Colors.white.withOpacity(0.08) : Colors.transparent,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: th.titleMedium),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: th.bodySmall?.copyWith(color: Colors.white60),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                selected
-                    ? Icons.radio_button_checked
-                    : Icons.radio_button_unchecked,
-                color: selected ? Colors.amberAccent : Colors.white24,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SimpleInfoScreen extends StatelessWidget {
-  const _SimpleInfoScreen({
-    required this.onMenuTap,
-    required this.title,
-    required this.description,
-    this.highlightAction,
-  });
-
-  final VoidCallback onMenuTap;
-  final String title;
-  final String description;
-  final ({IconData icon, String label, VoidCallback onTap})? highlightAction;
-
-  @override
-  Widget build(BuildContext context) {
-    final th = Theme.of(context).textTheme;
-    return SafeArea(
-      child: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.black, Color(0xFF101010)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.menu, color: Colors.white),
-                    onPressed: onMenuTap,
-                    tooltip: 'Menü',
-                  ),
-                  const SizedBox(width: 12),
-                  Text(title, style: th.titleLarge),
-                ],
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 520),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          description,
-                          style: th.bodyLarge?.copyWith(color: Colors.white70),
-                        ),
-                        if (highlightAction != null) ...[
-                          const SizedBox(height: 24),
-                          ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white.withOpacity(0.1),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 14,
-                              ),
-                            ),
-                            onPressed: highlightAction!.onTap,
-                            icon: Icon(highlightAction!.icon),
-                            label: Text(highlightAction!.label),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
+              padding: const EdgeInsets.all(20),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  loc.translate('appTitle'),
+                  style: Theme.of(context).textTheme.titleLarge,
                 ),
               ),
             ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: items.length,
+                itemBuilder: (context, displayIndex) {
+                  final index = items[displayIndex];
+                  final page = pages[index];
+                  final selected = index == selectedIndex;
+                  return ListTile(
+                    leading: Icon(page.icon),
+                    title: Text(loc.translate(page.titleKey)),
+                    subtitle: Text(loc.translate(page.subtitleKey)),
+                    selected: selected,
+                    onTap: () => onSelect(index),
+                  );
+                },
+              ),
+            ),
+            const Divider(),
+            _LanguageSwitcher(),
           ],
         ),
       ),
@@ -356,58 +268,111 @@ class _SimpleInfoScreen extends StatelessWidget {
   }
 }
 
-// Firebase varsa çalıştır; yoksa sessizce devam
-Future<void> _tryInitFirebase() async {
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
+class _LanguageSwitcher extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final provider = LocaleScope.of(context);
+    final loc = AppLocalizations.of(context);
+    final locale = provider.locale;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(loc.translate('menuLanguage'), style: Theme.of(context).textTheme.labelLarge),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _LocaleChip(
+                label: '🇹🇷 ${loc.translate('languageTurkish')}',
+                selected: locale.languageCode == 'tr',
+                onTap: () async {
+                  await provider.setLocale(const Locale('tr'));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(loc.translate('languageSwitchSaved'))),
+                  );
+                },
+              ),
+              const SizedBox(width: 12),
+              _LocaleChip(
+                label: '🇬🇧 ${loc.translate('languageEnglish')}',
+                selected: locale.languageCode == 'en',
+                onTap: () async {
+                  await provider.setLocale(const Locale('en'));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(loc.translate('languageSwitchSaved'))),
+                  );
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
     );
-  } catch (error, stackTrace) {
-    debugPrint('Firebase başlatma atlandı: $error');
-    debugPrintStack(stackTrace: stackTrace);
   }
 }
 
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await initializeDateFormatting('tr_TR', null);
-  await _tryInitFirebase();
-  runApp(const KismetlyApp());
-}
+class _LocaleChip extends StatelessWidget {
+  const _LocaleChip({required this.label, required this.selected, required this.onTap});
 
-class KismetlyApp extends StatelessWidget {
-  const KismetlyApp({super.key});
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = GoogleFonts.playfairDisplayTextTheme(
-      ThemeData(brightness: Brightness.dark).textTheme,
-    );
-
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Kismetly',
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: Colors.black,
-        textTheme: textTheme.copyWith(
-          bodyMedium: textTheme.bodyMedium?.copyWith(height: 1.45),
-          bodyLarge: textTheme.bodyLarge?.copyWith(height: 1.45),
-          labelSmall: textTheme.labelSmall?.copyWith(letterSpacing: 0.2),
-        ),
-        colorScheme: const ColorScheme.dark(
-          primary: Colors.white,
-          secondary: Colors.white70,
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: selected
+                ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
+                : Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
+          ),
         ),
       ),
-      locale: const Locale('tr', 'TR'),
-      supportedLocales: const [Locale('tr', 'TR'), Locale('en', 'US')],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-      ],
-      home: const _MainShell(),
+    );
+  }
+}
+
+class PlaceholderScreen extends StatelessWidget {
+  const PlaceholderScreen({
+    super.key,
+    required this.onMenuTap,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final VoidCallback onMenuTap;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      backgroundColor: theme.colorScheme.background,
+      appBar: AppBar(
+        leading: IconButton(icon: const Icon(Icons.menu), onPressed: onMenuTap),
+        title: Text(title),
+      ),
+      body: Center(
+        child: Text(
+          subtitle,
+          style: theme.textTheme.titleMedium,
+          textAlign: TextAlign.center,
+        ),
+      ),
     );
   }
 }

@@ -1,10 +1,16 @@
-import 'dart:async';
-
-import 'package:characters/characters.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import '../services.dart';
+import '../core/localization/app_localizations.dart';
+import '../core/localization/locale_provider.dart';
+import '../core/utils/locale_collator.dart';
+import '../data/horoscope_insights_en.dart';
+import '../data/horoscope_insights_tr.dart';
+import '../data/zodiac_signs.dart';
+import '../features/coffee/coffee_reading_screen.dart';
+import '../features/dreams/dream_interpreter_screen.dart';
+import 'horoscope_detail.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -21,175 +27,50 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late DateTime _now;
-  late final String _sunSign;
-  late final String _ascendant;
-  late final List<String> _signs = AstroService.signs;
+  static const _sunKey = 'sun_sign';
+  static const _risingKey = 'rising_sign';
 
-  LocationSnapshot? _loc;
-  WeatherSnapshot? _weather;
-  NetworkTimeSnapshot? _net;
-  HoroscopeBundle? _horo;
-  PlanetarySnapshot? _planets;
-  String? _quote;
-
-  bool _loadingLoc = true;
-  bool _loadingWeather = true;
-  bool _loadingTime = true;
-  bool _loadingHoro = true;
-  bool _loadingPlanets = true;
-  bool _loadingQuote = true;
-
-  String? _errLoc, _errW, _errT, _errH, _errP;
-
-  Timer? _ticker;
-  int _selectedHoroscopeIndex = 0;
+  String? _sunSignId;
+  String? _risingSignId;
+  bool _loading = true;
+  String? _matchLeft;
+  String? _matchRight;
 
   @override
   void initState() {
     super.initState();
-    _now = DateTime.now();
-    _sunSign = AstroService.sunSign(_now);
-    _ascendant = AstroService.approxAscendant(TimeOfDay.fromDateTime(_now));
-    _startTicker();
-    _boot();
+    _loadSigns();
   }
 
-  void _startTicker() {
-    _ticker = Timer.periodic(const Duration(minutes: 1), (_) {
-      setState(() => _now = DateTime.now());
-    });
-  }
-
-  Future<void> _boot() async {
-    await _loadLocation();
-    _loadQuoteAndHoro();
-    _loadPlanets();
-  }
-
-  Future<void> _loadLocation() async {
+  Future<void> _loadSigns() async {
+    final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _loadingLoc = true;
-      _errLoc = null;
+      _sunSignId = prefs.getString(_sunKey);
+      _risingSignId = prefs.getString(_risingKey);
+      _matchLeft = _sunSignId ?? zodiacSigns.first.id;
+      _matchRight = _risingSignId ?? zodiacSigns.last.id;
+      _loading = false;
     });
-    try {
-      final l = await LocationService.currentLocation();
-      if (!mounted) return;
-      setState(() {
-        _loc = l;
-        _loadingLoc = false;
-      });
-      if (l != null) {
-        _fetchWeather(l);
-        _fetchNet(l);
-      } else {
-        setState(() {
-          _loadingWeather = false;
-          _loadingTime = false;
-          _errW = 'Konum alınamadı';
-          _errT = 'Konum alınamadı';
-        });
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _loadingLoc = false;
-        _errLoc = 'Konum hatası';
-      });
-    }
   }
 
-  Future<void> _fetchWeather(LocationSnapshot l) async {
-    setState(() {
-      _loadingWeather = true;
-      _errW = null;
-    });
-    final w = await WeatherService.fetchWeather(
-      latitude: l.latitude,
-      longitude: l.longitude,
+  Future<void> _updateSun(String? id) async {
+    if (id == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_sunKey, id);
+    setState(() => _sunSignId = id);
+  }
+
+  Future<void> _updateRising(String? id) async {
+    if (id == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_risingKey, id);
+    setState(() => _risingSignId = id);
+  }
+
+  void _openDetail(String id) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => HoroscopeDetailScreen(signId: id)),
     );
-    if (!mounted) return;
-    setState(() {
-      _weather = w;
-      _loadingWeather = false;
-      if (w == null) _errW = 'Hava durumu alınamadı';
-    });
-  }
-
-  Future<void> _fetchNet(LocationSnapshot l) async {
-    setState(() {
-      _loadingTime = true;
-      _errT = null;
-    });
-    final t = await NetworkTimeService.fetchTime(
-      latitude: l.latitude,
-      longitude: l.longitude,
-    );
-    if (!mounted) return;
-    setState(() {
-      _net = t;
-      _loadingTime = false;
-      if (t != null) {
-        _now = t.dateTime;
-      } else {
-        _errT = 'Ağ zamanı alınamadı';
-      }
-    });
-  }
-
-  Future<void> _loadQuoteAndHoro() async {
-    setState(() {
-      _loadingHoro = true;
-      _loadingQuote = true;
-      _errH = null;
-    });
-    try {
-      final results = await Future.wait<dynamic>([
-        AstroService.fetchDailyQuote(),
-        AstroService.fetchHoroscopeBundle(_sunSign),
-      ]);
-      if (!mounted) return;
-      setState(() {
-        _quote = results[0] as String;
-        _horo = results[1] as HoroscopeBundle;
-        _loadingHoro = false;
-        _loadingQuote = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _loadingHoro = false;
-        _loadingQuote = false;
-        _errH = 'Burç yorumu alınamadı';
-      });
-    }
-  }
-
-  Future<void> _loadPlanets() async {
-    setState(() {
-      _loadingPlanets = true;
-      _errP = null;
-    });
-    try {
-      final p = await AstroService.fetchPlanetarySnapshot();
-      if (!mounted) return;
-      setState(() {
-        _planets = p;
-        _loadingPlanets = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _loadingPlanets = false;
-        _errP = 'Gezegen bilgisi alınamadı';
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _ticker?.cancel();
-    super.dispose();
   }
 
   String get _partnerSign =>
@@ -263,105 +144,81 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final active = _net?.dateTime ?? _now;
-    final dateText = DateFormat('d MMMM y EEEE', 'tr_TR').format(active);
-    final timeText = DateFormat('HH:mm', 'tr_TR').format(active);
-    final zoneText =
-        _net != null ? '${_net!.timeZone} · ${_net!.utcOffset}' : 'Yerel saat';
-    final th = Theme.of(context).textTheme;
-    final energies = _dailyEnergies(active);
-    final interactions = _interactionPreviews();
-
-    return SafeArea(
-      child: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.black, Color(0xFF0E0E0E)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+    final theme = Theme.of(context);
+    final loc = AppLocalizations.of(context);
+    final provider = LocaleScope.of(context);
+    final locale = provider.locale;
+    final language = locale.languageCode;
+    final collator = const LocaleCollator();
+    final sortedSigns = [...zodiacSigns]
+      ..sort((a, b) => collator.compare(a.labelFor(language), b.labelFor(language), locale));
+    final now = DateTime.now();
+    final sunInsight = _sunSignId == null
+        ? null
+        : language == 'en'
+            ? sunInsightForEn(_sunSignId!, now)
+            : sunInsightForTr(_sunSignId!, now);
+    final risingInsight = _risingSignId == null
+        ? null
+        : language == 'en'
+            ? risingInsightForEn(_risingSignId!, now)
+            : risingInsightForTr(_risingSignId!, now);
+    final formatter = DateFormat.yMMMMd(language);
+    return Scaffold(
+      backgroundColor: theme.colorScheme.background,
+      appBar: AppBar(
+        leading: IconButton(icon: const Icon(Icons.menu), onPressed: widget.onMenuTap),
+        title: Text(loc.translate('menuHome')),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.favorite_outline),
+            onPressed: widget.onOpenCompatibility,
           ),
-        ),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
+        ],
+      ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: _loadSigns,
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.menu, color: Colors.white),
-                    onPressed: widget.onMenuTap,
-                    tooltip: 'Menü',
+                  Text(
+                    loc.translate('homeDailyTitle'),
+                    style: theme.textTheme.titleLarge,
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 250),
-                      child: Text(
-                        _loc?.city ?? 'Konum belirleniyor…',
-                        key: ValueKey(_loc?.city ?? '—'),
-                        overflow: TextOverflow.ellipsis,
-                        style: th.titleMedium?.copyWith(
-                          color: Colors.white,
-                          letterSpacing: 0.5,
+                  const SizedBox(height: 8),
+                  Text(
+                    formatter.format(now),
+                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.primary),
+                  ),
+                  const SizedBox(height: 16),
+                  _InsightSection(
+                    title: loc.translate('homeDailyCardTitle'),
+                    sunId: _sunSignId,
+                    risingId: _risingSignId,
+                    sunInsight: sunInsight,
+                    risingInsight: risingInsight,
+                    onSelectSun: (id) => _updateSun(id),
+                    onSelectRising: (id) => _updateRising(id),
+                    signs: sortedSigns,
+                    locale: locale,
+                  ),
+                  const SizedBox(height: 20),
+                  _ShortcutRow(
+                    onDream: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => DreamInterpreterScreen(
+                          onMenuTap: () => Navigator.of(context).maybePop(),
                         ),
                       ),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.refresh, color: Colors.white70),
-                    tooltip: 'Yenile',
-                    onPressed: () async {
-                      final l = _loc;
-                      if (l != null) {
-                        await Future.wait([
-                          _fetchWeather(l),
-                          _fetchNet(l),
-                        ]);
-                      } else {
-                        await _loadLocation();
-                      }
-                    },
-                  ),
-                  CircleAvatar(
-                    backgroundColor: Colors.white12,
-                    child: Text(
-                      _sunSign.characters.first,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1, color: Colors.white12),
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _HeroBlock(
-                      dateText: dateText,
-                      timeText: timeText,
-                      zoneText: zoneText,
-                      sun: _sunSign,
-                      asc: _ascendant,
-                    ),
-                    const SizedBox(height: 20),
-                    _QuickShortcuts(
-                      onOpenCompatibility: widget.onOpenCompatibility,
-                      onSeeHoroscope: () {
-                        setState(() => _selectedHoroscopeIndex = 0);
-                        _loadQuoteAndHoro();
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    _Section(
-                      title: 'Bugünün ilhamı',
-                      trailing: IconButton(
-                        icon: const Icon(Icons.refresh, size: 18, color: Colors.white70),
-                        onPressed: _loadQuoteAndHoro,
-                        tooltip: 'Yenile',
+                    onCoffee: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => CoffeeReadingScreen(
+                          onMenuTap: () => Navigator.of(context).maybePop(),
+                        ),
                       ),
                       child: _loadingQuote
                           ? const _LoaderLine('İlham yükleniyor…')
@@ -376,59 +233,45 @@ class _HomeScreenState extends State<HomeScreen> {
                                 )
                               : const _ErrLine('İlham alınamadı')), 
                     ),
-                    _Section(
-                      title: 'Tarih · Saat · Konum',
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('$dateText · $timeText · ${_loc?.city ?? "—"}',
-                              style: th.titleLarge),
-                          const SizedBox(height: 8),
-                          _KV('Saat dilimi', zoneText),
-                          const SizedBox(height: 8),
-                          if (_loadingWeather)
-                            const _LoaderLine('Hava durumu yükleniyor…')
-                          else if (_errW != null)
-                            _ErrLine(_errW!)
-                          else if (_weather != null)
-                            Wrap(
-                              spacing: 12,
-                              runSpacing: 8,
-                              children: [
-                                _Chip('Hava',
-                                    '${_weather!.description} · ${_weather!.temperature.toStringAsFixed(0)}°C'),
-                                _Chip('Hissedilen',
-                                    '${_weather!.apparentTemperature.toStringAsFixed(0)}°C'),
-                                _Chip('Nem', '%${_weather!.humidity.toStringAsFixed(0)}'),
-                                _Chip('Rüzgar',
-                                    '${_weather!.windSpeed.toStringAsFixed(1)} m/sn'),
-                              ],
+                    onCompatibility: widget.onOpenCompatibility,
+                  ),
+                  const SizedBox(height: 24),
+                  _CompatibilityPreview(
+                    left: _matchLeft ?? sortedSigns.first.id,
+                    right: _matchRight ?? sortedSigns.last.id,
+                    onLeftChanged: (value) => setState(() => _matchLeft = value),
+                    onRightChanged: (value) => setState(() => _matchRight = value),
+                    signs: sortedSigns,
+                    locale: locale,
+                    onOpenFull: widget.onOpenCompatibility,
+                  ),
+                  const SizedBox(height: 24),
+                  Text(loc.translate('homeTrending'), style: theme.textTheme.titleMedium),
+                  const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                      _FeatureChip(
+                        label: loc.translate('homeShortcutDream'),
+                        icon: Icons.bedtime,
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => DreamInterpreterScreen(
+                              onMenuTap: () => Navigator.of(context).maybePop(),
                             ),
-                        ],
-                      ),
-                    ),
-                    _Section(
-                      title: 'Günlük enerjiler',
-                      child: Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        children: [
-                          for (final energy in energies)
-                            _EnergyCard(focus: energy),
-                        ],
-                      ),
-                    ),
-                    _Section(
-                      title: 'Burç yorumları',
-                      trailing: SegmentedButton<int>(
-                        style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.resolveWith(
-                            (states) => states.contains(MaterialState.selected)
-                                ? Colors.white.withOpacity(0.14)
-                                : Colors.white.withOpacity(0.03),
                           ),
-                          foregroundColor:
-                              MaterialStateProperty.all<Color>(Colors.white),
+                        ),
+                      ),
+                      _FeatureChip(
+                        label: loc.translate('homeShortcutCoffee'),
+                        icon: Icons.local_cafe,
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => CoffeeReadingScreen(
+                              onMenuTap: () => Navigator.of(context).maybePop(),
+                            ),
+                          ),
                         ),
                         segments: const [
                           ButtonSegment(value: 0, label: Text('Günlük')),
@@ -441,444 +284,188 @@ class _HomeScreenState extends State<HomeScreen> {
                           setState(() => _selectedHoroscopeIndex = index);
                         },
                       ),
-                      child: _loadingHoro
-                          ? const _LoaderLine('Burç yorumları yükleniyor…')
-                          : (_errH != null
-                              ? _ErrLine(_errH!)
-                              : AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 300),
-                                  child: Text(
-                                    _horoscopeTextForIndex(_selectedHoroscopeIndex),
-                                    key: ValueKey(
-                                      '${_selectedHoroscopeIndex}_${_horoscopeTextForIndex(_selectedHoroscopeIndex).hashCode}',
-                                    ),
-                                    style: th.bodyLarge,
-                                  ),
-                                )),
-                    ),
-                    _Section(
-                      title: 'Astroloji bilgileri',
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _KV('Güneş burcu', _sunSign),
-                          const SizedBox(height: 8),
-                          _KV('Yükselen', _ascendant),
-                          const SizedBox(height: 8),
-                          _KV('Ay fazı', _moonPhaseDesc(active)),
-                        ],
+                      _FeatureChip(
+                        label: loc.translate('homeShortcutCompatibility'),
+                        icon: Icons.favorite,
+                        onTap: widget.onOpenCompatibility,
                       ),
+                      ],
                     ),
-                    _Section(
-                      title: 'Astroloji etkileşimleri',
-                      trailing: TextButton.icon(
-                        onPressed: widget.onOpenCompatibility,
-                        icon: const Icon(Icons.open_in_new, size: 16),
-                        label: const Text('Detaya git'),
-                      ),
-                      child: Column(
-                        children: [
-                          for (final interaction in interactions)
-                            _InteractionTile(interaction: interaction),
-                        ],
-                      ),
+                  const SizedBox(height: 24),
+                  Text(loc.translate('homeDailyEnergy'), style: theme.textTheme.titleMedium),
+                  const SizedBox(height: 12),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: sortedSigns.length,
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      childAspectRatio: 0.8,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
                     ),
-                    _Section(
-                      title: 'Mars & Venüs görünümü',
-                      child: _loadingPlanets
-                          ? const _LoaderLine('Gezegen verileri yükleniyor…')
-                          : (_errP != null
-                              ? _ErrLine(_errP!)
-                              : _PlanetsList(snapshot: _planets)),
-                    ),
-                    _Section(
-                      title: 'Bugün için öneriler',
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          _Bullet('Nefes araları ver.'),
-                          _Bullet('Kısa bir niyet yaz.'),
-                          _Bullet('Su içmeyi unutma.'),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                    itemBuilder: (context, index) {
+                      final sign = sortedSigns[index];
+                      final label = sign.labelFor(language);
+                      return _SignCard(
+                        label: label,
+                        onTap: () => _openDetail(sign.id),
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
+    );
+  }
+}
+
+class _InsightSection extends StatelessWidget {
+  const _InsightSection({
+    required this.title,
+    required this.sunId,
+    required this.risingId,
+    required this.sunInsight,
+    required this.risingInsight,
+    required this.onSelectSun,
+    required this.onSelectRising,
+    required this.signs,
+    required this.locale,
+  });
+
+  final String title;
+  final String? sunId;
+  final String? risingId;
+  final String? sunInsight;
+  final String? risingInsight;
+  final ValueChanged<String?> onSelectSun;
+  final ValueChanged<String?> onSelectRising;
+  final List<ZodiacSign> signs;
+  final Locale locale;
+
+  @override
+  Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
+    final language = locale.languageCode;
+    final sunLabel = sunId == null
+        ? ''
+        : findZodiacById(sunId!)?.labelFor(language) ?? sunId!;
+    final risingLabel = risingId == null
+        ? ''
+        : findZodiacById(risingId!)?.labelFor(language) ?? risingId!;
+    return Card(
+      color: Theme.of(context).colorScheme.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              value: sunId,
+              items: signs
+                  .map(
+                    (sign) => DropdownMenuItem(
+                      value: sign.id,
+                      child: Text(sign.labelFor(language)),
+                    ),
+                  )
+                  .toList(),
+              decoration: InputDecoration(
+                labelText: loc.translate('pickerSun'),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              onChanged: onSelectSun,
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              value: risingId,
+              items: signs
+                  .map(
+                    (sign) => DropdownMenuItem(
+                      value: sign.id,
+                      child: Text(sign.labelFor(language)),
+                    ),
+                  )
+                  .toList(),
+              decoration: InputDecoration(
+                labelText: loc.translate('pickerRising'),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              onChanged: onSelectRising,
+            ),
+            const SizedBox(height: 16),
+            if (sunInsight != null)
+              Text(
+                loc.translate('homeSunInsight', params: {
+                  'sign': sunLabel,
+                  'message': sunInsight!.isEmpty
+                      ? loc.translate('insightSunDefault')
+                      : sunInsight!,
+                }),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5),
+              )
+            else
+              Text(loc.translate('homeNoSelection')),
+            const SizedBox(height: 12),
+            if (risingInsight != null)
+              Text(
+                loc.translate('homeRisingInsight', params: {
+                  'sign': risingLabel,
+                  'message': risingInsight!.isEmpty
+                      ? loc.translate('insightRisingDefault')
+                      : risingInsight!,
+                }),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5),
+              ),
           ],
         ),
       ),
     );
   }
-
-  String _moonPhaseDesc(DateTime date) {
-    const synodic = 29.530588853;
-    final diff = date.toUtc().difference(DateTime(2000, 1, 6, 18, 14));
-    var days = diff.inMilliseconds / Duration.millisecondsPerDay;
-    var phase = days % synodic;
-    if (phase < 0) phase += synodic;
-    final f = phase / synodic;
-    if (f < 0.03) return 'Yeni Ay';
-    if (f < 0.22) return 'Hilal (büyüyen)';
-    if (f < 0.28) return 'İlk Dördün';
-    if (f < 0.47) return 'Şişkin (büyüyen)';
-    if (f < 0.53) return 'Dolunay';
-    if (f < 0.72) return 'Şişkin (azalan)';
-    if (f < 0.78) return 'Son Dördün';
-    if (f < 0.97) return 'Hilal (azalan)';
-    return 'Yeni Ay';
-  }
 }
 
-class _HeroBlock extends StatelessWidget {
-  const _HeroBlock({
-    required this.dateText,
-    required this.timeText,
-    required this.zoneText,
-    required this.sun,
-    required this.asc,
+class _ShortcutRow extends StatelessWidget {
+  const _ShortcutRow({
+    required this.onDream,
+    required this.onCoffee,
+    required this.onCompatibility,
   });
 
-  final String dateText;
-  final String timeText;
-  final String zoneText;
-  final String sun;
-  final String asc;
+  final VoidCallback onDream;
+  final VoidCallback onCoffee;
+  final VoidCallback onCompatibility;
 
   @override
   Widget build(BuildContext context) {
-    final th = Theme.of(context).textTheme;
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white12),
-        color: Colors.white.withOpacity(0.02),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Astroloji for life on Earth.', style: th.headlineSmall),
-                const SizedBox(height: 8),
-                Text(
-                  '$dateText · $timeText',
-                  style: th.bodyMedium?.copyWith(color: Colors.white70),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  zoneText,
-                  style: th.labelSmall?.copyWith(color: Colors.white60),
-                ),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text('GÜNEŞ',
-                  style: th.labelSmall?.copyWith(color: Colors.white60)),
-              Text(sun.toUpperCase(), style: th.titleLarge),
-              const SizedBox(height: 8),
-              Text('YÜKSELEN',
-                  style: th.labelSmall?.copyWith(color: Colors.white60)),
-              Text(asc, style: th.titleLarge),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Section extends StatelessWidget {
-  const _Section({
-    required this.title,
-    required this.child,
-    this.trailing,
-  });
-
-  final String title;
-  final Widget child;
-  final Widget? trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    final th = Theme.of(context).textTheme;
-    return Container(
-      margin: const EdgeInsets.only(top: 18),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white10),
-        color: Colors.white.withOpacity(0.02),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(child: Text(title, style: th.titleMedium)),
-              if (trailing != null) trailing!,
-            ],
-          ),
-          const SizedBox(height: 10),
-          child,
-        ],
-      ),
-    );
-  }
-}
-
-class _KV extends StatelessWidget {
-  const _KV(this.k, this.v);
-
-  final String k;
-  final String v;
-
-  @override
-  Widget build(BuildContext context) {
-    final th = Theme.of(context).textTheme;
-    return RichText(
-      text: TextSpan(
-        text: '$k: ',
-        style: th.bodyMedium?.copyWith(color: Colors.white70),
-        children: [
-          TextSpan(
-            text: v,
-            style: th.bodyMedium?.copyWith(color: Colors.white),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Chip extends StatelessWidget {
-  const _Chip(this.label, this.value);
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white12),
-        color: Colors.white.withOpacity(0.04),
-      ),
-      child: Text('$label: $value'),
-    );
-  }
-}
-
-class _LoaderLine extends StatelessWidget {
-  const _LoaderLine(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final th = Theme.of(context).textTheme;
+    final loc = AppLocalizations.of(context);
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const SizedBox(
-          width: 16,
-          height: 16,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: Colors.white70,
-          ),
+        _ShortcutCard(
+          icon: Icons.bedtime,
+          label: loc.translate('homeShortcutDream'),
+          onTap: onDream,
         ),
-        const SizedBox(width: 10),
-        Text(
-          text,
-          style: th.bodyMedium?.copyWith(color: Colors.white70),
+        _ShortcutCard(
+          icon: Icons.local_cafe,
+          label: loc.translate('homeShortcutCoffee'),
+          onTap: onCoffee,
+        ),
+        _ShortcutCard(
+          icon: Icons.favorite,
+          label: loc.translate('homeShortcutCompatibility'),
+          onTap: onCompatibility,
         ),
       ],
     );
   }
 }
 
-class _ErrLine extends StatelessWidget {
-  const _ErrLine(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final th = Theme.of(context).textTheme;
-    return Text(
-      text,
-      style: th.bodyMedium?.copyWith(color: Colors.orangeAccent),
-    );
-  }
-}
-
-class _PlanetsList extends StatelessWidget {
-  const _PlanetsList({required this.snapshot});
-
-  final PlanetarySnapshot? snapshot;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = snapshot?.planets ?? [];
-    if (p.isEmpty) return const Text('—');
-    final th = Theme.of(context).textTheme;
-    return Column(
-      children: [
-        for (final e in p)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(Icons.public, size: 18, color: Colors.white70),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(e.name, style: th.titleSmall),
-                      Text(
-                        e.detail,
-                        style: th.bodySmall?.copyWith(color: Colors.white70),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _Bullet extends StatelessWidget {
-  const _Bullet(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Row(
-        children: [
-          const Text('•  '),
-          Expanded(child: Text(text)),
-        ],
-      ),
-    );
-  }
-}
-
-class _EnergyFocus {
-  const _EnergyFocus({
-    required this.title,
-    required this.detail,
-    required this.icon,
-  });
-
-  final String title;
-  final String detail;
-  final IconData icon;
-}
-
-class _EnergyCard extends StatelessWidget {
-  const _EnergyCard({required this.focus});
-
-  final _EnergyFocus focus;
-
-  @override
-  Widget build(BuildContext context) {
-    final th = Theme.of(context).textTheme;
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-      width: 180,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white12),
-        color: Colors.white.withOpacity(0.03),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(focus.icon, color: Colors.amberAccent),
-          const SizedBox(height: 12),
-          Text(focus.title, style: th.titleMedium),
-          const SizedBox(height: 8),
-          Text(
-            focus.detail,
-            style: th.bodySmall?.copyWith(color: Colors.white70),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _QuickShortcuts extends StatelessWidget {
-  const _QuickShortcuts({
-    required this.onOpenCompatibility,
-    required this.onSeeHoroscope,
-  });
-
-  final VoidCallback onOpenCompatibility;
-  final VoidCallback onSeeHoroscope;
-
-  @override
-  Widget build(BuildContext context) {
-    final th = Theme.of(context).textTheme;
-    return Row(
-      children: [
-        Expanded(
-          child: _ShortcutButton(
-            icon: Icons.favorite,
-            label: 'Uyum hesapla',
-            onTap: onOpenCompatibility,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _ShortcutButton(
-            icon: Icons.star,
-            label: 'Trend burçlar',
-            onTap: onSeeHoroscope,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _ShortcutButton(
-            icon: Icons.spa,
-            label: 'Ritüel önerisi',
-            onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Bugün minik bir niyet defteri molası öneriyoruz.'),
-                duration: Duration(seconds: 3),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ShortcutButton extends StatelessWidget {
-  const _ShortcutButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
+class _ShortcutCard extends StatelessWidget {
+  const _ShortcutCard({required this.icon, required this.label, required this.onTap});
 
   final IconData icon;
   final String label;
@@ -886,24 +473,132 @@ class _ShortcutButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Ink(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.white12),
-          color: Colors.white.withOpacity(0.03),
+    final theme = Theme.of(context);
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 6),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: theme.colorScheme.primary),
+              const SizedBox(height: 12),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall,
+              ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+}
+
+class _CompatibilityPreview extends StatelessWidget {
+  const _CompatibilityPreview({
+    required this.left,
+    required this.right,
+    required this.onLeftChanged,
+    required this.onRightChanged,
+    required this.signs,
+    required this.locale,
+    required this.onOpenFull,
+  });
+
+  final String left;
+  final String right;
+  final ValueChanged<String> onLeftChanged;
+  final ValueChanged<String> onRightChanged;
+  final List<ZodiacSign> signs;
+  final Locale locale;
+  final VoidCallback onOpenFull;
+
+  int _score(String a, String b) {
+    final base = a.codeUnitAt(0) + b.codeUnitAt(0);
+    return 50 + (base % 51);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
+    final language = locale.languageCode;
+    final score = _score(left, right);
+    final loveScore = (score * 0.9).round();
+    final friendScore = (score * 0.8).round();
+    final workScore = (score * 0.7).round();
+    return Card(
+      color: Theme.of(context).colorScheme.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: Colors.amberAccent),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              textAlign: TextAlign.center,
+            Text(loc.translate('homeLoveMatch'), style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: left,
+                    decoration: InputDecoration(
+                      labelText: loc.translate('homeSelectPrompt'),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    items: signs
+                        .map(
+                          (sign) => DropdownMenuItem(
+                            value: sign.id,
+                            child: Text(sign.labelFor(language)),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) onLeftChanged(value);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: right,
+                    decoration: InputDecoration(
+                      labelText: loc.translate('homeSelectPrompt'),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    items: signs
+                        .map(
+                          (sign) => DropdownMenuItem(
+                            value: sign.id,
+                            child: Text(sign.labelFor(language)),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) onRightChanged(value);
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _ScoreRow(label: loc.translate('homeLoveMatch'), score: loveScore),
+            _ScoreRow(label: loc.translate('homeFriendMatch'), score: friendScore),
+            _ScoreRow(label: loc.translate('homeWorkMatch'), score: workScore),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: onOpenFull,
+                child: Text(loc.translate('homeOpenCompatibility')),
+              ),
             ),
           ],
         ),
@@ -912,71 +607,50 @@ class _ShortcutButton extends StatelessWidget {
   }
 }
 
-class _InteractionPreview {
-  const _InteractionPreview({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.report,
-  });
+class _ScoreRow extends StatelessWidget {
+  const _ScoreRow({required this.label, required this.score});
 
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final CompatibilityReport report;
-}
-
-class _InteractionTile extends StatelessWidget {
-  const _InteractionTile({required this.interaction});
-
-  final _InteractionPreview interaction;
+  final String label;
+  final int score;
 
   @override
   Widget build(BuildContext context) {
-    final th = Theme.of(context).textTheme;
-    final percent = (interaction.report.score * 100).round();
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white12),
-        color: Colors.white.withOpacity(0.025),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Icon(interaction.icon, color: Colors.amberAccent),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(interaction.title, style: th.titleMedium),
-                const SizedBox(height: 4),
-                Text(
-                  interaction.subtitle,
-                  style: th.bodySmall?.copyWith(color: Colors.white60),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  interaction.report.tone,
-                  style: th.bodySmall?.copyWith(color: Colors.white70),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text('$percent%', style: th.titleLarge),
-              Text(
-                'uyum',
-                style: th.bodySmall?.copyWith(color: Colors.white54),
-              ),
-            ],
-          ),
+          Expanded(child: Text(label)),
+          Text('$score/100'),
         ],
+      ),
+    );
+  }
+}
+
+class _SignCard extends StatelessWidget {
+  const _SignCard({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          color: Theme.of(context).colorScheme.surface,
+        ),
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(label, style: Theme.of(context).textTheme.titleSmall, textAlign: TextAlign.center),
+            const SizedBox(height: 6),
+            const Icon(Icons.auto_awesome, size: 20),
+          ],
+        ),
       ),
     );
   }
