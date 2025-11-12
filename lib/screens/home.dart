@@ -73,6 +73,75 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  String get _partnerSign =>
+      _signs[(_now.day + _now.month) % _signs.length];
+
+  String get _collabSign =>
+      _signs[(_now.month * 3 + _now.weekday) % _signs.length];
+
+  List<_EnergyFocus> _dailyEnergies(DateTime date) {
+    final weekday = DateFormat('EEEE', 'tr_TR').format(date);
+    return [
+      _EnergyFocus(
+        title: 'Duygusal ritim',
+        detail: '$weekday enerjisi sezgileri güçlendiriyor.',
+        icon: Icons.self_improvement,
+      ),
+      _EnergyFocus(
+        title: 'Zihin odağı',
+        detail: 'Yükselen $_ascendant ile stratejik planlara yer aç.',
+        icon: Icons.psychology_outlined,
+      ),
+      _EnergyFocus(
+        title: 'Topluluk',
+        detail: '$_sunSign burcu bağlantıları derinleştirmek için uygun.',
+        icon: Icons.groups,
+      ),
+    ];
+  }
+
+  List<_InteractionPreview> _interactionPreviews() {
+    final loveReport = AstroService.compatibility(_sunSign, _partnerSign);
+    final collabReport = AstroService.compatibility(_ascendant, _collabSign);
+    final wildCardSign = _signs[(_now.day * 2) % _signs.length];
+    final wildReport = AstroService.compatibility(_sunSign, wildCardSign);
+    return [
+      _InteractionPreview(
+        title: 'Aşk uyumu',
+        subtitle: '$_sunSign × $_partnerSign',
+        icon: Icons.favorite,
+        report: loveReport,
+      ),
+      _InteractionPreview(
+        title: 'Takım enerjisi',
+        subtitle: '$_ascendant × $_collabSign',
+        icon: Icons.handshake,
+        report: collabReport,
+      ),
+      _InteractionPreview(
+        title: 'Sürpriz eşleşme',
+        subtitle: '$_sunSign × $wildCardSign',
+        icon: Icons.auto_awesome,
+        report: wildReport,
+      ),
+    ];
+  }
+
+  String _horoscopeTextForIndex(int index) {
+    final h = _horo;
+    if (h == null) return '—';
+    switch (index) {
+      case 0:
+        return h.daily;
+      case 1:
+        return h.monthly;
+      case 2:
+        return h.yearly;
+      default:
+        return h.daily;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -151,6 +220,18 @@ class _HomeScreenState extends State<HomeScreen> {
                           onMenuTap: () => Navigator.of(context).maybePop(),
                         ),
                       ),
+                      child: _loadingQuote
+                          ? const _LoaderLine('İlham yükleniyor…')
+                          : (_quote != null
+                              ? AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 300),
+                                  child: Text(
+                                    _quote!,
+                                    key: ValueKey(_quote),
+                                    style: th.bodyLarge,
+                                  ),
+                                )
+                              : const _ErrLine('İlham alınamadı')), 
                     ),
                     onCompatibility: widget.onOpenCompatibility,
                   ),
@@ -192,6 +273,16 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                         ),
+                        segments: const [
+                          ButtonSegment(value: 0, label: Text('Günlük')),
+                          ButtonSegment(value: 1, label: Text('Aylık')),
+                          ButtonSegment(value: 2, label: Text('Yıllık')),
+                        ],
+                        selected: <int>{_selectedHoroscopeIndex},
+                        onSelectionChanged: (values) {
+                          final index = values.first;
+                          setState(() => _selectedHoroscopeIndex = index);
+                        },
                       ),
                       _FeatureChip(
                         label: loc.translate('homeShortcutCompatibility'),
