@@ -4,6 +4,7 @@ import '../core/localization/app_localizations.dart';
 import '../core/localization/locale_provider.dart';
 import '../core/utils/locale_collator.dart';
 import '../data/zodiac_signs.dart';
+import '../services.dart';
 
 class ZodiacCompatibilityScreen extends StatefulWidget {
   const ZodiacCompatibilityScreen({super.key, required this.onMenuTap});
@@ -50,7 +51,7 @@ class _ZodiacCompatibilityScreenState extends State<ZodiacCompatibilityScreen>
     final collator = const LocaleCollator();
     final sorted = [...zodiacSigns]
       ..sort((a, b) => collator.compare(a.labelFor(language), b.labelFor(language), locale));
-    final result = CompatibilityEngine.calculate(_firstSign, _secondSign);
+    final result = calculateCompatibilityResult(_firstSign, _secondSign);
     final firstLabel = findZodiacById(_firstSign)?.labelFor(language) ?? _firstSign;
     final secondLabel = findZodiacById(_secondSign)?.labelFor(language) ?? _secondSign;
     return Scaffold(
@@ -309,6 +310,25 @@ class _CompatibilityTab extends StatelessWidget {
   }
 }
 
+CompatibilityResult calculateCompatibilityResult(String firstId, String secondId) {
+  final firstTr = findZodiacById(firstId)?.labelFor('tr') ?? firstId;
+  final secondTr = findZodiacById(secondId)?.labelFor('tr') ?? secondId;
+  final report = AstroService.compatibility(firstTr, secondTr);
+  final baseScore = (report.score * 100).round().clamp(0, 100);
+
+  int derive(String key, int bias) {
+    final seed = key.hashCode ^ firstId.hashCode ^ (secondId.hashCode << 1);
+    final offset = (seed % 17) - 8;
+    return (baseScore + offset + bias).clamp(0, 100);
+  }
+
+  return CompatibilityResult(
+    love: derive('love', 6),
+    family: derive('family', 2),
+    career: derive('career', -4),
+  );
+}
+
 class CompatibilityResult {
   const CompatibilityResult({
     required this.love,
@@ -325,16 +345,6 @@ class CompatibilityResult {
   String loveAdvice(AppLocalizations loc) => _adviceFor(loc, love);
   String familyAdvice(AppLocalizations loc) => _adviceFor(loc, family);
   String careerAdvice(AppLocalizations loc) => _adviceFor(loc, career);
-}
-
-class CompatibilityEngine {
-  static CompatibilityResult calculate(String first, String second) {
-    final base = first.codeUnitAt(0) + second.codeUnitAt(0);
-    final love = 50 + (base % 50);
-    final family = 45 + ((base * 3) % 50);
-    final career = 40 + ((base * 5) % 50);
-    return CompatibilityResult(love: love, family: family, career: career);
-  }
 }
 
 String _adviceFor(AppLocalizations loc, int score) {
