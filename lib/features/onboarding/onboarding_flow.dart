@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart' as geo;
 
+import 'package:kismetly/services/weather_service.dart';
+
 import '../../core/localization/app_localizations.dart';
 import '../../data/zodiac_signs.dart';
-import '../../services.dart';
 import '../../models/weather_report.dart';
-import '../../services/weather_service.dart';
 import '../profile/user_profile.dart';
 
 class OnboardingFlow extends StatefulWidget {
@@ -35,7 +35,6 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   WeatherReport? _weatherPreview;
   bool _weatherLoading = false;
   String? _weatherError;
-  final WeatherService _weatherService = WeatherService();
 
   @override
   void dispose() {
@@ -92,7 +91,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     });
     final locale = Localizations.localeOf(context);
     try {
-      final report = await _weatherService.fetchWeather(
+      final report = await WeatherService().fetchWeather(
         city: location.city ?? _cityController.text.trim(),
         latitude: location.latitude,
         longitude: location.longitude,

@@ -308,14 +308,16 @@ class _WeatherCard extends StatelessWidget {
         ),
       );
     }
-    if (report == null) {
-      return const SizedBox.shrink();
-    }
+    final icon = report?.icon ?? '☀️';
+    final temperatureText = '${(report?.temperature ?? 0).toStringAsFixed(0)}°';
+    final conditionText = report?.condition ?? '-';
+    final cityText = report?.city ?? '-';
+
     return _BlurCard(
       child: Row(
         children: [
           Text(
-            report.icon,
+            icon,
             style: const TextStyle(fontSize: 36),
           ),
           const SizedBox(width: 18),
@@ -324,11 +326,11 @@ class _WeatherCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${report.temperature.toStringAsFixed(0)}°',
+                  temperatureText,
                   style: theme.textTheme.titleLarge,
                 ),
-                Text(report.condition, style: theme.textTheme.bodyMedium),
-                Text(report.city, style: theme.textTheme.bodySmall),
+                Text(conditionText, style: theme.textTheme.bodyMedium),
+                Text(cityText, style: theme.textTheme.bodySmall),
               ],
             ),
           ),
