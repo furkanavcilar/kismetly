@@ -1,29 +1,30 @@
 import 'dart:convert';
-
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 class AppLocalizations {
-  AppLocalizations(this.locale, this._strings);
-
   final Locale locale;
-  final Map<String, String> _strings;
+  late Map<String, String> _localizedStrings;
+
+  AppLocalizations(this.locale);
 
   static const supportedLocales = [Locale('tr'), Locale('en')];
 
   static Future<AppLocalizations> load(Locale locale) async {
-    final languageCode = supportedLocales
-            .map((e) => e.languageCode)
-            .contains(locale.languageCode)
-        ? locale.languageCode
-        : supportedLocales.first.languageCode;
-    final path = 'lib/l10n/app_\${languageCode}.arb';
-    final data = await rootBundle.loadString(path);
-    final map = json.decode(data) as Map<String, dynamic>;
-    return AppLocalizations(
-      Locale(languageCode),
-      map.map((key, value) => MapEntry(key, value.toString())),
-    );
+    final String langCode =
+        supportedLocales.map((e) => e.languageCode).contains(locale.languageCode)
+            ? locale.languageCode
+            : supportedLocales.first.languageCode;
+
+    final String jsonString =
+        await rootBundle.loadString('lib/l10n/app_$langCode.arb');
+    final Map<String, dynamic> jsonMap = json.decode(jsonString);
+
+    final localization = AppLocalizations(locale);
+    localization._localizedStrings = jsonMap.map((key, value) {
+      return MapEntry(key, value.toString());
+    });
+    return localization;
   }
 
   static AppLocalizations of(BuildContext context) {
@@ -31,15 +32,13 @@ class AppLocalizations {
   }
 
   String translate(String key, {Map<String, String>? params}) {
-    final template = _strings[key] ?? key;
-    if (params == null || params.isEmpty) {
-      return template;
+    String value = _localizedStrings[key] ?? key;
+    if (params != null) {
+      params.forEach((param, replacement) {
+        value = value.replaceAll('{$param}', replacement);
+      });
     }
-    var result = template;
-    params.forEach((placeholder, value) {
-      result = result.replaceAll('{$placeholder}', value);
-    });
-    return result;
+    return value;
   }
 }
 
@@ -48,15 +47,12 @@ class AppLocalizationsDelegate
   const AppLocalizationsDelegate();
 
   @override
-  bool isSupported(Locale locale) {
-    return AppLocalizations.supportedLocales
-        .any((element) => element.languageCode == locale.languageCode);
-  }
+  bool isSupported(Locale locale) =>
+      AppLocalizations.supportedLocales.any((e) => e.languageCode == locale.languageCode);
 
   @override
-  Future<AppLocalizations> load(Locale locale) {
-    return AppLocalizations.load(locale);
-  }
+  Future<AppLocalizations> load(Locale locale) =>
+      AppLocalizations.load(locale);
 
   @override
   bool shouldReload(covariant LocalizationsDelegate<AppLocalizations> old) =>
