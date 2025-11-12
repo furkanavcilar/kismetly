@@ -269,6 +269,8 @@ class AppDrawer extends StatelessWidget {
 }
 
 class _LanguageSwitcher extends StatelessWidget {
+  const _LanguageSwitcher({super.key});
+
   @override
   Widget build(BuildContext context) {
     final provider = LocaleScope.of(context);
@@ -313,7 +315,12 @@ class _LanguageSwitcher extends StatelessWidget {
 }
 
 class _LocaleChip extends StatelessWidget {
-  const _LocaleChip({required this.label, required this.selected, required this.onTap});
+  const _LocaleChip({
+    super.key,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   final String label;
   final bool selected;

@@ -161,6 +161,7 @@ class _CommentsSectionState extends State<CommentsSection> {
 
 class _CommentBubble extends StatelessWidget {
   const _CommentBubble({
+    super.key,
     required this.displayName,
     required this.text,
     required this.time,

@@ -470,6 +470,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class _InsightSection extends StatelessWidget {
   const _InsightSection({
+    super.key,
     required this.title,
     required this.sunId,
     required this.risingId,
@@ -577,6 +578,7 @@ class _InsightSection extends StatelessWidget {
 
 class _ShortcutRow extends StatelessWidget {
   const _ShortcutRow({
+    super.key,
     required this.onDream,
     required this.onCoffee,
     required this.onCompatibility,
@@ -613,7 +615,12 @@ class _ShortcutRow extends StatelessWidget {
 }
 
 class _ShortcutCard extends StatelessWidget {
-  const _ShortcutCard({required this.icon, required this.label, required this.onTap});
+  const _ShortcutCard({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   final IconData icon;
   final String label;
@@ -651,6 +658,7 @@ class _ShortcutCard extends StatelessWidget {
 
 class _CompatibilityPreview extends StatelessWidget {
   const _CompatibilityPreview({
+    super.key,
     required this.left,
     required this.right,
     required this.onLeftChanged,
@@ -756,7 +764,7 @@ class _CompatibilityPreview extends StatelessWidget {
 }
 
 class _ScoreRow extends StatelessWidget {
-  const _ScoreRow({required this.label, required this.score});
+  const _ScoreRow({super.key, required this.label, required this.score});
 
   final String label;
   final int score;
@@ -776,7 +784,7 @@ class _ScoreRow extends StatelessWidget {
 }
 
 class _SignCard extends StatelessWidget {
-  const _SignCard({required this.label, required this.onTap});
+  const _SignCard({super.key, required this.label, required this.onTap});
 
   final String label;
   final VoidCallback onTap;
@@ -805,7 +813,12 @@ class _SignCard extends StatelessWidget {
 }
 
 class _FeatureChip extends StatelessWidget {
-  const _FeatureChip({required this.label, required this.icon, required this.onTap});
+  const _FeatureChip({
+    super.key,
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
 
   final String label;
   final IconData icon;
@@ -849,7 +862,7 @@ class _EnergyFocusData {
 }
 
 class _EnergyFocus extends StatelessWidget {
-  const _EnergyFocus({required this.data});
+  const _EnergyFocus({super.key, required this.data});
 
   final _EnergyFocusData data;
 
@@ -890,6 +903,7 @@ class _EnergyFocus extends StatelessWidget {
 
 class _InteractionPreview extends StatelessWidget {
   const _InteractionPreview({
+    super.key,
     required this.title,
     required this.description,
     required this.hint,
@@ -943,7 +957,7 @@ class _InteractionPreview extends StatelessWidget {
 }
 
 class _LoaderLine extends StatelessWidget {
-  const _LoaderLine();
+  const _LoaderLine({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -958,7 +972,7 @@ class _LoaderLine extends StatelessWidget {
 }
 
 class _ErrLine extends StatelessWidget {
-  const _ErrLine({required this.message, this.onRetry});
+  const _ErrLine({super.key, required this.message, this.onRetry});
 
   final String message;
   final VoidCallback? onRetry;
@@ -992,6 +1006,7 @@ class _ErrLine extends StatelessWidget {
 
 class _HoroscopePreview extends StatelessWidget {
   const _HoroscopePreview({
+    super.key,
     required this.title,
     required this.tabs,
     required this.loading,

@@ -239,7 +239,7 @@ class _CoffeeReadingScreenState extends State<CoffeeReadingScreen> {
 }
 
 class _CoffeePreview extends StatelessWidget {
-  const _CoffeePreview({required this.file});
+  const _CoffeePreview({super.key, required this.file});
 
   final XFile file;
 
@@ -263,7 +263,7 @@ class _CoffeePreview extends StatelessWidget {
 }
 
 class _CoffeeResultCard extends StatelessWidget {
-  const _CoffeeResultCard({required this.result});
+  const _CoffeeResultCard({super.key, required this.result});
 
   final Map<String, String> result;
 
@@ -308,6 +308,7 @@ class _CoffeeResultCard extends StatelessWidget {
 
 class _ResultSection extends StatelessWidget {
   const _ResultSection({
+    super.key,
     required this.icon,
     required this.title,
     required this.text,

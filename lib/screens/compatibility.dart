@@ -156,6 +156,7 @@ String _toneForScore(AppLocalizations loc, int score) {
 
 class _SignSelector extends StatelessWidget {
   const _SignSelector({
+    super.key,
     required this.signs,
     required this.first,
     required this.second,
@@ -219,7 +220,12 @@ class _SignSelector extends StatelessWidget {
 }
 
 class _ScoreRing extends StatelessWidget {
-  const _ScoreRing({required this.score, required this.first, required this.second});
+  const _ScoreRing({
+    super.key,
+    required this.score,
+    required this.first,
+    required this.second,
+  });
 
   final int score;
   final String first;
@@ -276,6 +282,7 @@ class _ScoreRing extends StatelessWidget {
 
 class _CompatibilityTab extends StatelessWidget {
   const _CompatibilityTab({
+    super.key,
     required this.label,
     required this.summary,
     required this.score,
