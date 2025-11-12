@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart' as geo;
 
+import 'package:kismetly/services/weather_service.dart';
+
 import '../../core/localization/app_localizations.dart';
 import '../../data/zodiac_signs.dart';
-import '../../services.dart';
 import '../../models/weather_report.dart';
-import '../../services/weather_service.dart';
 import '../profile/user_profile.dart';
 
 class OnboardingFlow extends StatefulWidget {
