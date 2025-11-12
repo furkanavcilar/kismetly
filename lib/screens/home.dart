@@ -344,6 +344,18 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                         ],
                       ),
+                      child: _loadingQuote
+                          ? const _LoaderLine('İlham yükleniyor…')
+                          : (_quote != null
+                              ? AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 300),
+                                  child: Text(
+                                    _quote!,
+                                    key: ValueKey(_quote),
+                                    style: th.bodyLarge,
+                                  ),
+                                )
+                              : const _ErrLine('İlham alınamadı')), 
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -374,6 +386,16 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                         ),
+                        segments: const [
+                          ButtonSegment(value: 0, label: Text('Günlük')),
+                          ButtonSegment(value: 1, label: Text('Aylık')),
+                          ButtonSegment(value: 2, label: Text('Yıllık')),
+                        ],
+                        selected: <int>{_selectedHoroscopeIndex},
+                        onSelectionChanged: (values) {
+                          final index = values.first;
+                          setState(() => _selectedHoroscopeIndex = index);
+                        },
                       ),
                       _FeatureChip(
                         label: loc.translate('homeShortcutCompatibility'),
