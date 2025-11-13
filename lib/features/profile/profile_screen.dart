@@ -50,30 +50,79 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadProfile() async {
+    if (!mounted) return;
     setState(() => _loading = true);
-    final controller = UserProfileScope.of(context);
-    final profile = controller.profile;
-    final user = _googleAuth.currentUser;
+    
+    try {
+      final controller = UserProfileScope.of(context);
+      final profile = controller.profile;
+      final user = _googleAuth.currentUser;
 
-    if (profile != null) {
-      _nameController.text = profile.name;
-      _birthDate = profile.birthDate;
-      _birthTime = TimeOfDay(
-        hour: profile.birthTime.inHours,
-        minute: profile.birthTime.inMinutes % 60,
-      );
-      _cityController.text = profile.birthCity;
-      _genderController.text = profile.gender ?? '';
-    }
+      // Load from profile first
+      if (profile != null) {
+        _nameController.text = profile.name;
+        _birthDate = profile.birthDate;
+        _birthTime = TimeOfDay(
+          hour: profile.birthTime.inHours,
+          minute: profile.birthTime.inMinutes % 60,
+        );
+        _cityController.text = profile.birthCity;
+        _genderController.text = profile.gender ?? '';
+      }
 
-    if (user != null) {
-      _profileImageUrl = user.photoURL;
-      if (_nameController.text.isEmpty && user.displayName != null) {
-        _nameController.text = user.displayName!;
+      // Override with Google user data if available
+      if (user != null) {
+        _profileImageUrl = user.photoURL;
+        if (_nameController.text.isEmpty && user.displayName != null) {
+          _nameController.text = user.displayName!;
+        }
+        
+        // Also try to load from Firestore as fallback
+        try {
+          final firestore = FirebaseFirestore.instance;
+          final userDoc = await firestore.collection('users').doc(user.uid).get();
+          if (userDoc.exists) {
+            final data = userDoc.data();
+            if (data != null) {
+              if (_nameController.text.isEmpty && data['name'] != null) {
+                _nameController.text = data['name'] as String;
+              }
+              if (_cityController.text.isEmpty && data['birthCity'] != null) {
+                _cityController.text = data['birthCity'] as String;
+              }
+              if (_genderController.text.isEmpty && data['gender'] != null) {
+                _genderController.text = data['gender'] as String;
+              }
+              if (_birthDate == null && data['birthDate'] != null) {
+                final timestamp = data['birthDate'] as Timestamp;
+                _birthDate = timestamp.toDate();
+              }
+              if (_birthTime == null && data['birthTime'] != null) {
+                final minutes = data['birthTime'] as int;
+                _birthTime = TimeOfDay(
+                  hour: minutes ~/ 60,
+                  minute: minutes % 60,
+                );
+              }
+            }
+          }
+        } catch (e) {
+          debugPrint('Error loading from Firestore: $e');
+          // Continue with existing data
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading profile: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context).translate('profileLoadError') ?? 'Error loading profile')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
       }
     }
-
-    setState(() => _loading = false);
   }
 
   Future<void> _pickImage() async {

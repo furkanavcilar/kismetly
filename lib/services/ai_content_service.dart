@@ -260,9 +260,21 @@ class AiContentService {
     if (content is! String) {
       throw const FormatException('Unexpected OpenAI response');
     }
-    final parsed = jsonDecode(content);
-    return parsed
-        .map((key, value) => MapEntry(key.toString(), value.toString()));
+    final parsed = jsonDecode(content) as Map<String, dynamic>;
+    
+    // Ensure all required sections exist
+    final result = <String, String>{
+      'summary': parsed['summary']?.toString() ?? '',
+      'love': parsed['love']?.toString() ?? '',
+      'family': parsed['family']?.toString() ?? '',
+      'career': parsed['career']?.toString() ?? '',
+      'strengths': parsed['strengths']?.toString() ?? '',
+      'challenges': parsed['challenges']?.toString() ?? '',
+      'communication': parsed['communication']?.toString() ?? '',
+      'longTerm': parsed['longTerm']?.toString() ?? '',
+    };
+    
+    return result;
   }
 
   // Fallback builder
@@ -308,20 +320,19 @@ class AiContentService {
     required Locale locale,
     required int seed,
   }) {
-    final summary = locale.languageCode == 'tr'
-        ? '$firstSign ve $secondSign arasında yumuşak bir enerji akışı var.'
-        : '$firstSign and $secondSign share a gentle, harmonic flow.';
+    // Fallback should be minimal - AI service should handle most cases
+    final loadingMsg = locale.languageCode == 'tr'
+        ? 'Uyumluluk analizi yükleniyor...'
+        : 'Loading compatibility analysis...';
     return {
-      'summary': summary,
-      'love': locale.languageCode == 'tr'
-          ? 'Aşkta anlayış ve sabır bugün size rehberlik edecek.'
-          : 'In love, patience and empathy guide your bond.',
-      'family': locale.languageCode == 'tr'
-          ? 'Aile içinde karşılıklı destek enerjisi öne çıkıyor.'
-          : 'Family ties are nurtured through mutual support.',
-      'career': locale.languageCode == 'tr'
-          ? 'İş ortamında net iletişim ve ortak hedefler önemli.'
-          : 'Clear communication drives collaboration at work.',
+      'summary': loadingMsg,
+      'love': loadingMsg,
+      'family': loadingMsg,
+      'career': loadingMsg,
+      'strengths': loadingMsg,
+      'challenges': loadingMsg,
+      'communication': loadingMsg,
+      'longTerm': loadingMsg,
     };
   }
 
@@ -346,9 +357,35 @@ Sun sign: $sunSign, rising: $risingSign. Provide actionable daily advice. Respon
     required int seed,
   }) {
     if (locale.languageCode == 'tr') {
-      return '''Sen deneyimli bir astroloji ve ilişki danışmanısın. $firstSign ve $secondSign burçlarının uyumluluğunu analiz et. JSON formatında döndür: {"summary":string,"love":string,"family":string,"career":string}. Her bölüm için 2-3 paragraf yaz. Kişisel, empatik, şiirsel ve derinden insani bir ton kullan. Yapay zeka, modeller veya teknolojiden asla bahsetme. Kişiye doğrudan "sen" diye hitap et. Türkçe yanıt ver.''';
+      return '''Sen deneyimli bir astroloji ve ilişki danışmanısın. $firstSign ve $secondSign burçlarının uyumluluğunu derinlemesine analiz et. JSON formatında döndür: {"summary":string,"love":string,"family":string,"career":string,"strengths":string,"challenges":string,"communication":string,"longTerm":string}. 
+
+Her bölüm için 3-4 paragraf yaz. Her bölüm detaylı, özgün ve bu özel burç çiftine özgü olmalı. Aynı metni kopyalama - her burç çifti için tamamen farklı içerik üret.
+
+- summary: Genel uyum özeti (3-4 paragraf)
+- love: Aşk ve romantik ilişkiler (3-4 paragraf)
+- family: Aile ve yakın ilişkiler (3-4 paragraf)
+- career: İş ve kariyer uyumu (3-4 paragraf)
+- strengths: Bu çiftin güçlü yönleri ve uyumlu alanları (3-4 paragraf)
+- challenges: Zorluklar ve dikkat edilmesi gerekenler (3-4 paragraf)
+- communication: İletişim önerileri ve nasıl daha iyi anlaşabilecekleri (3-4 paragraf)
+- longTerm: Uzun vadeli potansiyel ve ilişki geleceği (3-4 paragraf)
+
+Kişisel, empatik, şiirsel ve derinden insani bir ton kullan. Yapay zeka, modeller veya teknolojiden asla bahsetme. Kişiye doğrudan "sen" diye hitap et. Her burç çifti için benzersiz, tekrar etmeyen içerik üret. Türkçe yanıt ver.''';
     }
-    return '''You are an experienced astrology and relationship counselor. Analyze the compatibility between $firstSign and $secondSign signs. Return in JSON format: {"summary":string,"love":string,"family":string,"career":string}. Write 2-3 paragraphs for each section. Use a personal, empathetic, poetic, and deeply human tone. Never mention AI, models, or technology. Speak directly to the person using "you". Respond in English.''';
+    return '''You are an experienced astrology and relationship counselor. Analyze the compatibility between $firstSign and $secondSign signs in depth. Return in JSON format: {"summary":string,"love":string,"family":string,"career":string,"strengths":string,"challenges":string,"communication":string,"longTerm":string}.
+
+Write 3-4 paragraphs for each section. Each section must be detailed, unique, and specific to this particular sign pair. Do not copy the same text - generate completely different content for each sign pair.
+
+- summary: Overall compatibility summary (3-4 paragraphs)
+- love: Love and romantic relationships (3-4 paragraphs)
+- family: Family and close relationships (3-4 paragraphs)
+- career: Work and career compatibility (3-4 paragraphs)
+- strengths: This pair's strengths and harmonious areas (3-4 paragraphs)
+- challenges: Challenges and areas to be mindful of (3-4 paragraphs)
+- communication: Communication tips and how they can better understand each other (3-4 paragraphs)
+- longTerm: Long-term potential and relationship future (3-4 paragraphs)
+
+Use a personal, empathetic, poetic, and deeply human tone. Never mention AI, models, or technology. Speak directly to the person using "you". Generate unique, non-repetitive content for each sign pair. Respond in English.''';
   }
 
   /// Fetch daily horoscope for a specific zodiac sign
@@ -388,7 +425,9 @@ Sun sign: $sunSign, rising: $risingSign. Provide actionable daily advice. Respon
               },
               {
                 'role': 'user',
-                'content': 'Write today\'s horoscope for $sign (date: ${date.year}-${date.month}-${date.day}). Make it personal, warm, and specific to this sign. Write 4-6 long paragraphs with varied, non-generic guidance. Include insights about love, career, spiritual growth, and social connections. Use the date (${date.day}/${date.month}/${date.year}) and sign characteristics to create unique, non-repetitive content. Write as a caring astrologer speaking directly to the person using "you". Never mention AI, models, or technology. Vary your language, sentence structure, and avoid repetitive phrases. Each paragraph should be substantial (3-4 sentences minimum). Make it feel fresh and different from any previous horoscope for this sign.',
+                'content': locale.languageCode == 'tr'
+                    ? 'Sen sıcak, empatik bir astrologsun. $sign burcu için bugünün (${date.day}/${date.month}/${date.year}) horoskopunu yaz. Bu horoskop SADECE $sign burcu için özel olmalı - diğer burçlardan tamamen farklı olmalı. 4-6 uzun paragraf yaz. Her paragraf en az 3-4 cümle içermeli. Aşk, kariyer, ruhsal gelişim ve sosyal bağlantılar hakkında özel içgörüler ver. Tarihi ve burç özelliklerini kullanarak benzersiz, tekrar etmeyen içerik oluştur. Kişiye doğrudan "sen" diye hitap et. Yapay zeka, modeller veya teknolojiden asla bahsetme. Dilini, cümle yapını değiştir ve tekrarlayan ifadelerden kaçın. Bu horoskop $sign burcu için bugün özel olmalı ve diğer tüm burçlardan farklı olmalı.'
+                    : 'You are a warm, empathetic astrologer. Write today\'s (${date.day}/${date.month}/${date.year}) horoscope for the $sign sign. This horoscope must be SPECIFIC to the $sign sign only - completely different from all other signs. Write 4-6 long paragraphs. Each paragraph should contain at least 3-4 sentences. Provide specific insights about love, career, spiritual growth, and social connections. Use the date and sign characteristics to create unique, non-repetitive content. Speak directly to the person using "you". Never mention AI, models, or technology. Vary your language, sentence structure, and avoid repetitive phrases. This horoscope must be special for the $sign sign today and different from all other signs.',
               },
             ],
             'temperature': 0.95, // Higher temperature for more variation
@@ -468,10 +507,13 @@ Sun sign: $sunSign, rising: $risingSign. Provide actionable daily advice. Respon
               },
               {
                 'role': 'user',
-                'content': 'Provide detailed information about the $sign zodiac sign. Include: General Traits (Genel Özellikler), Strengths (Güçlü Yönler), Challenges (Zorluklar), Love & Relationships (Aşk & İlişkiler), Career & Money (Kariyer & Para), Emotional Landscape (Duygusal Manzara), and Monthly/Seasonal Focus (Bu Ayın Teması). Write as a knowledgeable astrologer. Each section should be 3-4 paragraphs. Never mention AI or technology.',
+                'content': locale.languageCode == 'tr'
+                    ? 'Sen deneyimli bir astrologsun. $sign burcu hakkında detaylı, zengin ve kişisel bir açıklama yaz. Şu bölümleri içermeli: Genel Özellikler (3-4 paragraf, bu burcun temel karakteristiklerini anlat - $sign burcuna özgü, diğer burçlardan farklı), Güçlü Yönler (3-4 paragraf, bu burcun güçlü yanlarını detaylandır - $sign burcuna özel güçler), Zorluklar (3-4 paragraf, bu burcun zayıf yönlerini ve gelişim alanlarını açıkla - $sign burcuna özgü zorluklar), Aşk & İlişkiler (3-4 paragraf, bu burcun aşk hayatındaki yaklaşımını ve ilişki dinamiklerini anlat - $sign burcuna özel aşk tarzı), Kariyer & Para (3-4 paragraf, bu burcun iş hayatı ve finansal yaklaşımını detaylandır - $sign burcuna özel kariyer yolu), Duygusal Manzara (3-4 paragraf, bu burcun duygusal dünyasını ve içsel yolculuğunu anlat - $sign burcuna özel duygusal özellikler), Ruhsal Yolculuk (3-4 paragraf, bu burcun ruhsal gelişim yolunu ve manevi arayışını açıkla - $sign burcuna özel ruhsal yol). Her bölümü $sign burcuna özgü, benzersiz ve detaylı yaz. Her burç için farklı cümle yapıları, farklı örnekler ve farklı odak noktaları kullan. Yapay zeka, modeller veya teknolojiden asla bahsetme. Kişiye doğrudan "sen" diye hitap et. Her burç için tamamen farklı içerik üret - aynı metni kopyalama. $sign burcu diğer tüm burçlardan farklıdır, bu farklılığı her bölümde vurgula.'
+                    : 'You are an experienced astrologer. Write a detailed, rich, and personal description about the $sign zodiac sign. Include these sections: General Traits (3-4 paragraphs describing the core characteristics of this sign - specific to $sign, different from other signs), Strengths (3-4 paragraphs detailing the strong points of this sign - $sign-specific strengths), Challenges (3-4 paragraphs explaining the weaknesses and growth areas of this sign - $sign-specific challenges), Love & Relationships (3-4 paragraphs describing this sign\'s approach to love and relationship dynamics - $sign-specific love style), Career & Money (3-4 paragraphs detailing this sign\'s work life and financial approach - $sign-specific career path), Emotional Landscape (3-4 paragraphs describing this sign\'s emotional world and inner journey - $sign-specific emotional traits), Spiritual Path (3-4 paragraphs explaining this sign\'s spiritual development path and spiritual quest - $sign-specific spiritual journey). Write each section uniquely and specifically for the $sign sign. Use different sentence structures, different examples, and different focus points for each sign. Never mention AI, models, or technology. Speak directly to the person using "you". Generate completely different content for each sign - do not copy the same text. The $sign sign is different from all other signs, emphasize this difference in every section.',
               },
             ],
-            'temperature': 0.7,
+            'temperature': 0.85, // Higher temperature for more variation between signs
+            'seed': _hashString('$sign|${locale.languageCode}'), // Unique seed per sign
           }),
         );
 
@@ -512,6 +554,7 @@ Sun sign: $sunSign, rising: $risingSign. Provide actionable daily advice. Respon
       'love': '',
       'career': '',
       'emotional': '',
+      'spiritual': '', // New section: Ruhsal Yolculuk / Spiritual Path
       'themes': '',
     };
 
@@ -535,6 +578,9 @@ Sun sign: $sunSign, rising: $risingSign. Provide actionable daily advice. Respon
     final emotionalKeywords = language == 'tr'
         ? ['duygusal', 'emotional']
         : ['emotional', 'landscape'];
+    final spiritualKeywords = language == 'tr'
+        ? ['ruhsal', 'spiritual', 'spiritüel', 'manevi']
+        : ['spiritual', 'path', 'journey'];
     final themeKeywords = language == 'tr'
         ? ['tema', 'yılın', 'ayın', 'themes']
         : ['themes', 'year', 'monthly'];
@@ -547,6 +593,7 @@ Sun sign: $sunSign, rising: $risingSign. Provide actionable daily advice. Respon
           : key == 'love' ? loveKeywords
           : key == 'career' ? careerKeywords
           : key == 'emotional' ? emotionalKeywords
+          : key == 'spiritual' ? spiritualKeywords
           : themeKeywords;
       
       for (final keyword in keywords) {
@@ -564,6 +611,7 @@ Sun sign: $sunSign, rising: $risingSign. Provide actionable daily advice. Respon
                 : otherKey == 'love' ? loveKeywords
                 : otherKey == 'career' ? careerKeywords
                 : otherKey == 'emotional' ? emotionalKeywords
+                : otherKey == 'spiritual' ? spiritualKeywords
                 : themeKeywords;
             for (final otherKeyword in otherKeywords) {
               final otherIndex = lower.indexOf(otherKeyword, start);
@@ -594,25 +642,30 @@ Sun sign: $sunSign, rising: $risingSign. Provide actionable daily advice. Respon
   }
 
   Map<String, String> _getFallbackZodiacDetails(String sign, String language) {
+    // Fallback should be minimal and sign-specific - avoid generic text
+    // In production, this should rarely be used as AI service should handle it
+    final signHash = sign.hashCode % 12; // Simple variation per sign
     if (language == 'tr') {
       return {
-        'traits': '$sign burcu, kozmik enerjilerin güçlü bir temsilcisidir. Bu burç, derin duygusal bağlantılar ve sezgisel anlayışla karakterize edilir.',
-        'strengths': 'Güçlü yönlerin arasında empati, yaratıcılık ve içgörü yer alır. Bu özellikler seni hayatta ileriye taşır.',
-        'challenges': 'Bazen aşırı duyarlılık ve mükemmeliyetçilik zorluk yaratabilir. Kendine karşı nazik olmayı unutma.',
-        'love': 'Aşk hayatında derin bağlantılar kurma eğilimindesin. Duygusal samimiyet ve güven senin için çok önemli.',
-        'career': 'Kariyerinde yaratıcılık ve sezgilerin seni yönlendiriyor. İş hayatında empati ve anlayış güçlü yönlerin.',
-        'emotional': 'Duygusal manzaran zengin ve derin. İç dünyanı keşfetmek ve duygularını ifade etmek senin için önemli.',
-        'themes': 'Bu yıl, kişisel gelişim ve ruhsal derinleşme temaları öne çıkıyor. Yeni fırsatlar ve dönüşümler seni bekliyor.',
+        'traits': '$sign burcu hakkında detaylı bilgi yükleniyor. Lütfen internet bağlantınızı kontrol edin.',
+        'strengths': 'Güçlü yönler analiz ediliyor...',
+        'challenges': 'Zorluklar değerlendiriliyor...',
+        'love': 'Aşk ve ilişkiler bölümü hazırlanıyor...',
+        'career': 'Kariyer ve para bölümü hazırlanıyor...',
+        'emotional': 'Duygusal manzara analiz ediliyor...',
+        'spiritual': 'Ruhsal yolculuk bölümü hazırlanıyor...',
+        'themes': 'Yıllık temalar değerlendiriliyor...',
       };
     }
     return {
-      'traits': 'The $sign sign is a powerful representative of cosmic energies. This sign is characterized by deep emotional connections and intuitive understanding.',
-      'strengths': 'Your strengths include empathy, creativity, and insight. These qualities carry you forward in life.',
-      'challenges': 'Sometimes excessive sensitivity and perfectionism can create challenges. Remember to be gentle with yourself.',
-      'love': 'In love, you tend to form deep connections. Emotional intimacy and trust are very important to you.',
-      'career': 'In your career, creativity and intuition guide you. Empathy and understanding are your strong points in work life.',
-      'emotional': 'Your emotional landscape is rich and deep. Exploring your inner world and expressing your feelings is important to you.',
-      'themes': 'This year, themes of personal growth and spiritual deepening come to the fore. New opportunities and transformations await you.',
+      'traits': 'Loading detailed information about the $sign sign. Please check your internet connection.',
+      'strengths': 'Analyzing strengths...',
+      'challenges': 'Evaluating challenges...',
+      'love': 'Preparing love and relationships section...',
+      'career': 'Preparing career and money section...',
+      'emotional': 'Analyzing emotional landscape...',
+      'spiritual': 'Preparing spiritual path section...',
+      'themes': 'Evaluating yearly themes...',
     };
   }
 }

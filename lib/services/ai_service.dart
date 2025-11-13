@@ -18,6 +18,8 @@ class AiService {
   Future<String> interpretDream({
     required String prompt,
     required Locale locale,
+    String? userZodiacSign,
+    String? userCity,
   }) async {
     if (prompt.trim().isEmpty) {
       return '';
@@ -41,13 +43,11 @@ class AiService {
             },
             {
               'role': 'user',
-              'content': locale.languageCode == 'tr'
-                  ? 'Rüyam: $prompt\n\nBu rüyayı derinlemesine analiz et. Rüyadaki sembolleri, duyguları ve mesajları keşfet. Kişiye doğrudan, empati ve anlayışla konuş. 4-7 paragraf uzunluğunda, detaylı bir yorum yaz. Psikolojik içgörüler ve sembolik astroloji tarzını harmanla ama sakin, rahatlatıcı bir dil kullan. Rüya metnindeki özel detaylara referans ver. Tarih: ${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}. Her gün farklı bir yorum üret.'
-                  : 'My dream: $prompt\n\nAnalyze this dream in depth. Discover the symbols, emotions, and messages in the dream. Speak directly to the person with empathy and understanding. Write a detailed interpretation with 4-7 paragraphs. Mix psychological insights and symbolic astrology style, but use calm, comforting language. Reference specific details from the dream text. Date: ${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}. Generate a different interpretation each day.',
+              'content': _buildDreamPrompt(prompt, locale, userZodiacSign, userCity),
             }
           ],
-          'temperature': 0.9,
-          'seed': DateTime.now().day * 100 + DateTime.now().month + prompt.hashCode % 1000,
+          'temperature': 0.95, // Higher temperature for more variation
+          'seed': DateTime.now().day * 100 + DateTime.now().month + prompt.hashCode % 1000 + (userZodiacSign?.hashCode ?? 0) % 1000,
         }),
       );
       if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -131,6 +131,26 @@ class AiService {
       debugPrintStack(stackTrace: stack);
       return _offlineCoffee(locale);
     }
+  }
+
+  String _buildDreamPrompt(String prompt, Locale locale, String? userZodiacSign, String? userCity) {
+    final now = DateTime.now();
+    final dateStr = '${now.year}-${now.month}-${now.day}';
+    final zodiacContext = userZodiacSign != null && userZodiacSign.isNotEmpty
+        ? (locale.languageCode == 'tr'
+            ? ' Kullanıcının burcu: $userZodiacSign. Bu burç özelliklerini rüya yorumuna dahil et.'
+            : ' User\'s zodiac sign: $userZodiacSign. Incorporate this sign\'s characteristics into the dream interpretation.')
+        : '';
+    final cityContext = userCity != null && userCity.isNotEmpty
+        ? (locale.languageCode == 'tr'
+            ? ' Kullanıcının şehri: $userCity.'
+            : ' User\'s city: $userCity.')
+        : '';
+    
+    if (locale.languageCode == 'tr') {
+      return 'Rüyam: $prompt\n\nBu rüyayı derinlemesine analiz et. Rüyadaki sembolleri, duyguları ve mesajları keşfet. Kişiye doğrudan, empati ve anlayışla konuş. 4-7 paragraf uzunluğunda, detaylı bir yorum yaz. Her paragraf en az 3-4 cümle içermeli. Psikolojik içgörüler ve sembolik astroloji tarzını harmanla ama sakin, rahatlatıcı bir dil kullan. Rüya metnindeki özel detaylara referans ver. Tarih: $dateStr.$zodiacContext$cityContext Her gün farklı bir yorum üret. Aynı rüya metni için bile farklı açılardan yaklaş. Yapay zeka, modeller veya teknolojiden asla bahsetme.';
+    }
+    return 'My dream: $prompt\n\nAnalyze this dream in depth. Discover the symbols, emotions, and messages in the dream. Speak directly to the person with empathy and understanding. Write a detailed interpretation with 4-7 paragraphs. Each paragraph should contain at least 3-4 sentences. Mix psychological insights and symbolic astrology style, but use calm, comforting language. Reference specific details from the dream text. Date: $dateStr.$zodiacContext$cityContext Generate a different interpretation each day. Even for the same dream text, approach it from different angles. Never mention AI, models, or technology.';
   }
 
   String _dreamSystemPrompt(String language) {

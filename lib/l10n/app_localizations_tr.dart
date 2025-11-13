@@ -712,4 +712,22 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get errorConnectionDesc => 'Lütfen internet bağlantınızı kontrol edin';
+
+  @override
+  String get zodiacSpiritual => 'Ruhsal Yolculuk';
+
+  @override
+  String get compatibilityStrengths => 'Güçlü Alanlar';
+
+  @override
+  String get compatibilityChallenges => 'Zorluklar';
+
+  @override
+  String get compatibilityCommunication => 'İletişim Önerileri';
+
+  @override
+  String get compatibilityLongTerm => 'Uzun Vadeli Potansiyel';
+
+  @override
+  String get profileLoadError => 'Profil yüklenirken hata oluştu';
 }

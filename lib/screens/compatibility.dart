@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../core/localization/app_localizations.dart';
 import '../core/localization/locale_provider.dart';
 import '../core/utils/locale_collator.dart';
+import '../core/config/app_config.dart';
 import '../data/zodiac_signs.dart';
 import '../features/paywall/premium_lock_widget.dart';
 import '../features/paywall/upgrade_screen.dart';
@@ -36,7 +38,7 @@ class _ZodiacCompatibilityScreenState extends State<ZodiacCompatibilityScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 7, vsync: this);
     _firstSign = zodiacSigns.first.id;
     _secondSign = zodiacSigns.last.id;
     _checkDailyLimit();
@@ -45,7 +47,22 @@ class _ZodiacCompatibilityScreenState extends State<ZodiacCompatibilityScreen>
 
   Future<void> _checkDailyLimit() async {
     setState(() => _checkingLimit = true);
-    final canUse = await _dailyLimits.canUseFeature('zodiac');
+    // Check dev bypass first
+    final monetization = MonetizationService.instance;
+    final user = FirebaseAuth.instance.currentUser;
+    final bypass = AppConfig.shouldBypassLimits(user?.email);
+    
+    if (bypass || monetization.isPremium) {
+      if (mounted) {
+        setState(() {
+          _canUseFree = true;
+          _checkingLimit = false;
+        });
+      }
+      return;
+    }
+    
+    final canUse = await _dailyLimits.canUseFeature('compatibility');
     if (mounted) {
       setState(() {
         _canUseFree = canUse;
@@ -89,9 +106,11 @@ class _ZodiacCompatibilityScreenState extends State<ZodiacCompatibilityScreen>
       _error = null;
     });
     
-    // Record usage if free
-    if (_canUseFree && !monetization.isPremium) {
-      await _dailyLimits.recordFeatureUse('zodiac');
+    // Record usage if free (but not if dev bypass is active)
+    final user = FirebaseAuth.instance.currentUser;
+    final bypass = AppConfig.shouldBypassLimits(user?.email);
+    if (_canUseFree && !monetization.isPremium && !bypass) {
+      await _dailyLimits.recordFeatureUse('compatibility');
       setState(() => _canUseFree = false);
     }
     
@@ -153,10 +172,15 @@ class _ZodiacCompatibilityScreenState extends State<ZodiacCompatibilityScreen>
         ],
         bottom: TabBar(
           controller: _tabController,
+          isScrollable: true,
           tabs: [
             Tab(text: loc.translate('compatibilityLove')),
             Tab(text: loc.translate('compatibilityFamily')),
             Tab(text: loc.translate('compatibilityCareer')),
+            Tab(text: loc.translate('compatibilityStrengths') ?? 'Güçlü Alanlar'),
+            Tab(text: loc.translate('compatibilityChallenges') ?? 'Zorluklar'),
+            Tab(text: loc.translate('compatibilityCommunication') ?? 'İletişim'),
+            Tab(text: loc.translate('compatibilityLongTerm') ?? 'Uzun Vade'),
           ],
         ),
       ),
@@ -236,6 +260,26 @@ class _ZodiacCompatibilityScreenState extends State<ZodiacCompatibilityScreen>
                 _CompatibilityTab(
                   label: loc.translate('compatibilityCareer'),
                   summary: _insights?['career'] ?? '',
+                  loading: _loading,
+                ),
+                _CompatibilityTab(
+                  label: loc.translate('compatibilityStrengths'),
+                  summary: _insights?['strengths'] ?? '',
+                  loading: _loading,
+                ),
+                _CompatibilityTab(
+                  label: loc.translate('compatibilityChallenges'),
+                  summary: _insights?['challenges'] ?? '',
+                  loading: _loading,
+                ),
+                _CompatibilityTab(
+                  label: loc.translate('compatibilityCommunication'),
+                  summary: _insights?['communication'] ?? '',
+                  loading: _loading,
+                ),
+                _CompatibilityTab(
+                  label: loc.translate('compatibilityLongTerm'),
+                  summary: _insights?['longTerm'] ?? '',
                   loading: _loading,
                 ),
               ],

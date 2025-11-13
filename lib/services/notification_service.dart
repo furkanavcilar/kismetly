@@ -192,7 +192,7 @@ class NotificationService {
             final preview = sentences.take(2).join('. ');
             // Limit to 120 characters for notification
             if (preview.length > 120) {
-              return preview.substring(0, 117) + '...';
+              return '${preview.substring(0, 117)}...';
             }
             return preview;
           }

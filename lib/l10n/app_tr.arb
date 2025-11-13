@@ -250,5 +250,11 @@
   "settingsPurchases": "Satın Alımlar",
   "settingsRestorePurchases": "Satın Alımları Geri Yükle",
   "settingsRestorePurchasesDesc": "Önceki satın alımlarınızı geri yükleyin",
-  "errorConnectionDesc": "Lütfen internet bağlantınızı kontrol edin"
+  "errorConnectionDesc": "Lütfen internet bağlantınızı kontrol edin",
+  "zodiacSpiritual": "Ruhsal Yolculuk",
+  "compatibilityStrengths": "Güçlü Alanlar",
+  "compatibilityChallenges": "Zorluklar",
+  "compatibilityCommunication": "İletişim Önerileri",
+  "compatibilityLongTerm": "Uzun Vadeli Potansiyel",
+  "profileLoadError": "Profil yüklenirken hata oluştu"
 }

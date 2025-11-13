@@ -308,6 +308,10 @@ class AppDrawer extends StatelessWidget {
                   final index = items[displayIndex];
                   final page = pages[index];
                   final selected = index == selectedIndex;
+                  // Skip profile from menu list - it's in the header
+                  if (page.id == 'profile') {
+                    return const SizedBox.shrink();
+                  }
                   return ListTile(
                     leading: Icon(page.icon),
                     title: Text(loc.translate(page.titleKey)),

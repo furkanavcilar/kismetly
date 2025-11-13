@@ -8,6 +8,8 @@ import '../../services/ai_service.dart';
 import '../../services/monetization/monetization_service.dart';
 import '../../services/daily_limits_service.dart';
 import '../../features/paywall/upgrade_screen.dart';
+import '../../features/profile/user_profile_scope.dart';
+import '../../data/zodiac_signs.dart';
 import 'dream_history_entry.dart';
 import 'dream_history_store.dart';
 
@@ -101,9 +103,17 @@ class _DreamInterpreterScreenState extends State<DreamInterpreterScreen> {
     }
 
     final locale = LocaleScope.of(context).locale;
+    final profile = UserProfileScope.of(context).profile;
+    final userSign = profile?.sunSign != null
+        ? findZodiacById(profile!.sunSign!)?.labelFor(locale.languageCode)
+        : null;
+    final userCity = profile?.birthCity;
+    
     final response = await _aiService.interpretDream(
       prompt: text,
       locale: locale,
+      userZodiacSign: userSign,
+      userCity: userCity,
     );
     if (mounted) {
       setState(() {

@@ -152,6 +152,11 @@ class _ZodiacSignDetailScreenState extends State<ZodiacSignDetailScreen> {
                         ),
                         const SizedBox(height: 24),
                         _DetailSection(
+                          title: loc.translate('zodiacSpiritual') ?? 'Ruhsal Yolculuk',
+                          content: _details!['spiritual'] ?? '',
+                        ),
+                        const SizedBox(height: 24),
+                        _DetailSection(
                           title: loc.translate('zodiacThemes') ?? 'Bu Ayın Teması',
                           content: _details!['themes'] ?? '',
                         ),

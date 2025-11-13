@@ -1444,6 +1444,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please check your internet connection'**
   String get errorConnectionDesc;
+
+  /// No description provided for @zodiacSpiritual.
+  ///
+  /// In en, this message translates to:
+  /// **'Spiritual Path'**
+  String get zodiacSpiritual;
+
+  /// No description provided for @compatibilityStrengths.
+  ///
+  /// In en, this message translates to:
+  /// **'Strengths'**
+  String get compatibilityStrengths;
+
+  /// No description provided for @compatibilityChallenges.
+  ///
+  /// In en, this message translates to:
+  /// **'Challenges'**
+  String get compatibilityChallenges;
+
+  /// No description provided for @compatibilityCommunication.
+  ///
+  /// In en, this message translates to:
+  /// **'Communication Tips'**
+  String get compatibilityCommunication;
+
+  /// No description provided for @compatibilityLongTerm.
+  ///
+  /// In en, this message translates to:
+  /// **'Long-Term Potential'**
+  String get compatibilityLongTerm;
+
+  /// No description provided for @profileLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading profile'**
+  String get profileLoadError;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

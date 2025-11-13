@@ -223,5 +223,11 @@
   "settingsPurchases": "Purchases",
   "settingsRestorePurchases": "Restore Purchases",
   "settingsRestorePurchasesDesc": "Restore your previous purchases",
-  "errorConnectionDesc": "Please check your internet connection"
+  "errorConnectionDesc": "Please check your internet connection",
+  "zodiacSpiritual": "Spiritual Path",
+  "compatibilityStrengths": "Strengths",
+  "compatibilityChallenges": "Challenges",
+  "compatibilityCommunication": "Communication Tips",
+  "compatibilityLongTerm": "Long-Term Potential",
+  "profileLoadError": "Error loading profile"
 }

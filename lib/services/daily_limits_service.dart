@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
+import '../core/config/app_config.dart';
+
 class DailyLimitsService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -9,6 +11,13 @@ class DailyLimitsService {
   /// Check if user can use a feature (1 free per day)
   Future<bool> canUseFeature(String featureName) async {
     final user = _auth.currentUser;
+    
+    // Dev bypass: if in dev mode and user email matches test domains, bypass limits
+    if (AppConfig.shouldBypassLimits(user?.email)) {
+      debugPrint('Dev mode: bypassing daily limit for $featureName');
+      return true;
+    }
+    
     if (user == null) return true; // Guest users have limits too, but we'll track locally
 
     try {

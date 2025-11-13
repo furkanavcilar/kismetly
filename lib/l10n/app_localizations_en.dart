@@ -712,4 +712,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errorConnectionDesc => 'Please check your internet connection';
+
+  @override
+  String get zodiacSpiritual => 'Spiritual Path';
+
+  @override
+  String get compatibilityStrengths => 'Strengths';
+
+  @override
+  String get compatibilityChallenges => 'Challenges';
+
+  @override
+  String get compatibilityCommunication => 'Communication Tips';
+
+  @override
+  String get compatibilityLongTerm => 'Long-Term Potential';
+
+  @override
+  String get profileLoadError => 'Error loading profile';
 }
