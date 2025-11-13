@@ -64,8 +64,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '366386022105',
     projectId: 'kismetlyfal',
     storageBucket: 'kismetlyfal.firebasestorage.app',
-    androidClientId: '366386022105-8u0d81a6s68992v3tpv0af71bc5cgvkm.apps.googleusercontent.com',
-    iosClientId: '366386022105-7eh5i18jip13ggtecb7gtbpahjbo6c50.apps.googleusercontent.com',
+    androidClientId:
+        '366386022105-8u0d81a6s68992v3tpv0af71bc5cgvkm.apps.googleusercontent.com',
+    iosClientId:
+        '366386022105-7eh5i18jip13ggtecb7gtbpahjbo6c50.apps.googleusercontent.com',
     iosBundleId: 'com.example.kismetly',
   );
 
@@ -75,8 +77,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '366386022105',
     projectId: 'kismetlyfal',
     storageBucket: 'kismetlyfal.firebasestorage.app',
-    androidClientId: '366386022105-8u0d81a6s68992v3tpv0af71bc5cgvkm.apps.googleusercontent.com',
-    iosClientId: '366386022105-7eh5i18jip13ggtecb7gtbpahjbo6c50.apps.googleusercontent.com',
+    androidClientId:
+        '366386022105-8u0d81a6s68992v3tpv0af71bc5cgvkm.apps.googleusercontent.com',
+    iosClientId:
+        '366386022105-7eh5i18jip13ggtecb7gtbpahjbo6c50.apps.googleusercontent.com',
     iosBundleId: 'com.example.kismetly',
   );
 
@@ -89,5 +93,4 @@ class DefaultFirebaseOptions {
     storageBucket: 'kismetlyfal.firebasestorage.app',
     measurementId: 'G-MN6PGHKE5G',
   );
-
 }

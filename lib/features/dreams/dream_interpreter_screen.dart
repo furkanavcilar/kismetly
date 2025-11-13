@@ -91,6 +91,7 @@ class _DreamInterpreterScreenState extends State<DreamInterpreterScreen> {
       return;
     }
     final loc = AppLocalizations.of(context);
+    final localeCode = LocaleScope.of(context).locale.languageCode;
     if (_history.any(
       (entry) => entry.prompt == text && entry.interpretation == result,
     )) {
@@ -100,7 +101,6 @@ class _DreamInterpreterScreenState extends State<DreamInterpreterScreen> {
       return;
     }
     final store = _historyStore ?? await DreamHistoryStore.load();
-    final localeCode = LocaleScope.of(context).locale.languageCode;
     final entry = DreamHistoryEntry.create(
       prompt: text,
       interpretation: result,
@@ -120,6 +120,7 @@ class _DreamInterpreterScreenState extends State<DreamInterpreterScreen> {
   }
 
   Future<void> _removeEntry(DreamHistoryEntry entry) async {
+    final loc = AppLocalizations.of(context);
     final store = _historyStore ?? await DreamHistoryStore.load();
     final updated = List<DreamHistoryEntry>.from(_history)
       ..removeWhere((element) => element.id == entry.id);
@@ -129,7 +130,6 @@ class _DreamInterpreterScreenState extends State<DreamInterpreterScreen> {
       _historyStore = store;
       _history = updated;
     });
-    final loc = AppLocalizations.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(loc.translate('dreamDeleteSuccess'))),
     );
@@ -146,7 +146,8 @@ class _DreamInterpreterScreenState extends State<DreamInterpreterScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(false),
-                  child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
+                  child:
+                      Text(MaterialLocalizations.of(context).cancelButtonLabel),
                 ),
                 FilledButton(
                   onPressed: () => Navigator.of(context).pop(true),
@@ -168,9 +169,10 @@ class _DreamInterpreterScreenState extends State<DreamInterpreterScreen> {
     final theme = Theme.of(context);
     final loc = AppLocalizations.of(context);
     final locale = LocaleScope.of(context).locale;
-    final formatted = DateFormat.yMMMMd(locale.languageCode).format(DateTime.now());
+    final formatted =
+        DateFormat.yMMMMd(locale.languageCode).format(DateTime.now());
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.menu),
@@ -358,7 +360,8 @@ class _DreamHistoryTile extends StatelessWidget {
     final theme = Theme.of(context);
     final loc = AppLocalizations.of(context);
     final locale = LocaleScope.of(context).locale;
-    final formattedDate = DateFormat.yMMMMd(locale.languageCode).add_Hm().format(entry.createdAt);
+    final formattedDate =
+        DateFormat.yMMMMd(locale.languageCode).add_Hm().format(entry.createdAt);
     return Card(
       elevation: 0,
       color: theme.colorScheme.surface,
@@ -374,7 +377,8 @@ class _DreamHistoryTile extends StatelessWidget {
         ),
         subtitle: Text(
           formattedDate,
-          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.primary),
+          style: theme.textTheme.bodySmall
+              ?.copyWith(color: theme.colorScheme.primary),
         ),
         children: [
           const SizedBox(height: 8),

@@ -98,7 +98,8 @@ class _CoffeeReadingScreenState extends State<CoffeeReadingScreen> {
       _result = result;
       _loading = false;
     });
-    await _saveHistory({...result, 'timestamp': DateTime.now().toIso8601String()});
+    await _saveHistory(
+        {...result, 'timestamp': DateTime.now().toIso8601String()});
     setState(() {
       _message = loc.translate('coffeeSaved');
     });
@@ -111,7 +112,7 @@ class _CoffeeReadingScreenState extends State<CoffeeReadingScreen> {
     final locale = LocaleScope.of(context).locale;
     final formatter = DateFormat.yMMMMd(locale.languageCode);
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.menu),
@@ -208,7 +209,8 @@ class _CoffeeReadingScreenState extends State<CoffeeReadingScreen> {
               ..._history.map(
                 (entry) => Card(
                   color: theme.colorScheme.surface,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: const EdgeInsets.all(12),
                     child: Column(
@@ -216,7 +218,8 @@ class _CoffeeReadingScreenState extends State<CoffeeReadingScreen> {
                       children: [
                         if (entry['timestamp'] != null)
                           Text(
-                            formatter.format(DateTime.parse(entry['timestamp']!)),
+                            formatter
+                                .format(DateTime.parse(entry['timestamp']!)),
                             style: theme.textTheme.labelMedium,
                           ),
                         const SizedBox(height: 6),
@@ -229,7 +232,8 @@ class _CoffeeReadingScreenState extends State<CoffeeReadingScreen> {
             const SizedBox(height: 24),
             Text(
               loc.translate('coffeePrivacy'),
-              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(color: theme.colorScheme.outline),
             ),
           ],
         ),
@@ -239,7 +243,7 @@ class _CoffeeReadingScreenState extends State<CoffeeReadingScreen> {
 }
 
 class _CoffeePreview extends StatelessWidget {
-  const _CoffeePreview({super.key, required this.file});
+  const _CoffeePreview({required this.file});
 
   final XFile file;
 
@@ -263,7 +267,7 @@ class _CoffeePreview extends StatelessWidget {
 }
 
 class _CoffeeResultCard extends StatelessWidget {
-  const _CoffeeResultCard({super.key, required this.result});
+  const _CoffeeResultCard({required this.result});
 
   final Map<String, String> result;
 
@@ -308,7 +312,6 @@ class _CoffeeResultCard extends StatelessWidget {
 
 class _ResultSection extends StatelessWidget {
   const _ResultSection({
-    super.key,
     required this.icon,
     required this.title,
     required this.text,

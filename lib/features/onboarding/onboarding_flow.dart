@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart' as geo;
 
@@ -7,6 +6,10 @@ import 'package:kismetly/services/weather_service.dart';
 
 import '../../core/localization/app_localizations.dart';
 import '../../data/zodiac_signs.dart';
+<<<<<<< Updated upstream
+=======
+import '../../services.dart' as services;
+>>>>>>> Stashed changes
 import '../../models/weather_report.dart';
 import '../profile/user_profile.dart';
 
@@ -68,7 +71,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         setState(() {
           _weatherLoading = false;
           _weatherPreview = null;
-          _weatherError = AppLocalizations.of(context).translate('onboardingCityError');
+          _weatherError =
+              AppLocalizations.of(context).translate('onboardingCityError');
           _resolvedLocation = null;
           _resolvedQuery = null;
         });
@@ -101,8 +105,9 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       setState(() {
         _weatherPreview = report;
         _weatherLoading = false;
-        _weatherError =
-            report == null ? _localizedWeatherUnavailable(locale.languageCode) : null;
+        _weatherError = report == null
+            ? _localizedWeatherUnavailable(locale.languageCode)
+            : null;
       });
     } catch (e) {
       if (!mounted) return;
@@ -183,8 +188,9 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       final cityInput = _cityController.text.trim();
       final normalized = cityInput.toLowerCase();
       var location = _resolvedLocation;
-      final needsLookup =
-          location == null || _resolvedQuery == null || _resolvedQuery != normalized;
+      final needsLookup = location == null ||
+          _resolvedQuery == null ||
+          _resolvedQuery != normalized;
       if (needsLookup) {
         location = await _resolveCity(cityInput);
       }
@@ -195,8 +201,9 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         });
         return;
       }
-      final shouldFetchWeather =
-          _weatherPreview == null || _resolvedQuery == null || _resolvedQuery != normalized;
+      final shouldFetchWeather = _weatherPreview == null ||
+          _resolvedQuery == null ||
+          _resolvedQuery != normalized;
       if (needsLookup && mounted) {
         setState(() {
           _resolvedLocation = location;
@@ -213,20 +220,24 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         _birthTime!.hour,
         _birthTime!.minute,
       );
-      final sun = AstroService.sunSign(birthDateTime);
+      final sun = services.AstroService.sunSign(birthDateTime);
       final sunId = _signIdFromLabel(sun);
       final risingId = _estimateRising(
-        birthTime: Duration(hours: _birthTime!.hour, minutes: _birthTime!.minute),
+        birthTime:
+            Duration(hours: _birthTime!.hour, minutes: _birthTime!.minute),
         longitude: location.longitude,
       );
       final profile = UserProfile(
         name: _nameController.text.trim(),
         birthDate: _birthDate!,
-        birthTime: Duration(hours: _birthTime!.hour, minutes: _birthTime!.minute),
+        birthTime:
+            Duration(hours: _birthTime!.hour, minutes: _birthTime!.minute),
         birthCity: location.city ?? _cityController.text.trim(),
         birthLatitude: location.latitude,
         birthLongitude: location.longitude,
-        gender: _genderController.text.trim().isEmpty ? null : _genderController.text.trim(),
+        gender: _genderController.text.trim().isEmpty
+            ? null
+            : _genderController.text.trim(),
         sunSign: sunId,
         risingSign: risingId,
       );
@@ -259,7 +270,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           loc.longitude,
         );
         if (placemarks.isNotEmpty) {
-          city = placemarks.first.locality ?? placemarks.first.administrativeArea;
+          city =
+              placemarks.first.locality ?? placemarks.first.administrativeArea;
         }
       } catch (_) {
         city = null;
@@ -282,10 +294,12 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     return sign.id;
   }
 
-  String _estimateRising({required Duration birthTime, required double longitude}) {
+  String _estimateRising(
+      {required Duration birthTime, required double longitude}) {
     final minutes = birthTime.inMinutes + longitude.round();
     final index = (minutes ~/ 120) % zodiacSigns.length;
-    final normalized = (index % zodiacSigns.length + zodiacSigns.length) % zodiacSigns.length;
+    final normalized =
+        (index % zodiacSigns.length + zodiacSigns.length) % zodiacSigns.length;
     return zodiacSigns[normalized].id;
   }
 
@@ -312,7 +326,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                 style: theme.textTheme.titleMedium,
               ),
               const SizedBox(height: 24),
-              Text(loc.translate('onboardingIntro'), style: theme.textTheme.bodyLarge),
+              Text(loc.translate('onboardingIntro'),
+                  style: theme.textTheme.bodyLarge),
               const SizedBox(height: 48),
               ElevatedButton.icon(
                 onPressed: _begin,
@@ -341,7 +356,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(loc.translate('onboardingWelcome'), style: theme.textTheme.titleLarge),
+              Text(loc.translate('onboardingWelcome'),
+                  style: theme.textTheme.titleLarge),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _nameController,
@@ -405,7 +421,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                   padding: const EdgeInsets.only(bottom: 12),
                   child: Text(
                     _error!,
-                    style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.error),
+                    style: theme.textTheme.bodyMedium
+                        ?.copyWith(color: theme.colorScheme.error),
                   ),
                 ),
               ElevatedButton(
@@ -503,43 +520,40 @@ class _WeatherPeek extends StatelessWidget {
       );
       keyLabel = 'error';
     } else {
-      final narrative = report!.narrative;
-      final vibe = report!.vibeTag;
+      final narrative = report?.narrative ?? '';
+      final vibe = report?.vibeTag ?? '';
       content = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Text(report!.icon, style: const TextStyle(fontSize: 28)),
+              Text(report?.icon ?? '☀️', style: const TextStyle(fontSize: 28)),
               const SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${report!.temperature.toStringAsFixed(0)}°',
+                    '${(report?.temperature ?? 0).toStringAsFixed(0)}°',
                     style: theme.textTheme.titleMedium,
                   ),
-                  Text(report!.condition, style: theme.textTheme.bodyMedium),
-                  Text(report!.city, style: theme.textTheme.bodySmall),
+                  Text(report?.condition ?? '',
+                      style: theme.textTheme.bodyMedium),
+                  Text(report?.city ?? '', style: theme.textTheme.bodySmall),
                 ],
               ),
             ],
           ),
-          if (vibe != null && vibe.isNotEmpty) ...[
+          if (vibe.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
               vibe,
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: theme.colorScheme.primary,
-              ),
+              style: theme.textTheme.labelMedium
+                  ?.copyWith(color: theme.colorScheme.primary),
             ),
           ],
-          if (narrative != null && narrative.isNotEmpty) ...[
+          if (narrative.isNotEmpty) ...[
             const SizedBox(height: 4),
-            Text(
-              narrative,
-              style: theme.textTheme.bodySmall,
-            ),
+            Text(narrative, style: theme.textTheme.bodySmall),
           ],
         ],
       );
@@ -553,9 +567,12 @@ class _WeatherPeek extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+          color:
+              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: theme.dividerColor.withOpacity(0.4)),
+          border: Border.all(
+            color: theme.dividerColor.withValues(alpha: 0.4),
+          ),
         ),
         child: content,
       ),

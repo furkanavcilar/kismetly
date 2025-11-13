@@ -51,7 +51,7 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
 
     final controller = _controller!;
     return UserProfileScope(
-      controller: controller,
+      notifier: controller,
       child: AnimatedBuilder(
         animation: controller,
         builder: (context, _) {

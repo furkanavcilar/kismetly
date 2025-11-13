@@ -11,10 +11,11 @@ class AppLocalizations {
   static const supportedLocales = [Locale('tr'), Locale('en')];
 
   static Future<AppLocalizations> load(Locale locale) async {
-    final String langCode =
-        supportedLocales.map((e) => e.languageCode).contains(locale.languageCode)
-            ? locale.languageCode
-            : supportedLocales.first.languageCode;
+    final String langCode = supportedLocales
+            .map((e) => e.languageCode)
+            .contains(locale.languageCode)
+        ? locale.languageCode
+        : supportedLocales.first.languageCode;
 
     final String jsonString =
         await rootBundle.loadString('lib/l10n/app_$langCode.arb');
@@ -42,17 +43,15 @@ class AppLocalizations {
   }
 }
 
-class AppLocalizationsDelegate
-    extends LocalizationsDelegate<AppLocalizations> {
+class AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
   const AppLocalizationsDelegate();
 
   @override
-  bool isSupported(Locale locale) =>
-      AppLocalizations.supportedLocales.any((e) => e.languageCode == locale.languageCode);
+  bool isSupported(Locale locale) => AppLocalizations.supportedLocales
+      .any((e) => e.languageCode == locale.languageCode);
 
   @override
-  Future<AppLocalizations> load(Locale locale) =>
-      AppLocalizations.load(locale);
+  Future<AppLocalizations> load(Locale locale) => AppLocalizations.load(locale);
 
   @override
   bool shouldReload(covariant LocalizationsDelegate<AppLocalizations> old) =>

@@ -27,15 +27,16 @@ class HoroscopeDetailScreen extends StatelessWidget {
     final risingMessage = language == 'en'
         ? risingInsightForEn(signId, date)
         : risingInsightForTr(signId, date);
-    final safeSun = sunMessage.isEmpty
-        ? loc.translate('insightSunDefault')
-        : sunMessage;
+    final safeSun =
+        sunMessage.isEmpty ? loc.translate('insightSunDefault') : sunMessage;
     final safeRising = risingMessage.isEmpty
         ? loc.translate('insightRisingDefault')
         : risingMessage;
     final formattedDate = DateFormat.yMMMMd(language).format(date);
     return Scaffold(
-      appBar: AppBar(title: Text(loc.translate('horoscopeDetailTitle', params: {'sign': label}))),
+      appBar: AppBar(
+          title: Text(
+              loc.translate('horoscopeDetailTitle', params: {'sign': label}))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -78,7 +79,8 @@ class _InsightCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               message,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.4),
+              style:
+                  Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.4),
             ),
           ],
         ),

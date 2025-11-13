@@ -1,13 +1,14 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 
 class AiService {
   AiService({String? apiKey, String? model})
       : _apiKey = apiKey ?? const String.fromEnvironment('OPENAI_API_KEY'),
-        _model = model ?? const String.fromEnvironment('OPENAI_MODEL', defaultValue: 'gpt-4o-mini');
+        _model = model ??
+            const String.fromEnvironment('OPENAI_MODEL',
+                defaultValue: 'gpt-4o-mini');
 
   final String _apiKey;
   final String _model;
@@ -150,15 +151,19 @@ class AiService {
   Map<String, String> _offlineCoffee(Locale locale) {
     if (locale.languageCode == 'en') {
       return {
-        'general': 'The shapes hint at a hopeful transition. Stay receptive to guidance from trusted friends.',
+        'general':
+            'The shapes hint at a hopeful transition. Stay receptive to guidance from trusted friends.',
         'love': 'Warm swirls show affectionate conversations blooming.',
         'career': 'A rising pattern signals steady progress at work.',
-        'warnings': 'Avoid rushing; let plans brew slowly for the best outcome.',
+        'warnings':
+            'Avoid rushing; let plans brew slowly for the best outcome.',
       };
     }
     return {
-      'general': 'Şekiller umutlu bir geçişe işaret ediyor. Güvendiğiniz dostların rehberliğine açık olun.',
-      'love': 'Sıcak desenler sevgi dolu konuşmaların canlanacağını gösteriyor.',
+      'general':
+          'Şekiller umutlu bir geçişe işaret ediyor. Güvendiğiniz dostların rehberliğine açık olun.',
+      'love':
+          'Sıcak desenler sevgi dolu konuşmaların canlanacağını gösteriyor.',
       'career': 'Yükselen bir çizgi işte istikrarlı ilerlemeyi simgeliyor.',
       'warnings': 'Aceleden kaçının; planlarınızı demlemeye bırakın.',
     };

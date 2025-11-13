@@ -79,7 +79,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get homeDailyCardTitle => 'Güneş & Yükselen';
 
   @override
-  String get homeNoSelection => 'Burçlarınızı seçerek kişiselleştirilmiş içgörülere ulaşın.';
+  String get homeNoSelection =>
+      'Burçlarınızı seçerek kişiselleştirilmiş içgörülere ulaşın.';
 
   @override
   String get homeShortcutDream => 'Rüya Yorumla';
@@ -124,7 +125,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get homeInteractionsTitle => 'Bugünün Etkileşimleri';
 
   @override
-  String homeInteractionsDescription(Object first, Object score, Object second, Object tone) {
+  String homeInteractionsDescription(
+      Object first, Object score, Object second, Object tone) {
     return '$first ve $second arasında enerji $tone seviyesinde (%$score).';
   }
 
@@ -164,7 +166,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get dreamLoading => 'Rüyanız yorumlanıyor...';
 
   @override
-  String get dreamError => 'Yorumlanırken bir sorun oluştu. Lütfen tekrar deneyin.';
+  String get dreamError =>
+      'Yorumlanırken bir sorun oluştu. Lütfen tekrar deneyin.';
 
   @override
   String get dreamEmpty => 'Paylaşılacak bir rüya yazın.';
@@ -173,7 +176,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get coffeeTitle => 'Kahve Falı';
 
   @override
-  String get coffeeHint => 'Kahve fincanı ve tabağınızın fotoğraflarını yükleyin';
+  String get coffeeHint =>
+      'Kahve fincanı ve tabağınızın fotoğraflarını yükleyin';
 
   @override
   String get coffeeAddPhotos => 'Fotoğraf ekle';
@@ -206,7 +210,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get coffeeHistory => 'Son fal kayıtlarınız';
 
   @override
-  String get coffeePrivacy => 'Fotoğraflar sadece yorum için kullanılır ve cihazınızda saklanır.';
+  String get coffeePrivacy =>
+      'Fotoğraflar sadece yorum için kullanılır ve cihazınızda saklanır.';
 
   @override
   String get compatibilityTitle => 'Zodyak Uyumu';
@@ -245,7 +250,8 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String compatibilityAdviceTemplate(Object advice, Object first, Object second) {
+  String compatibilityAdviceTemplate(
+      Object advice, Object first, Object second) {
     return 'Bugün $first ve $second için öneri: $advice.';
   }
 
@@ -271,7 +277,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get adviceFlux => 'Farklılıklara alan açıp dikkatle dinleyin.';
 
   @override
-  String get adviceTransform => 'Samimi ama yumuşak sohbetlerle dönüşümü başlatın.';
+  String get adviceTransform =>
+      'Samimi ama yumuşak sohbetlerle dönüşümü başlatın.';
 
   @override
   String get commentsTitle => 'Yorumlar';
@@ -351,10 +358,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get coffeeHistoryEmpty => 'Henüz kayıtlı falınız yok.';
 
   @override
-  String get insightSunDefault => 'Bugün enerjinizi dengelemek için sezgilerinize güvenin.';
+  String get insightSunDefault =>
+      'Bugün enerjinizi dengelemek için sezgilerinize güvenin.';
 
   @override
-  String get insightRisingDefault => 'Çevrenizle kurduğunuz bağları güçlendirin.';
+  String get insightRisingDefault =>
+      'Çevrenizle kurduğunuz bağları güçlendirin.';
 
   @override
   String get pickerSun => 'Güneş Burcu';

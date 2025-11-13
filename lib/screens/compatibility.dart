@@ -12,7 +12,8 @@ class ZodiacCompatibilityScreen extends StatefulWidget {
   final VoidCallback onMenuTap;
 
   @override
-  State<ZodiacCompatibilityScreen> createState() => _ZodiacCompatibilityScreenState();
+  State<ZodiacCompatibilityScreen> createState() =>
+      _ZodiacCompatibilityScreenState();
 }
 
 class _ZodiacCompatibilityScreenState extends State<ZodiacCompatibilityScreen>
@@ -58,7 +59,7 @@ class _ZodiacCompatibilityScreenState extends State<ZodiacCompatibilityScreen>
     try {
       String label(String id) {
         final sign = findZodiacById(id);
-        return sign.labelFor(locale.languageCode);
+        return sign?.labelFor(locale.languageCode) ?? id;
       }
 
       final result = await _aiService.fetchCompatibility(
@@ -87,13 +88,21 @@ class _ZodiacCompatibilityScreenState extends State<ZodiacCompatibilityScreen>
     final locale = LocaleScope.of(context).locale;
     final language = locale.languageCode;
     final collator = const LocaleCollator();
-    final sorted = [...zodiacSigns]
-      ..sort((a, b) => collator.compare(a.labelFor(language), b.labelFor(language), locale));
-    final firstLabel = findZodiacById(_firstSign)?.labelFor(language) ?? _firstSign;
-    final secondLabel = findZodiacById(_secondSign)?.labelFor(language) ?? _secondSign;
+    final sorted = [...zodiacSigns]..sort((a, b) => collator.compare(
+          a.labelFor(language),
+          b.labelFor(language),
+          locale,
+        ));
+
+    final firstLabel =
+        findZodiacById(_firstSign)?.labelFor(language) ?? _firstSign;
+    final secondLabel =
+        findZodiacById(_secondSign)?.labelFor(language) ?? _secondSign;
+
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(icon: const Icon(Icons.menu), onPressed: widget.onMenuTap),
+        leading: IconButton(
+            icon: const Icon(Icons.menu), onPressed: widget.onMenuTap),
         title: Text(loc.translate('compatibilityTitle')),
         actions: [
           IconButton(icon: const Icon(Icons.swap_horiz), onPressed: _swap),
@@ -170,7 +179,6 @@ class _ZodiacCompatibilityScreenState extends State<ZodiacCompatibilityScreen>
 
 class _SignSelector extends StatelessWidget {
   const _SignSelector({
-    super.key,
     required this.signs,
     required this.first,
     required this.second,
@@ -189,10 +197,12 @@ class _SignSelector extends StatelessWidget {
       children: [
         Expanded(
           child: DropdownButtonFormField<String>(
-            value: first,
+            initialValue: first,
             decoration: InputDecoration(
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-              labelText: AppLocalizations.of(context).translate('homeSelectPrompt'),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+              labelText:
+                  AppLocalizations.of(context).translate('homeSelectPrompt'),
             ),
             items: signs
                 .map(
@@ -210,10 +220,12 @@ class _SignSelector extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: DropdownButtonFormField<String>(
-            value: second,
+            initialValue: second,
             decoration: InputDecoration(
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-              labelText: AppLocalizations.of(context).translate('homeSelectPrompt'),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+              labelText:
+                  AppLocalizations.of(context).translate('homeSelectPrompt'),
             ),
             items: signs
                 .map(
@@ -269,7 +281,8 @@ class _InsightSummary extends StatelessWidget {
           const SizedBox(height: 8),
           Text(error!, style: theme.textTheme.bodyMedium),
           const SizedBox(height: 12),
-          TextButton(onPressed: onRetry, child: Text(loc.translate('actionRetry'))),
+          TextButton(
+              onPressed: onRetry, child: Text(loc.translate('actionRetry'))),
         ],
       );
     }

@@ -79,7 +79,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeDailyCardTitle => 'Sun & Rising';
 
   @override
-  String get homeNoSelection => 'Select your signs to unlock personalized insights.';
+  String get homeNoSelection =>
+      'Select your signs to unlock personalized insights.';
 
   @override
   String get homeShortcutDream => 'Interpret Dream';
@@ -124,7 +125,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeInteractionsTitle => 'Today\'s Interactions';
 
   @override
-  String homeInteractionsDescription(Object first, Object score, Object second, Object tone) {
+  String homeInteractionsDescription(
+      Object first, Object score, Object second, Object tone) {
     return 'Energy between $first and $second feels $tone ($score%).';
   }
 
@@ -206,7 +208,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get coffeeHistory => 'Recent readings';
 
   @override
-  String get coffeePrivacy => 'Images are used only for interpretation and stay on your device.';
+  String get coffeePrivacy =>
+      'Images are used only for interpretation and stay on your device.';
 
   @override
   String get compatibilityTitle => 'Zodiac Compatibility';
@@ -245,7 +248,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String compatibilityAdviceTemplate(Object advice, Object first, Object second) {
+  String compatibilityAdviceTemplate(
+      Object advice, Object first, Object second) {
     return 'Tip for $first and $second today: $advice.';
   }
 
@@ -271,7 +275,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adviceFlux => 'Give space for differences and listen deeply.';
 
   @override
-  String get adviceTransform => 'Transform tension with honest yet gentle conversations.';
+  String get adviceTransform =>
+      'Transform tension with honest yet gentle conversations.';
 
   @override
   String get commentsTitle => 'Comments';
@@ -351,7 +356,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get coffeeHistoryEmpty => 'No saved readings yet.';
 
   @override
-  String get insightSunDefault => 'Trust your intuition to balance today\'s energy.';
+  String get insightSunDefault =>
+      'Trust your intuition to balance today\'s energy.';
 
   @override
   String get insightRisingDefault => 'Strengthen connections around you.';

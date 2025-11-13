@@ -176,7 +176,7 @@ class AppDrawer extends StatelessWidget {
       return collator.compare(titleA, titleB, locale);
     });
     return Drawer(
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       child: SafeArea(
         child: Column(
           children: [
@@ -217,7 +217,7 @@ class AppDrawer extends StatelessWidget {
 }
 
 class _LanguageSwitcher extends StatelessWidget {
-  const _LanguageSwitcher({super.key});
+  const _LanguageSwitcher();
 
   @override
   Widget build(BuildContext context) {
@@ -241,8 +241,10 @@ class _LanguageSwitcher extends StatelessWidget {
                 selected: locale.languageCode == 'tr',
                 onTap: () async {
                   await provider.setLocale(const Locale('tr'));
+                  if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(loc.translate('languageSwitchSaved'))),
+                    SnackBar(
+                        content: Text(loc.translate('languageSwitchSaved'))),
                   );
                 },
               ),
@@ -252,8 +254,10 @@ class _LanguageSwitcher extends StatelessWidget {
                 selected: locale.languageCode == 'en',
                 onTap: () async {
                   await provider.setLocale(const Locale('en'));
+                  if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(loc.translate('languageSwitchSaved'))),
+                    SnackBar(
+                        content: Text(loc.translate('languageSwitchSaved'))),
                   );
                 },
               ),
@@ -267,7 +271,6 @@ class _LanguageSwitcher extends StatelessWidget {
 
 class _LocaleChip extends StatelessWidget {
   const _LocaleChip({
-    super.key,
     required this.label,
     required this.selected,
     required this.onTap,
@@ -287,7 +290,7 @@ class _LocaleChip extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             color: selected
-                ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
+                ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)
                 : Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(20),
           ),
@@ -319,7 +322,7 @@ class PlaceholderScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         leading: IconButton(icon: const Icon(Icons.menu), onPressed: onMenuTap),
         title: Text(title),

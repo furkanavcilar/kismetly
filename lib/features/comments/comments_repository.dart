@@ -42,7 +42,8 @@ class FirestoreCommentsRepository implements CommentsRepository {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
 
-  CollectionReference<Map<String, dynamic>> _collection(String signId, String date) {
+  CollectionReference<Map<String, dynamic>> _collection(
+      String signId, String date) {
     return _firestore.collection('comments').doc(signId).collection(date);
   }
 
@@ -51,7 +52,10 @@ class FirestoreCommentsRepository implements CommentsRepository {
     required String signId,
     required String date,
   }) {
-    return _collection(signId, date).orderBy('createdAt', descending: true).snapshots().map(
+    return _collection(signId, date)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map(
           (snapshot) => snapshot.docs
               .map(
                 (doc) => CommentEntry(
@@ -59,7 +63,9 @@ class FirestoreCommentsRepository implements CommentsRepository {
                   userId: doc.data()['uid'] as String? ?? '',
                   displayName: doc.data()['displayName'] as String? ?? 'User',
                   text: doc.data()['text'] as String? ?? '',
-                  createdAt: (doc.data()['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+                  createdAt:
+                      (doc.data()['createdAt'] as Timestamp?)?.toDate() ??
+                          DateTime.now(),
                 ),
               )
               .toList(),
@@ -116,7 +122,7 @@ class MemoryCommentsRepository implements CommentsRepository {
 }
 
 CommentsRepository resolveCommentsRepository() {
-  if (Firebase.apps.isNotEmpty && FirebaseFirestore.instance is FirebaseFirestore) {
+  if (Firebase.apps.isNotEmpty) {
     try {
       return FirestoreCommentsRepository();
     } catch (error) {

@@ -39,9 +39,9 @@ class LocaleProvider extends ChangeNotifier {
 class LocaleScope extends InheritedNotifier<LocaleProvider> {
   const LocaleScope({
     super.key,
-    required LocaleProvider notifier,
-    required Widget child,
-  }) : super(notifier: notifier, child: child);
+    required super.notifier,
+    required super.child,
+  });
 
   static LocaleProvider of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<LocaleScope>();

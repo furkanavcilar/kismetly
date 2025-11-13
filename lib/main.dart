@@ -6,7 +6,6 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'app_bootstrapper.dart';
 import 'core/localization/app_localizations.dart';
 import 'core/localization/locale_provider.dart';
-import 'main_shell.dart';
 import 'theme.dart';
 import 'firebase_options.dart';
 
@@ -15,7 +14,8 @@ Future<void> main() async {
   await initializeDateFormatting('tr_TR');
   await initializeDateFormatting('en_US');
   try {
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
   } catch (_) {
     debugPrint('Firebase not configured, continuing without it.');
   }
@@ -56,4 +56,3 @@ class KismetlyApp extends StatelessWidget {
     );
   }
 }
-

@@ -1,9 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
-
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../models/weather_report.dart';
 
 class WeatherService {
@@ -33,6 +31,7 @@ class WeatherService {
     return hash;
   }
 
+  /// 🔹 Hava durumunu API'den çeker, yoksa cache'ten döner.
   Future<WeatherReport?> fetchWeather({
     required String city,
     required double latitude,
@@ -42,56 +41,72 @@ class WeatherService {
     final prefs = await _prefsFuture;
     final dayKey = _dayStamp(DateTime.now());
     final cacheKey = 'weather_${city.toLowerCase()}_${localeCode}_$dayKey';
+
+    // ✅ Cache kontrolü
     final cached = prefs.getString(cacheKey);
     if (cached != null) {
       try {
-        return WeatherReport.fromJson(jsonDecode(cached) as Map<String, dynamic>);
+        return WeatherReport.fromJson(
+            jsonDecode(cached) as Map<String, dynamic>);
       } catch (_) {
         // ignore invalid cache
       }
     }
 
-    final url = Uri.parse(
-      'https://api.open-meteo.com/v1/forecast?latitude=$latitude&longitude=$longitude&current=temperature_2m,weather_code&hourly=temperature_2m&timezone=auto',
-    );
-    final response = await _client.get(url);
-    if (response.statusCode >= 400) {
-      return cached != null
-          ? WeatherReport.fromJson(jsonDecode(cached) as Map<String, dynamic>)
-          : null;
-    }
+    try {
+      final url = Uri.parse(
+        'https://api.open-meteo.com/v1/forecast?latitude=$latitude&longitude=$longitude&current=temperature_2m,weather_code&timezone=auto',
+      );
 
-    final decoded = jsonDecode(response.body) as Map<String, dynamic>;
-    final current = decoded['current'] as Map<String, dynamic>?;
-    if (current == null) {
+      final response = await _client.get(url);
+
+      if (response.statusCode != 200)
+        throw Exception('API ${response.statusCode}');
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final current = decoded['current'] as Map<String, dynamic>?;
+
+      if (current == null) throw Exception('Invalid API format');
+
+      final code = (current['weather_code'] as num?)?.toInt() ?? 0;
+      final condition = _describe(code, localeCode, dayKey, city);
+      final icon = _iconFor(code);
+      final temp = (current['temperature_2m'] as num?)?.toDouble() ?? 0;
+
+      final report = WeatherReport(
+        temperature: temp,
+        condition: condition,
+        icon: icon,
+        city: city,
+        lastUpdated: DateTime.tryParse(current['time'] as String? ?? '') ??
+            DateTime.now(),
+        narrative: _composeNarrative(
+          localeCode: localeCode,
+          city: city,
+          condition: condition,
+          temperature: temp,
+          code: code,
+          dayKey: dayKey,
+        ),
+        vibeTag: _vibeTag(
+          localeCode: localeCode,
+          code: code,
+          dayKey: dayKey,
+          city: city,
+        ),
+      );
+
+      await prefs.setString(cacheKey, jsonEncode(report.toJson()));
+      return report;
+    } catch (e) {
+      // ❗ Hata durumunda cache varsa oradan dön
+      if (cached != null) {
+        try {
+          return WeatherReport.fromJson(
+              jsonDecode(cached) as Map<String, dynamic>);
+        } catch (_) {}
+      }
       return null;
     }
-    final code = (current['weather_code'] as num?)?.toInt() ?? 0;
-    final condition = _describe(code, localeCode, dayKey, city);
-    final icon = _iconFor(code);
-    final report = WeatherReport(
-      temperature: (current['temperature_2m'] as num?)?.toDouble() ?? 0,
-      condition: condition,
-      icon: icon,
-      city: city,
-      lastUpdated: DateTime.tryParse(current['time'] as String? ?? '') ?? DateTime.now(),
-      narrative: _composeNarrative(
-        localeCode: localeCode,
-        city: city,
-        condition: condition,
-        temperature: (current['temperature_2m'] as num?)?.toDouble() ?? 0,
-        code: code,
-        dayKey: dayKey,
-      ),
-      vibeTag: _vibeTag(
-        localeCode: localeCode,
-        code: code,
-        dayKey: dayKey,
-        city: city,
-      ),
-    );
-    await prefs.setString(cacheKey, jsonEncode(report.toJson()));
-    return report;
   }
 
   String _describe(int code, String locale, String dayKey, String city) {
@@ -124,9 +139,14 @@ class WeatherService {
             71: 'Light snow',
             80: 'Showers',
           };
-    final base = map[code] ?? (locale == 'tr' ? 'Kozmik hava' : 'Cosmic weather');
+    final base =
+        map[code] ?? (locale == 'tr' ? 'Kozmik hava' : 'Cosmic weather');
     final nuances = locale == 'tr'
-        ? ['• hafif bir esinti', '• parlayan bir serinlik', '• iç ısıtan bir titreşim']
+        ? [
+            '• hafif bir esinti',
+            '• parlayan bir serinlik',
+            '• iç ısıtan bir titreşim'
+          ]
         : ['• a soft breeze', '• a glowing calm', '• a comforting hush'];
     final random = Random(_hashString('$dayKey|$city|$locale|$code'));
     final nuance = nuances[random.nextInt(nuances.length)];
@@ -175,7 +195,8 @@ class WeatherService {
     return 'Over $city, $condition $sensation. $temperatureLine $invitation';
   }
 
-  String _temperatureLine(double temperature, String localeCode, Random random) {
+  String _temperatureLine(
+      double temperature, String localeCode, Random random) {
     if (localeCode == 'tr') {
       if (temperature <= 5) {
         final options = [

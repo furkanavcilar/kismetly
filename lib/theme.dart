@@ -28,14 +28,14 @@ class AppTheme {
       colorScheme: ColorScheme.fromSeed(
         seedColor: Colors.white,
         brightness: Brightness.dark,
-        background: bg,
         surface: card,
         primary: Colors.white,
         onPrimary: Colors.black,
       ),
       textTheme: TextTheme(
         displayLarge: serif.copyWith(fontSize: 34, fontWeight: FontWeight.w700),
-        displayMedium: serif.copyWith(fontSize: 28, fontWeight: FontWeight.w700),
+        displayMedium:
+            serif.copyWith(fontSize: 28, fontWeight: FontWeight.w700),
         titleLarge: serif.copyWith(fontSize: 22, fontWeight: FontWeight.w700),
         bodyLarge: sans.copyWith(fontSize: 16, color: text),
         bodyMedium: sans.copyWith(fontSize: 14, color: subtext),
@@ -51,7 +51,8 @@ class AppTheme {
         filled: true,
         fillColor: card,
         hintStyle: sans.copyWith(color: subtext),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: stroke),
@@ -66,7 +67,8 @@ class AppTheme {
           foregroundColor: Colors.black,
           backgroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           textStyle: sans.copyWith(
             color: Colors.black,
             fontWeight: FontWeight.w600,

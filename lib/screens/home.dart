@@ -56,9 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  void _onProfileChanged() {
-    _loadAll();
-  }
+  void _onProfileChanged() => _loadAll();
 
   Future<void> _loadAll() async {
     final profile = _profileController.profile;
@@ -68,11 +66,13 @@ class _HomeScreenState extends State<HomeScreen> {
       _loading = true;
       _error = null;
     });
+
     String describe(String? id) {
       if (id == null) return profile.name;
       final sign = findZodiacById(id);
-      return sign.labelFor(locale.languageCode);
+      return sign?.labelFor(locale.languageCode) ?? id;
     }
+
     try {
       final insights = await _aiService.fetchDailyInsights(
         sunSign: describe(profile.sunSign),
@@ -129,9 +129,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final loc = AppLocalizations.of(context);
     final profile = _profileController.profile;
 
-    if (profile == null) {
-      return const SizedBox();
-    }
+    if (profile == null) return const SizedBox();
 
     final locale = LocaleScope.of(context).locale;
     final now = DateTime.now();
@@ -140,16 +138,17 @@ class _HomeScreenState extends State<HomeScreen> {
     final greeting = _greetingFor(now, locale.languageCode, profile.name);
     final sun = profile.sunSign != null
         ? findZodiacById(profile.sunSign!)?.labelFor(locale.languageCode)
-        : profile.sunSign;
+        : null;
     final rising = profile.risingSign != null
         ? findZodiacById(profile.risingSign!)?.labelFor(locale.languageCode)
-        : profile.risingSign;
+        : null;
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         title: Text(loc.translate('homeTitle')),
-        leading: IconButton(icon: const Icon(Icons.menu), onPressed: widget.onMenuTap),
+        leading: IconButton(
+            icon: const Icon(Icons.menu), onPressed: widget.onMenuTap),
         actions: [
           IconButton(
             icon: const Icon(Icons.favorite_outline),
@@ -161,7 +160,8 @@ class _HomeScreenState extends State<HomeScreen> {
         onRefresh: _loadAll,
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+          physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics()),
           children: [
             _GreetingHeader(
               greeting: greeting,
@@ -181,8 +181,8 @@ class _HomeScreenState extends State<HomeScreen> {
               loading: _loading,
               error: _error,
               insights: _insights,
-              sun: sun,
-              rising: rising,
+              sun: sun ?? '—',
+              rising: rising ?? '—',
               onRetry: _loadAll,
             ),
             const SizedBox(height: 18),
@@ -272,6 +272,7 @@ class _WeatherCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
     if (loading) {
       return _BlurCard(
         child: Row(
@@ -288,6 +289,7 @@ class _WeatherCard extends StatelessWidget {
         ),
       );
     }
+
     if (error != null) {
       return _BlurCard(
         child: Column(
@@ -308,16 +310,28 @@ class _WeatherCard extends StatelessWidget {
         ),
       );
     }
+<<<<<<< Updated upstream
     final icon = report?.icon ?? '☀️';
     final temperatureText = '${(report?.temperature ?? 0).toStringAsFixed(0)}°';
     final conditionText = report?.condition ?? '-';
     final cityText = report?.city ?? '-';
+=======
+
+    final weather = report;
+    if (weather == null) {
+      return const SizedBox.shrink();
+    }
+>>>>>>> Stashed changes
 
     return _BlurCard(
       child: Row(
         children: [
           Text(
+<<<<<<< Updated upstream
             icon,
+=======
+            weather.icon,
+>>>>>>> Stashed changes
             style: const TextStyle(fontSize: 36),
           ),
           const SizedBox(width: 18),
@@ -326,11 +340,19 @@ class _WeatherCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
+<<<<<<< Updated upstream
                   temperatureText,
                   style: theme.textTheme.titleLarge,
                 ),
                 Text(conditionText, style: theme.textTheme.bodyMedium),
                 Text(cityText, style: theme.textTheme.bodySmall),
+=======
+                  '${weather.temperature.toStringAsFixed(0)}°',
+                  style: theme.textTheme.titleLarge,
+                ),
+                Text(weather.condition, style: theme.textTheme.bodyMedium),
+                Text(weather.city, style: theme.textTheme.bodySmall),
+>>>>>>> Stashed changes
               ],
             ),
           ),
@@ -353,8 +375,8 @@ class _DailyZodiacCard extends StatelessWidget {
   final bool loading;
   final String? error;
   final DailyAiInsights? insights;
-  final String? sun;
-  final String? rising;
+  final String sun;
+  final String rising;
   final Future<void> Function() onRetry;
 
   @override
@@ -374,14 +396,13 @@ class _DailyZodiacCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          if (sun != null)
-            Text(
-              loc.translate('homeSunRising', params: {
-                'sun': sun,
-                'rising': rising ?? '—',
-              }),
-              style: theme.textTheme.bodyMedium,
-            ),
+          Text(
+            loc.translate('homeSunRising', params: {
+              'sun': sun,
+              'rising': rising,
+            }),
+            style: theme.textTheme.bodyMedium,
+          ),
           const SizedBox(height: 12),
           if (loading)
             const LinearProgressIndicator(minHeight: 3)
@@ -399,10 +420,7 @@ class _DailyZodiacCard extends StatelessWidget {
               ],
             )
           else if (insights != null)
-            Text(
-              insights!.summary,
-              style: theme.textTheme.bodyLarge,
-            ),
+            Text(insights!.summary, style: theme.textTheme.bodyLarge),
         ],
       ),
     );
@@ -490,7 +508,8 @@ class _EnergyChip extends StatelessWidget {
           children: [
             Text(label, style: theme.textTheme.labelLarge),
             const SizedBox(height: 8),
-            Text(value, style: theme.textTheme.bodyMedium),
+            Text(value.isNotEmpty ? value : '-',
+                style: theme.textTheme.bodyMedium),
           ],
         ),
       ),
@@ -514,7 +533,8 @@ class _EnergyChip extends StatelessWidget {
             children: [
               Text(label, style: theme.textTheme.titleMedium),
               const SizedBox(height: 12),
-              Text(detail, style: theme.textTheme.bodyLarge),
+              Text(detail.isNotEmpty ? detail : '-',
+                  style: theme.textTheme.bodyLarge),
               const SizedBox(height: 16),
             ],
           ),
@@ -570,8 +590,10 @@ class _BlurCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        color: theme.colorScheme.surface.withOpacity(0.72),
-        border: Border.all(color: theme.dividerColor.withOpacity(0.3)),
+        color: theme.colorScheme.surface.withValues(alpha: 0.72),
+        border: Border.all(
+          color: theme.dividerColor.withValues(alpha: 0.3),
+        ),
       ),
       child: child,
     );

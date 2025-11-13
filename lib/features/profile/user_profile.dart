@@ -62,7 +62,8 @@ class UserProfile {
   static UserProfile fromJson(Map<String, dynamic> json) {
     return UserProfile(
       name: json['name'] as String? ?? '',
-      birthDate: DateTime.tryParse(json['birthDate'] as String? ?? '') ?? DateTime.now(),
+      birthDate: DateTime.tryParse(json['birthDate'] as String? ?? '') ??
+          DateTime.now(),
       birthTime: Duration(minutes: (json['birthTime'] as num?)?.toInt() ?? 0),
       birthCity: json['birthCity'] as String? ?? '',
       birthLatitude: (json['birthLatitude'] as num?)?.toDouble() ?? 0,

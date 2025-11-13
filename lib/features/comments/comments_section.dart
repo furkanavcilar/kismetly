@@ -91,7 +91,8 @@ class _CommentsSectionState extends State<CommentsSection> {
         SizedBox(
           height: 220,
           child: StreamBuilder<List<CommentEntry>>(
-            stream: _repository.watchComments(signId: widget.signId, date: todayKey),
+            stream: _repository.watchComments(
+                signId: widget.signId, date: todayKey),
             builder: (context, snapshot) {
               final data = snapshot.data ?? [];
               if (data.isEmpty) {
@@ -161,7 +162,6 @@ class _CommentsSectionState extends State<CommentsSection> {
 
 class _CommentBubble extends StatelessWidget {
   const _CommentBubble({
-    super.key,
     required this.displayName,
     required this.text,
     required this.time,

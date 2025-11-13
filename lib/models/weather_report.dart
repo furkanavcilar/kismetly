@@ -35,8 +35,8 @@ class WeatherReport {
       condition: json['condition'] as String? ?? '',
       icon: json['icon'] as String? ?? '',
       city: json['city'] as String? ?? '',
-      lastUpdated:
-          DateTime.tryParse(json['lastUpdated'] as String? ?? '') ?? DateTime.now(),
+      lastUpdated: DateTime.tryParse(json['lastUpdated'] as String? ?? '') ??
+          DateTime.now(),
       narrative: json['narrative'] as String?,
       vibeTag: json['vibeTag'] as String?,
     );
