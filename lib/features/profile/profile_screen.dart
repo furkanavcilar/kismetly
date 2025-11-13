@@ -220,9 +220,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _birthTime!.minute,
     );
     
-    // Import astro service to calculate signs
-    final astroService = services.AstroService();
-    final sunSignLabel = astroService.sunSign(birthDateTime);
+    // Calculate sun sign using static method
+    final sunSignLabel = services.AstroService.sunSign(birthDateTime);
     final sunSignId = _signIdFromLabel(sunSignLabel);
     final risingSignId = _estimateRising(
       birthTime: Duration(hours: _birthTime!.hour, minutes: _birthTime!.minute),
@@ -260,6 +259,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (mounted) {
       setState(() => _saving = false);
+      final loc = AppLocalizations.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(loc.translate('profileSaveSuccess') ?? 'Profile saved')),
       );

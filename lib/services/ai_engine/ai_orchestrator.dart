@@ -96,12 +96,6 @@ class AIOrchestrator {
       final cached = prefs.getString(cacheKey);
       if (cached != null) {
         try {
-          final decoded = _prefsFuture.then((p) => p.getString(cacheKey))
-              .then((s) => s != null ? Map<String, dynamic>.from(
-                  Map.fromEntries(s.split('|').map((e) {
-                    final parts = e.split(':');
-                    return MapEntry(parts[0], parts.sublist(1).join(':'));
-                  })))) : null);
           // Simplified caching - in production use JSON
           // For now, always regenerate
         } catch (_) {}
