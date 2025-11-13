@@ -4,6 +4,7 @@ import '../core/localization/app_localizations.dart';
 import '../core/localization/locale_provider.dart';
 import '../core/utils/locale_collator.dart';
 import '../data/zodiac_signs.dart';
+import '../features/paywall/premium_lock_widget.dart';
 import '../services/ai_content_service.dart';
 
 class ZodiacCompatibilityScreen extends StatefulWidget {
@@ -150,25 +151,28 @@ class _ZodiacCompatibilityScreenState extends State<ZodiacCompatibilityScreen>
             ),
           ),
           Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _CompatibilityTab(
-                  label: loc.translate('compatibilityLove'),
-                  summary: _insights?['love'] ?? '',
-                  loading: _loading,
-                ),
-                _CompatibilityTab(
-                  label: loc.translate('compatibilityFamily'),
-                  summary: _insights?['family'] ?? '',
-                  loading: _loading,
-                ),
-                _CompatibilityTab(
-                  label: loc.translate('compatibilityCareer'),
-                  summary: _insights?['career'] ?? '',
-                  loading: _loading,
-                ),
-              ],
+            child: PremiumLockWidget(
+              message: loc.translate('premiumFeatureCompatibility'),
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _CompatibilityTab(
+                    label: loc.translate('compatibilityLove'),
+                    summary: _insights?['love'] ?? '',
+                    loading: _loading,
+                  ),
+                  _CompatibilityTab(
+                    label: loc.translate('compatibilityFamily'),
+                    summary: _insights?['family'] ?? '',
+                    loading: _loading,
+                  ),
+                  _CompatibilityTab(
+                    label: loc.translate('compatibilityCareer'),
+                    summary: _insights?['career'] ?? '',
+                    loading: _loading,
+                  ),
+                ],
+              ),
             ),
           ),
         ],

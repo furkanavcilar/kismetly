@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/localization/locale_provider.dart';
 import '../../services/ai_service.dart';
+import '../../services/monetization/monetization_service.dart';
 import 'dream_history_entry.dart';
 import 'dream_history_store.dart';
 
@@ -29,14 +30,33 @@ class _DreamInterpreterScreenState extends State<DreamInterpreterScreen> {
   Future<void> _submit() async {
     final text = _controller.text.trim();
     final loc = AppLocalizations.of(context);
+    final monetization = MonetizationService.instance;
+    const creditCost = 3;
+
     if (text.isEmpty) {
       setState(() => _error = loc.translate('dreamEmpty'));
       return;
     }
+
+    if (!monetization.canAfford(creditCost)) {
+      setState(() => _error = loc.translate('creditsNeeded', params: {'amount': creditCost.toString()}));
+      return;
+    }
+
     setState(() {
       _loading = true;
       _error = null;
     });
+
+    final deducted = await monetization.deductCredits(creditCost);
+    if (!deducted) {
+      setState(() {
+        _loading = false;
+        _error = loc.translate('creditsNeeded', params: {'amount': creditCost.toString()});
+      });
+      return;
+    }
+
     final locale = LocaleScope.of(context).locale;
     final response = await _aiService.interpretDream(
       prompt: text,

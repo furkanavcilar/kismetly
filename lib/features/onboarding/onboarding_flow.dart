@@ -6,10 +6,7 @@ import 'package:kismetly/services/weather_service.dart';
 
 import '../../core/localization/app_localizations.dart';
 import '../../data/zodiac_signs.dart';
-<<<<<<< Updated upstream
-=======
 import '../../services.dart' as services;
->>>>>>> Stashed changes
 import '../../models/weather_report.dart';
 import '../profile/user_profile.dart';
 

@@ -52,7 +52,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyAr-idhj1t5JWYgdTcFhvhmOXSi5G0xpZw',
-    appId: '1:366386022105:android:3bd5ae95b1d4977e6ca0c8',
+    appId: '1:366386022105:android:422d7fb1642c19d16ca0c8',
     messagingSenderId: '366386022105',
     projectId: 'kismetlyfal',
     storageBucket: 'kismetlyfal.firebasestorage.app',
@@ -60,28 +60,24 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyA8X1IgaL4DuIBD-kIm0gv6GsL_Qp0BHhI',
-    appId: '1:366386022105:ios:ca00e64df98be4406ca0c8',
+    appId: '1:366386022105:ios:1e0db624e0c374506ca0c8',
     messagingSenderId: '366386022105',
     projectId: 'kismetlyfal',
     storageBucket: 'kismetlyfal.firebasestorage.app',
-    androidClientId:
-        '366386022105-8u0d81a6s68992v3tpv0af71bc5cgvkm.apps.googleusercontent.com',
-    iosClientId:
-        '366386022105-7eh5i18jip13ggtecb7gtbpahjbo6c50.apps.googleusercontent.com',
-    iosBundleId: 'com.example.kismetly',
+    androidClientId: '366386022105-8u0d81a6s68992v3tpv0af71bc5cgvkm.apps.googleusercontent.com',
+    iosClientId: '366386022105-indmel9cvs2hf7qpgrmmr286rrl78jvq.apps.googleusercontent.com',
+    iosBundleId: 'com.kismetly.app',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyA8X1IgaL4DuIBD-kIm0gv6GsL_Qp0BHhI',
-    appId: '1:366386022105:ios:ca00e64df98be4406ca0c8',
+    appId: '1:366386022105:ios:1e0db624e0c374506ca0c8',
     messagingSenderId: '366386022105',
     projectId: 'kismetlyfal',
     storageBucket: 'kismetlyfal.firebasestorage.app',
-    androidClientId:
-        '366386022105-8u0d81a6s68992v3tpv0af71bc5cgvkm.apps.googleusercontent.com',
-    iosClientId:
-        '366386022105-7eh5i18jip13ggtecb7gtbpahjbo6c50.apps.googleusercontent.com',
-    iosBundleId: 'com.example.kismetly',
+    androidClientId: '366386022105-8u0d81a6s68992v3tpv0af71bc5cgvkm.apps.googleusercontent.com',
+    iosClientId: '366386022105-indmel9cvs2hf7qpgrmmr286rrl78jvq.apps.googleusercontent.com',
+    iosBundleId: 'com.kismetly.app',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
@@ -93,4 +89,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'kismetlyfal.firebasestorage.app',
     measurementId: 'G-MN6PGHKE5G',
   );
+
 }

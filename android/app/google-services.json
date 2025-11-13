@@ -7,20 +7,12 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:366386022105:android:3bd5ae95b1d4977e6ca0c8",
+        "mobilesdk_app_id": "1:366386022105:android:422d7fb1642c19d16ca0c8",
         "android_client_info": {
-          "package_name": "com.example.kismetly"
+          "package_name": "com.kismetly.app"
         }
       },
       "oauth_client": [
-        {
-          "client_id": "366386022105-8u0d81a6s68992v3tpv0af71bc5cgvkm.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.kismetly",
-            "certificate_hash": "190ec62f01cd8a70e09eee341589504834885a5a"
-          }
-        },
         {
           "client_id": "366386022105-vgug2024863n7f6p5jh462de7klep08c.apps.googleusercontent.com",
           "client_type": 3

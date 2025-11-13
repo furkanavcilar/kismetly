@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/localization/locale_provider.dart';
 import '../../services/ai_service.dart';
+import '../../services/monetization/monetization_service.dart';
 
 class CoffeeReadingScreen extends StatefulWidget {
   const CoffeeReadingScreen({super.key, required this.onMenuTap});
@@ -74,16 +75,37 @@ class _CoffeeReadingScreenState extends State<CoffeeReadingScreen> {
 
   Future<void> _submit() async {
     final loc = AppLocalizations.of(context);
+    final monetization = MonetizationService.instance;
+    const creditCost = 5;
+
     if (_files.isEmpty) {
       setState(() {
         _message = loc.translate('coffeeEmpty');
       });
       return;
     }
+
+    if (!monetization.canAfford(creditCost)) {
+      setState(() {
+        _message = loc.translate('creditsNeeded', params: {'amount': creditCost.toString()});
+      });
+      return;
+    }
+
     setState(() {
       _loading = true;
       _message = null;
     });
+
+    final deducted = await monetization.deductCredits(creditCost);
+    if (!deducted) {
+      setState(() {
+        _loading = false;
+        _message = loc.translate('creditsNeeded', params: {'amount': creditCost.toString()});
+      });
+      return;
+    }
+
     final locale = LocaleScope.of(context).locale;
     final base64Images = <String>[];
     for (final file in _files) {

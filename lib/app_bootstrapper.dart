@@ -7,6 +7,7 @@ import 'features/profile/user_profile_scope.dart';
 import 'features/profile/user_profile_storage.dart';
 import 'features/profile/user_profile.dart';
 import 'main_shell.dart';
+import 'services/monetization/monetization_service.dart';
 
 class AppBootstrapper extends StatefulWidget {
   const AppBootstrapper({super.key});
@@ -29,6 +30,10 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
     final prefs = await SharedPreferences.getInstance();
     final storage = UserProfileStorage(prefs);
     final profile = storage.load();
+    
+    // Initialize monetization service
+    await MonetizationService.instance.init();
+    
     setState(() {
       _controller = UserProfileController(storage, profile);
       _loading = false;

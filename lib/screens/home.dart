@@ -310,28 +310,17 @@ class _WeatherCard extends StatelessWidget {
         ),
       );
     }
-<<<<<<< Updated upstream
-    final icon = report?.icon ?? '☀️';
-    final temperatureText = '${(report?.temperature ?? 0).toStringAsFixed(0)}°';
-    final conditionText = report?.condition ?? '-';
-    final cityText = report?.city ?? '-';
-=======
 
     final weather = report;
     if (weather == null) {
       return const SizedBox.shrink();
     }
->>>>>>> Stashed changes
 
     return _BlurCard(
       child: Row(
         children: [
           Text(
-<<<<<<< Updated upstream
-            icon,
-=======
             weather.icon,
->>>>>>> Stashed changes
             style: const TextStyle(fontSize: 36),
           ),
           const SizedBox(width: 18),
@@ -340,19 +329,11 @@ class _WeatherCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-<<<<<<< Updated upstream
-                  temperatureText,
-                  style: theme.textTheme.titleLarge,
-                ),
-                Text(conditionText, style: theme.textTheme.bodyMedium),
-                Text(cityText, style: theme.textTheme.bodySmall),
-=======
                   '${weather.temperature.toStringAsFixed(0)}°',
                   style: theme.textTheme.titleLarge,
                 ),
                 Text(weather.condition, style: theme.textTheme.bodyMedium),
                 Text(weather.city, style: theme.textTheme.bodySmall),
->>>>>>> Stashed changes
               ],
             ),
           ),
