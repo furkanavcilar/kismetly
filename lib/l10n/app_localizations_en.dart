@@ -348,7 +348,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menuLanguagePrompt => 'Choose language';
 
   @override
-  String get menuDreamsSubtitle => 'AI-powered insights';
+  String get menuDreamsSubtitle => 'Let\'s explore the emotional message behind your dream';
 
   @override
   String get menuHomeSubtitle => 'Personal astro feed';
@@ -364,6 +364,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get menuCoffeeSubtitle => 'Fortune from photos';
+
+  @override
+  String get menuZodiacSubtitle => 'Zodiac encyclopedia';
+
+  @override
+  String get menuTarotSubtitle => 'Secrets of the cards';
 
   @override
   String get menuSettingsSubtitle => 'App preferences';
@@ -594,7 +600,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paywallSubtitle => 'Deepen your cosmic journey';
 
   @override
-  String get paywallFeature1 => 'Unlimited AI Astrologer access';
+  String get paywallFeature1 => 'Unlimited personal guidance access';
 
   @override
   String get paywallFeature2 => 'Detailed compatibility reports';
@@ -618,7 +624,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get creditCostCoffee => 'Coffee reading: 5 credits';
 
   @override
-  String get creditCostChat => 'AI Astrologer question: 5 credits';
+  String get creditCostChat => 'Personal guidance question: 5 credits';
 
   @override
   String get creditCostChart => 'Guest chart: 10 credits';

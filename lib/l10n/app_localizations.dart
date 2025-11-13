@@ -740,7 +740,7 @@ abstract class AppLocalizations {
   /// No description provided for @menuDreamsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'AI-powered insights'**
+  /// **'Let\'s explore the emotional message behind your dream'**
   String get menuDreamsSubtitle;
 
   /// No description provided for @menuHomeSubtitle.
@@ -772,6 +772,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Fortune from photos'**
   String get menuCoffeeSubtitle;
+
+  /// No description provided for @menuZodiacSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Zodiac encyclopedia'**
+  String get menuZodiacSubtitle;
+
+  /// No description provided for @menuTarotSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Secrets of the cards'**
+  String get menuTarotSubtitle;
 
   /// No description provided for @menuSettingsSubtitle.
   ///
@@ -1208,7 +1220,7 @@ abstract class AppLocalizations {
   /// No description provided for @paywallFeature1.
   ///
   /// In en, this message translates to:
-  /// **'Unlimited AI Astrologer access'**
+  /// **'Unlimited personal guidance access'**
   String get paywallFeature1;
 
   /// No description provided for @paywallFeature2.
@@ -1256,7 +1268,7 @@ abstract class AppLocalizations {
   /// No description provided for @creditCostChat.
   ///
   /// In en, this message translates to:
-  /// **'AI Astrologer question: 5 credits'**
+  /// **'Personal guidance question: 5 credits'**
   String get creditCostChat;
 
   /// No description provided for @creditCostChart.

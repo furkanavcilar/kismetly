@@ -348,7 +348,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get menuLanguagePrompt => 'Dil seçin';
 
   @override
-  String get menuDreamsSubtitle => 'Yapay zekâ destekli içgörüler';
+  String get menuDreamsSubtitle => 'Rüyanın ardındaki duygusal mesajı birlikte keşfedelim';
 
   @override
   String get menuHomeSubtitle => 'Kişisel astrolojik akış';
@@ -364,6 +364,12 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get menuCoffeeSubtitle => 'Fotoğraflardan fal';
+
+  @override
+  String get menuZodiacSubtitle => 'Burç ansiklopedisi';
+
+  @override
+  String get menuTarotSubtitle => 'Kartların sırları';
 
   @override
   String get menuSettingsSubtitle => 'Uygulama tercihleri';
@@ -398,7 +404,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get languageSwitchSaved => 'Dil tercihi kaydedildi.';
 
   @override
-  String get actionRetry => 'Tekrar dene';
+  String get actionRetry => 'Tekrar Dene';
 
   @override
   String get homeTitle => 'Kozmik Pano';
@@ -508,10 +514,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get premiumPriceAnnual => '\$\$49.99/yıl';
 
   @override
-  String get premiumFeatureUnlimited => 'Sınırsız AI Astrolog Soruları';
+  String get premiumFeatureUnlimited => 'Sınırsız Kişisel Rehberlik';
 
   @override
-  String get premiumFeatureReports => 'Aylık ve Yıllık Kişisel Raporlar';
+  String get premiumFeatureReports => 'Aylık ve Yıllık Derinlemesine Raporlar';
 
   @override
   String get premiumFeatureCompatibility => 'Premium Uyumluluk Analizi';
@@ -594,7 +600,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get paywallSubtitle => 'Kozmik yolculuğunu derinleştir';
 
   @override
-  String get paywallFeature1 => 'Sınırsız AI Astrolog erişimi';
+  String get paywallFeature1 => 'Sınırsız kişisel rehberlik erişimi';
 
   @override
   String get paywallFeature2 => 'Detaylı uyumluluk raporları';
@@ -618,7 +624,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get creditCostCoffee => 'Kahve falı: 5 kredi';
 
   @override
-  String get creditCostChat => 'AI Astrolog sorusu: 5 kredi';
+  String get creditCostChat => 'Kişisel rehberlik sorusu: 5 kredi';
 
   @override
   String get creditCostChart => 'Misafir harita: 10 kredi';

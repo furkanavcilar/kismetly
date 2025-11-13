@@ -41,7 +41,9 @@ class AiService {
             },
             {
               'role': 'user',
-              'content': prompt,
+              'content': locale.languageCode == 'tr'
+                  ? 'Rüyam: $prompt\n\nBu rüyayı derinlemesine analiz et. Rüyadaki sembolleri, duyguları ve mesajları keşfet. Kişiye doğrudan, empati ve anlayışla konuş. Çok paragraflı, detaylı bir yorum yaz.'
+                  : 'My dream: $prompt\n\nAnalyze this dream in depth. Discover the symbols, emotions, and messages in the dream. Speak directly to the person with empathy and understanding. Write a detailed, multi-paragraph interpretation.',
             }
           ],
         }),

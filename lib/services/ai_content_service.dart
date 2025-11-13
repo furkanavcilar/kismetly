@@ -346,10 +346,230 @@ Sun sign: $sunSign, rising: $risingSign. Provide actionable daily advice. Respon
     required int seed,
   }) {
     if (locale.languageCode == 'tr') {
-      return '''JSON döndür: {"summary":string,"love":string,"family":string,"career":string}.
-Burçlar: $firstSign ve $secondSign. Uyumlu, empatik ve şiirsel anlatımla 2-3 cümlelik özetler oluştur. Türkçe yanıt ver.''';
+      return '''Sen deneyimli bir astroloji ve ilişki danışmanısın. $firstSign ve $secondSign burçlarının uyumluluğunu analiz et. JSON formatında döndür: {"summary":string,"love":string,"family":string,"career":string}. Her bölüm için 2-3 paragraf yaz. Kişisel, empatik, şiirsel ve derinden insani bir ton kullan. Yapay zeka, modeller veya teknolojiden asla bahsetme. Kişiye doğrudan "sen" diye hitap et. Türkçe yanıt ver.''';
     }
-    return '''Return JSON: {"summary":string,"love":string,"family":string,"career":string}.
-Signs: $firstSign and $secondSign. Use empathic and poetic tone with 2-3 sentence summaries. Respond in English.''';
+    return '''You are an experienced astrology and relationship counselor. Analyze the compatibility between $firstSign and $secondSign signs. Return in JSON format: {"summary":string,"love":string,"family":string,"career":string}. Write 2-3 paragraphs for each section. Use a personal, empathetic, poetic, and deeply human tone. Never mention AI, models, or technology. Speak directly to the person using "you". Respond in English.''';
+  }
+
+  /// Fetch daily horoscope for a specific zodiac sign
+  Future<String> fetchDailyHoroscope({
+    required String sign,
+    required Locale locale,
+    required DateTime date,
+  }) async {
+    final dayKey = _dayStamp(date);
+    final prefs = await _prefsFuture;
+    final cacheKey = 'horoscope_${locale.languageCode}_${sign}_$dayKey';
+    
+    final cached = prefs.getString(cacheKey);
+    if (cached != null && cached.isNotEmpty) {
+      return cached;
+    }
+
+    final apiKey = AppSecrets.openAiApiKey;
+    if (apiKey != null && apiKey.isNotEmpty) {
+      try {
+        final response = await _client.post(
+          Uri.parse('https://api.openai.com/v1/chat/completions'),
+          headers: {
+            'Authorization': 'Bearer $apiKey',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'model': 'gpt-4o-mini',
+            'messages': [
+              {
+                'role': 'system',
+                'content': _horoscopeSystemPrompt(locale.languageCode),
+              },
+              {
+                'role': 'user',
+                'content': 'Write today\'s horoscope for $sign. Make it personal, warm, and specific to this sign. Include insights about love, career, spiritual growth, and social connections. Write as a caring astrologer speaking directly to the person. Never mention AI or technology.',
+              },
+            ],
+            'temperature': 0.8,
+          }),
+        );
+
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+          final data = jsonDecode(response.body) as Map<String, dynamic>;
+          final choices = data['choices'] as List<dynamic>?;
+          if (choices != null && choices.isNotEmpty) {
+            final message = choices.first['message'] as Map<String, dynamic>?;
+            final content = message?['content'] as String?;
+            if (content != null && content.trim().isNotEmpty) {
+              final horoscope = content.trim();
+              await prefs.setString(cacheKey, horoscope);
+              return horoscope;
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('Horoscope generation failed: $e');
+      }
+    }
+
+    // Fallback
+    return _getFallbackHoroscope(sign, locale.languageCode);
+  }
+
+  String _horoscopeSystemPrompt(String language) {
+    if (language == 'en') {
+      return '''You are a warm, intuitive astrologer with deep knowledge of zodiac signs and their daily energies. Write horoscopes that feel personal, empathetic, and deeply human. Speak directly to the person using "you". Never mention AI, models, or technology. Your tone should be supportive, mystical, and feminine-friendly. Write multiple paragraphs with specific insights about love, career, spiritual growth, and social connections.''';
+    }
+    return '''Sen derin burç bilgisine sahip sıcak, sezgisel bir astrologsun. Kişisel, empatik ve derinden insani horoskoplar yaz. Kişiye doğrudan "sen" diye hitap et. Yapay zeka, modeller veya teknolojiden asla bahsetme. Tonun destekleyici, mistik ve kadın dostu olsun. Aşk, kariyer, ruhsal gelişim ve sosyal bağlantılar hakkında özel içgörülerle çok paragraflı metinler yaz.''';
+  }
+
+  String _getFallbackHoroscope(String sign, String language) {
+    if (language == 'tr') {
+      return 'Bugün kozmik enerjiler senin lehine çalışıyor. İç sesine güven ve adımlarını cesaretle at. Aşk hayatında yeni fırsatlar belirebilir, kariyerinde ilerleme kaydedebilirsin. Ruhsal gelişim için meditasyon ve iç gözlem zamanı ayır.';
+    }
+    return 'Today cosmic energies are working in your favor. Trust your inner voice and take steps with courage. New opportunities may appear in love, and you may make progress in your career. Take time for meditation and inner reflection for spiritual growth.';
+  }
+
+  /// Fetch detailed information about a zodiac sign
+  Future<Map<String, String>> fetchZodiacSignDetails({
+    required String sign,
+    required Locale locale,
+  }) async {
+    final prefs = await _prefsFuture;
+    final cacheKey = 'zodiac_details_${locale.languageCode}_$sign';
+    
+    final cached = prefs.getString(cacheKey);
+    if (cached != null) {
+      try {
+        final decoded = jsonDecode(cached) as Map<String, dynamic>;
+        return Map<String, String>.from(decoded);
+      } catch (_) {
+        // Invalid cache, continue to generate
+      }
+    }
+
+    final apiKey = AppSecrets.openAiApiKey;
+    if (apiKey != null && apiKey.isNotEmpty) {
+      try {
+        final response = await _client.post(
+          Uri.parse('https://api.openai.com/v1/chat/completions'),
+          headers: {
+            'Authorization': 'Bearer $apiKey',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'model': 'gpt-4o-mini',
+            'messages': [
+              {
+                'role': 'system',
+                'content': _zodiacDetailsSystemPrompt(locale.languageCode),
+              },
+              {
+                'role': 'user',
+                'content': 'Provide detailed information about the $sign zodiac sign. Include: General Traits (Genel Özellikler), Strengths (Güçlü Yönler), Challenges (Zorluklar), and Themes for the Year (Yılın Astrolojik Temaları). Write as a knowledgeable astrologer. Each section should be at least 2-3 paragraphs. Never mention AI or technology.',
+              },
+            ],
+            'temperature': 0.7,
+          }),
+        );
+
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+          final data = jsonDecode(response.body) as Map<String, dynamic>;
+          final choices = data['choices'] as List<dynamic>?;
+          if (choices != null && choices.isNotEmpty) {
+            final message = choices.first['message'] as Map<String, dynamic>?;
+            final content = message?['content'] as String?;
+            if (content != null && content.trim().isNotEmpty) {
+              final details = _parseZodiacDetails(content, locale.languageCode);
+              await prefs.setString(cacheKey, jsonEncode(details));
+              return details;
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('Zodiac details generation failed: $e');
+      }
+    }
+
+    // Fallback
+    return _getFallbackZodiacDetails(sign, locale.languageCode);
+  }
+
+  String _zodiacDetailsSystemPrompt(String language) {
+    if (language == 'en') {
+      return '''You are a knowledgeable, warm astrologer with deep understanding of zodiac signs. Write detailed, rich descriptions that feel personal and human. Never mention AI, models, or technology. Your tone should be supportive, mystical, and feminine-friendly. Write multiple paragraphs for each section.''';
+    }
+    return '''Sen derin burç bilgisine sahip bilgili, sıcak bir astrologsun. Kişisel ve insani hissettiren detaylı, zengin açıklamalar yaz. Yapay zeka, modeller veya teknolojiden asla bahsetme. Tonun destekleyici, mistik ve kadın dostu olsun. Her bölüm için çok paragraflı metinler yaz.''';
+  }
+
+  Map<String, String> _parseZodiacDetails(String text, String language) {
+    final sections = <String, String>{
+      'traits': '',
+      'strengths': '',
+      'challenges': '',
+      'themes': '',
+    };
+
+    // Try to parse structured response
+    final lower = text.toLowerCase();
+    final traitKeywords = language == 'tr' 
+        ? ['genel özellikler', 'özellikler', 'traits']
+        : ['general traits', 'traits'];
+    final strengthKeywords = language == 'tr'
+        ? ['güçlü yönler', 'güçlü', 'strengths']
+        : ['strengths', 'strong'];
+    final challengeKeywords = language == 'tr'
+        ? ['zorluklar', 'zayıf', 'challenges']
+        : ['challenges', 'weaknesses'];
+    final themeKeywords = language == 'tr'
+        ? ['tema', 'yılın', 'themes']
+        : ['themes', 'year'];
+
+    // Simple parsing - in production, use more sophisticated parsing
+    for (final key in sections.keys) {
+      final keywords = key == 'traits' ? traitKeywords
+          : key == 'strengths' ? strengthKeywords
+          : key == 'challenges' ? challengeKeywords
+          : themeKeywords;
+      
+      for (final keyword in keywords) {
+        final index = lower.indexOf(keyword);
+        if (index != -1) {
+          // Extract text after keyword
+          final start = index + keyword.length;
+          final end = text.length;
+          sections[key] = text.substring(start, end).trim();
+          break;
+        }
+      }
+    }
+
+    // If parsing failed, distribute text evenly
+    if (sections.values.every((v) => v.isEmpty)) {
+      final parts = text.split('\n\n');
+      final perSection = (parts.length / sections.length).ceil();
+      int partIndex = 0;
+      for (final key in sections.keys) {
+        final end = (partIndex + 1) * perSection;
+        sections[key] = parts.sublist(partIndex, end > parts.length ? parts.length : end).join('\n\n');
+        partIndex = end;
+      }
+    }
+
+    return sections;
+  }
+
+  Map<String, String> _getFallbackZodiacDetails(String sign, String language) {
+    if (language == 'tr') {
+      return {
+        'traits': '$sign burcu, kozmik enerjilerin güçlü bir temsilcisidir. Bu burç, derin duygusal bağlantılar ve sezgisel anlayışla karakterize edilir.',
+        'strengths': 'Güçlü yönlerin arasında empati, yaratıcılık ve içgörü yer alır. Bu özellikler seni hayatta ileriye taşır.',
+        'challenges': 'Bazen aşırı duyarlılık ve mükemmeliyetçilik zorluk yaratabilir. Kendine karşı nazik olmayı unutma.',
+        'themes': 'Bu yıl, kişisel gelişim ve ruhsal derinleşme temaları öne çıkıyor. Yeni fırsatlar ve dönüşümler seni bekliyor.',
+      };
+    }
+    return {
+      'traits': 'The $sign sign is a powerful representative of cosmic energies. This sign is characterized by deep emotional connections and intuitive understanding.',
+      'strengths': 'Your strengths include empathy, creativity, and insight. These qualities carry you forward in life.',
+      'challenges': 'Sometimes excessive sensitivity and perfectionism can create challenges. Remember to be gentle with yourself.',
+      'themes': 'This year, themes of personal growth and spiritual deepening come to the fore. New opportunities and transformations await you.',
+    };
   }
 }

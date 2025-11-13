@@ -5,7 +5,10 @@ import '../core/localization/locale_provider.dart';
 import '../core/utils/locale_collator.dart';
 import '../data/zodiac_signs.dart';
 import '../features/paywall/premium_lock_widget.dart';
+import '../features/paywall/upgrade_screen.dart';
 import '../services/ai_content_service.dart';
+import '../services/daily_limits_service.dart';
+import '../services/monetization/monetization_service.dart';
 
 class ZodiacCompatibilityScreen extends StatefulWidget {
   const ZodiacCompatibilityScreen({super.key, required this.onMenuTap});
@@ -23,9 +26,12 @@ class _ZodiacCompatibilityScreenState extends State<ZodiacCompatibilityScreen>
   late String _firstSign;
   late String _secondSign;
   final _aiService = AiContentService();
+  final _dailyLimits = DailyLimitsService();
   Map<String, String>? _insights;
   bool _loading = true;
   String? _error;
+  bool _canUseFree = true;
+  bool _checkingLimit = false;
 
   @override
   void initState() {
@@ -33,7 +39,19 @@ class _ZodiacCompatibilityScreenState extends State<ZodiacCompatibilityScreen>
     _tabController = TabController(length: 3, vsync: this);
     _firstSign = zodiacSigns.first.id;
     _secondSign = zodiacSigns.last.id;
+    _checkDailyLimit();
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+  }
+
+  Future<void> _checkDailyLimit() async {
+    setState(() => _checkingLimit = true);
+    final canUse = await _dailyLimits.canUseFeature('zodiac');
+    if (mounted) {
+      setState(() {
+        _canUseFree = canUse;
+        _checkingLimit = false;
+      });
+    }
   }
 
   @override
@@ -52,11 +70,31 @@ class _ZodiacCompatibilityScreenState extends State<ZodiacCompatibilityScreen>
   }
 
   Future<void> _load({bool forceRefresh = false}) async {
+    final monetization = MonetizationService.instance;
+    
+    // Check if user can use free compatibility
+    if (!_canUseFree && !monetization.isPremium) {
+      // Show paywall
+      if (mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const UpgradeScreen()),
+        );
+      }
+      return;
+    }
+
     final locale = LocaleScope.of(context).locale;
     setState(() {
       _loading = true;
       _error = null;
     });
+    
+    // Record usage if free
+    if (_canUseFree && !monetization.isPremium) {
+      await _dailyLimits.recordFeatureUse('zodiac');
+      setState(() => _canUseFree = false);
+    }
+    
     try {
       String label(String id) {
         final sign = findZodiacById(id);
@@ -150,29 +188,57 @@ class _ZodiacCompatibilityScreenState extends State<ZodiacCompatibilityScreen>
               onRetry: _load,
             ),
           ),
-          Expanded(
-            child: PremiumLockWidget(
-              message: loc.translate('premiumFeatureCompatibility'),
-              child: TabBarView(
-                controller: _tabController,
+          if (!_canUseFree && !MonetizationService.instance.isPremium) ...[
+            Container(
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
                 children: [
-                  _CompatibilityTab(
-                    label: loc.translate('compatibilityLove'),
-                    summary: _insights?['love'] ?? '',
-                    loading: _loading,
+                  Icon(
+                    Icons.info_outline,
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 20,
                   ),
-                  _CompatibilityTab(
-                    label: loc.translate('compatibilityFamily'),
-                    summary: _insights?['family'] ?? '',
-                    loading: _loading,
-                  ),
-                  _CompatibilityTab(
-                    label: loc.translate('compatibilityCareer'),
-                    summary: _insights?['career'] ?? '',
-                    loading: _loading,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      loc.translate('compatibilityDailyLimit') ??
+                          'Günlük ücretsiz kullanım hakkınız doldu. Pro\'ya yükseltin veya yarın tekrar deneyin.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                    ),
                   ),
                 ],
               ),
+            ),
+          ],
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _CompatibilityTab(
+                  label: loc.translate('compatibilityLove'),
+                  summary: _insights?['love'] ?? '',
+                  loading: _loading,
+                ),
+                _CompatibilityTab(
+                  label: loc.translate('compatibilityFamily'),
+                  summary: _insights?['family'] ?? '',
+                  loading: _loading,
+                ),
+                _CompatibilityTab(
+                  label: loc.translate('compatibilityCareer'),
+                  summary: _insights?['career'] ?? '',
+                  loading: _loading,
+                ),
+              ],
             ),
           ),
         ],

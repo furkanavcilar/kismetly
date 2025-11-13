@@ -8,6 +8,9 @@ import 'features/dreams/dream_interpreter_screen.dart';
 import 'features/profile/profile_screen.dart';
 import 'screens/compatibility.dart';
 import 'screens/home.dart';
+import 'screens/horoscopes_list_screen.dart';
+import 'screens/zodiac_encyclopedia_screen.dart';
+import 'screens/tarot_reading_screen.dart';
 
 class ShellPage {
   const ShellPage({
@@ -120,11 +123,21 @@ class _MainShellState extends State<MainShell> {
         titleKey: 'menuHoroscopes',
         subtitleKey: 'menuHoroscopesSubtitle',
         icon: Icons.auto_graph,
-        builder: (context) => PlaceholderScreen(
-          onMenuTap: openDrawer,
-          title: loc.translate('menuHoroscopes'),
-          subtitle: loc.translate('menuHoroscopesSubtitle'),
-        ),
+        builder: (context) => HoroscopesListScreen(onMenuTap: openDrawer),
+      ),
+      ShellPage(
+        id: 'zodiac',
+        titleKey: 'menuZodiac',
+        subtitleKey: 'menuZodiacSubtitle',
+        icon: Icons.stars,
+        builder: (context) => ZodiacEncyclopediaScreen(onMenuTap: openDrawer),
+      ),
+      ShellPage(
+        id: 'tarot',
+        titleKey: 'menuTarot',
+        subtitleKey: 'menuTarotSubtitle',
+        icon: Icons.style,
+        builder: (context) => TarotReadingScreen(onMenuTap: openDrawer),
       ),
       ShellPage(
         id: 'palmistry',

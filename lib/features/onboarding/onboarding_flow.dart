@@ -96,7 +96,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       return;
     }
 
-    _cityDebounce = Timer(const Duration(milliseconds: 400), () async {
+    _cityDebounce = Timer(const Duration(milliseconds: 250), () async {
       final suggestions = await _autocompleteService.search(trimmed);
       if (!mounted) return;
       setState(() {

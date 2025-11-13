@@ -255,7 +255,12 @@ class _SubscriptionToggle extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       loc.translate('premiumPriceMonthly'),
-                      style: theme.textTheme.bodySmall,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: !selectedAnnual 
+                            ? theme.colorScheme.onPrimaryContainer 
+                            : theme.colorScheme.onSurface,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ),
@@ -284,7 +289,12 @@ class _SubscriptionToggle extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       loc.translate('premiumPriceAnnual'),
-                      style: theme.textTheme.bodySmall,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: selectedAnnual 
+                            ? theme.colorScheme.onPrimaryContainer 
+                            : theme.colorScheme.onSurface,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ),
