@@ -640,4 +640,52 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get purchaseRestoreError => 'Geri yüklenecek satın alma bulunamadı.';
+
+  @override
+  String get menuProfile => 'Profil';
+
+  @override
+  String get menuProfileSubtitle => 'Kişisel bilgileriniz';
+
+  @override
+  String get settingsTheme => 'Tema';
+
+  @override
+  String get settingsThemeLight => 'Açık';
+
+  @override
+  String get settingsThemeDark => 'Koyu';
+
+  @override
+  String get settingsThemeSystem => 'Sistem';
+
+  @override
+  String get settingsThemeSaved => 'Tema kaydedildi';
+
+  @override
+  String get settingsNotifications => 'Bildirimler';
+
+  @override
+  String get settingsNotificationsDailyHoroscope => 'Günlük Burç Yorumu';
+
+  @override
+  String get settingsNotificationsDailyHoroscopeDesc => 'Günlük burç yorumu bildirimleri al';
+
+  @override
+  String get settingsNotificationsNightly => 'Gece Motivasyonu';
+
+  @override
+  String get settingsNotificationsNightlyDesc => 'Gece motivasyon mesajları al';
+
+  @override
+  String get settingsData => 'Veri';
+
+  @override
+  String get settingsClearCache => 'Önbelleği Temizle';
+
+  @override
+  String get settingsClearCacheDesc => 'Kaydedilmiş okumalar önbelleğini temizle';
+
+  @override
+  String get settingsCacheCleared => 'Önbellek temizlendi';
 }

@@ -21,12 +21,16 @@ class _ZodiacSignDetailScreenState extends State<ZodiacSignDetailScreen> {
   String? _error;
 
   @override
-  void initState() {
-    super.initState();
-    _loadDetails();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_loading && _details == null) {
+      _loadDetails();
+    }
   }
 
   Future<void> _loadDetails() async {
+    if (!mounted) return;
+    
     setState(() {
       _loading = true;
       _error = null;
@@ -127,7 +131,22 @@ class _ZodiacSignDetailScreenState extends State<ZodiacSignDetailScreen> {
                         ),
                         const SizedBox(height: 24),
                         _DetailSection(
-                          title: loc.translate('zodiacThemes') ?? 'Yılın Astrolojik Temaları',
+                          title: loc.translate('zodiacLove') ?? 'Aşk & İlişkiler',
+                          content: _details!['love'] ?? '',
+                        ),
+                        const SizedBox(height: 24),
+                        _DetailSection(
+                          title: loc.translate('zodiacCareer') ?? 'Kariyer & Para',
+                          content: _details!['career'] ?? '',
+                        ),
+                        const SizedBox(height: 24),
+                        _DetailSection(
+                          title: loc.translate('zodiacEmotional') ?? 'Duygusal Manzara',
+                          content: _details!['emotional'] ?? '',
+                        ),
+                        const SizedBox(height: 24),
+                        _DetailSection(
+                          title: loc.translate('zodiacThemes') ?? 'Bu Ayın Teması',
                           content: _details!['themes'] ?? '',
                         ),
                       ],

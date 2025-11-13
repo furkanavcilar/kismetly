@@ -356,14 +356,18 @@ Sun sign: $sunSign, rising: $risingSign. Provide actionable daily advice. Respon
     required String sign,
     required Locale locale,
     required DateTime date,
+    bool forceRefresh = false,
   }) async {
     final dayKey = _dayStamp(date);
     final prefs = await _prefsFuture;
     final cacheKey = 'horoscope_${locale.languageCode}_${sign}_$dayKey';
     
-    final cached = prefs.getString(cacheKey);
-    if (cached != null && cached.isNotEmpty) {
-      return cached;
+    // Only use cache if not forcing refresh
+    if (!forceRefresh) {
+      final cached = prefs.getString(cacheKey);
+      if (cached != null && cached.isNotEmpty) {
+        return cached;
+      }
     }
 
     final apiKey = AppSecrets.openAiApiKey;
@@ -384,10 +388,11 @@ Sun sign: $sunSign, rising: $risingSign. Provide actionable daily advice. Respon
               },
               {
                 'role': 'user',
-                'content': 'Write today\'s horoscope for $sign. Make it personal, warm, and specific to this sign. Include insights about love, career, spiritual growth, and social connections. Write as a caring astrologer speaking directly to the person. Never mention AI or technology.',
+                'content': 'Write today\'s horoscope for $sign (date: ${date.year}-${date.month}-${date.day}). Make it personal, warm, and specific to this sign. Write 4-6 long paragraphs with varied, non-generic guidance. Include insights about love, career, spiritual growth, and social connections. Use the date (${date.day}/${date.month}/${date.year}) and sign characteristics to create unique, non-repetitive content. Write as a caring astrologer speaking directly to the person using "you". Never mention AI, models, or technology. Vary your language, sentence structure, and avoid repetitive phrases. Each paragraph should be substantial (3-4 sentences minimum). Make it feel fresh and different from any previous horoscope for this sign.',
               },
             ],
-            'temperature': 0.8,
+            'temperature': 0.95, // Higher temperature for more variation
+            'seed': date.day * 100 + date.month + date.year % 100 + sign.hashCode % 1000, // Add sign hash for uniqueness
           }),
         );
 
@@ -463,7 +468,7 @@ Sun sign: $sunSign, rising: $risingSign. Provide actionable daily advice. Respon
               },
               {
                 'role': 'user',
-                'content': 'Provide detailed information about the $sign zodiac sign. Include: General Traits (Genel Özellikler), Strengths (Güçlü Yönler), Challenges (Zorluklar), and Themes for the Year (Yılın Astrolojik Temaları). Write as a knowledgeable astrologer. Each section should be at least 2-3 paragraphs. Never mention AI or technology.',
+                'content': 'Provide detailed information about the $sign zodiac sign. Include: General Traits (Genel Özellikler), Strengths (Güçlü Yönler), Challenges (Zorluklar), Love & Relationships (Aşk & İlişkiler), Career & Money (Kariyer & Para), Emotional Landscape (Duygusal Manzara), and Monthly/Seasonal Focus (Bu Ayın Teması). Write as a knowledgeable astrologer. Each section should be 3-4 paragraphs. Never mention AI or technology.',
               },
             ],
             'temperature': 0.7,
@@ -504,6 +509,9 @@ Sun sign: $sunSign, rising: $risingSign. Provide actionable daily advice. Respon
       'traits': '',
       'strengths': '',
       'challenges': '',
+      'love': '',
+      'career': '',
+      'emotional': '',
       'themes': '',
     };
 
@@ -518,23 +526,52 @@ Sun sign: $sunSign, rising: $risingSign. Provide actionable daily advice. Respon
     final challengeKeywords = language == 'tr'
         ? ['zorluklar', 'zayıf', 'challenges']
         : ['challenges', 'weaknesses'];
+    final loveKeywords = language == 'tr'
+        ? ['aşk', 'ilişkiler', 'love']
+        : ['love', 'relationships'];
+    final careerKeywords = language == 'tr'
+        ? ['kariyer', 'para', 'career', 'money']
+        : ['career', 'money'];
+    final emotionalKeywords = language == 'tr'
+        ? ['duygusal', 'emotional']
+        : ['emotional', 'landscape'];
     final themeKeywords = language == 'tr'
-        ? ['tema', 'yılın', 'themes']
-        : ['themes', 'year'];
+        ? ['tema', 'yılın', 'ayın', 'themes']
+        : ['themes', 'year', 'monthly'];
 
     // Simple parsing - in production, use more sophisticated parsing
     for (final key in sections.keys) {
       final keywords = key == 'traits' ? traitKeywords
           : key == 'strengths' ? strengthKeywords
           : key == 'challenges' ? challengeKeywords
+          : key == 'love' ? loveKeywords
+          : key == 'career' ? careerKeywords
+          : key == 'emotional' ? emotionalKeywords
           : themeKeywords;
       
       for (final keyword in keywords) {
         final index = lower.indexOf(keyword);
         if (index != -1) {
-          // Extract text after keyword
+          // Extract text after keyword until next section or end
           final start = index + keyword.length;
-          final end = text.length;
+          // Find next section marker
+          int end = text.length;
+          for (final otherKey in sections.keys) {
+            if (otherKey == key) continue;
+            final otherKeywords = otherKey == 'traits' ? traitKeywords
+                : otherKey == 'strengths' ? strengthKeywords
+                : otherKey == 'challenges' ? challengeKeywords
+                : otherKey == 'love' ? loveKeywords
+                : otherKey == 'career' ? careerKeywords
+                : otherKey == 'emotional' ? emotionalKeywords
+                : themeKeywords;
+            for (final otherKeyword in otherKeywords) {
+              final otherIndex = lower.indexOf(otherKeyword, start);
+              if (otherIndex != -1 && otherIndex < end) {
+                end = otherIndex;
+              }
+            }
+          }
           sections[key] = text.substring(start, end).trim();
           break;
         }
@@ -562,6 +599,9 @@ Sun sign: $sunSign, rising: $risingSign. Provide actionable daily advice. Respon
         'traits': '$sign burcu, kozmik enerjilerin güçlü bir temsilcisidir. Bu burç, derin duygusal bağlantılar ve sezgisel anlayışla karakterize edilir.',
         'strengths': 'Güçlü yönlerin arasında empati, yaratıcılık ve içgörü yer alır. Bu özellikler seni hayatta ileriye taşır.',
         'challenges': 'Bazen aşırı duyarlılık ve mükemmeliyetçilik zorluk yaratabilir. Kendine karşı nazik olmayı unutma.',
+        'love': 'Aşk hayatında derin bağlantılar kurma eğilimindesin. Duygusal samimiyet ve güven senin için çok önemli.',
+        'career': 'Kariyerinde yaratıcılık ve sezgilerin seni yönlendiriyor. İş hayatında empati ve anlayış güçlü yönlerin.',
+        'emotional': 'Duygusal manzaran zengin ve derin. İç dünyanı keşfetmek ve duygularını ifade etmek senin için önemli.',
         'themes': 'Bu yıl, kişisel gelişim ve ruhsal derinleşme temaları öne çıkıyor. Yeni fırsatlar ve dönüşümler seni bekliyor.',
       };
     }
@@ -569,6 +609,9 @@ Sun sign: $sunSign, rising: $risingSign. Provide actionable daily advice. Respon
       'traits': 'The $sign sign is a powerful representative of cosmic energies. This sign is characterized by deep emotional connections and intuitive understanding.',
       'strengths': 'Your strengths include empathy, creativity, and insight. These qualities carry you forward in life.',
       'challenges': 'Sometimes excessive sensitivity and perfectionism can create challenges. Remember to be gentle with yourself.',
+      'love': 'In love, you tend to form deep connections. Emotional intimacy and trust are very important to you.',
+      'career': 'In your career, creativity and intuition guide you. Empathy and understanding are your strong points in work life.',
+      'emotional': 'Your emotional landscape is rich and deep. Exploring your inner world and expressing your feelings is important to you.',
       'themes': 'This year, themes of personal growth and spiritual deepening come to the fore. New opportunities and transformations await you.',
     };
   }

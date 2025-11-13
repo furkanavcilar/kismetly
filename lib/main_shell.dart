@@ -11,6 +11,10 @@ import 'screens/home.dart';
 import 'screens/horoscopes_list_screen.dart';
 import 'screens/zodiac_encyclopedia_screen.dart';
 import 'screens/tarot_reading_screen.dart';
+import 'features/palm/palm_reading_screen.dart';
+import 'screens/settings_screen.dart';
+import 'services/google_auth_service.dart';
+import 'features/profile/user_profile_scope.dart';
 
 class ShellPage {
   const ShellPage({
@@ -144,11 +148,7 @@ class _MainShellState extends State<MainShell> {
         titleKey: 'menuPalmistry',
         subtitleKey: 'menuPalmistrySubtitle',
         icon: Icons.front_hand,
-        builder: (context) => PlaceholderScreen(
-          onMenuTap: openDrawer,
-          title: loc.translate('menuPalmistry'),
-          subtitle: loc.translate('menuPalmistrySubtitle'),
-        ),
+        builder: (context) => PalmReadingScreen(onMenuTap: openDrawer),
       ),
       ShellPage(
         id: 'compatibility',
@@ -166,12 +166,107 @@ class _MainShellState extends State<MainShell> {
       ),
       ShellPage(
         id: 'profile',
-        titleKey: 'menuSettings',
-        subtitleKey: 'menuSettingsSubtitle',
+        titleKey: 'menuProfile',
+        subtitleKey: 'menuProfileSubtitle',
         icon: Icons.person_outline,
         builder: (context) => ProfileScreen(onMenuTap: openDrawer),
       ),
+      ShellPage(
+        id: 'settings',
+        titleKey: 'menuSettings',
+        subtitleKey: 'menuSettingsSubtitle',
+        icon: Icons.settings_outlined,
+        builder: (context) => SettingsScreen(onMenuTap: openDrawer),
+      ),
     ];
+  }
+}
+
+class _DrawerHeader extends StatelessWidget {
+  const _DrawerHeader({
+    required this.onSelect,
+    required this.pages,
+  });
+
+  final ValueChanged<int> onSelect;
+  final List<ShellPage> pages;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final loc = AppLocalizations.of(context);
+    final googleAuth = GoogleAuthService();
+    final user = googleAuth.currentUser;
+    final profileController = UserProfileScope.of(context);
+    final profile = profileController.profile;
+    
+    final displayName = user?.displayName ?? profile?.name ?? 'Guest';
+    final photoUrl = user?.photoURL;
+    
+    // Get initials for avatar
+    final initials = displayName
+        .split(' ')
+        .take(2)
+        .map((n) => n.isNotEmpty ? n[0].toUpperCase() : '')
+        .join();
+
+    // Find profile page index
+    final profileIndex = pages.indexWhere((p) => p.id == 'profile');
+
+    return InkWell(
+      onTap: () {
+        if (profileIndex != -1) {
+          onSelect(profileIndex);
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 28,
+              backgroundImage: photoUrl != null ? NetworkImage(photoUrl) : null,
+              backgroundColor: theme.colorScheme.primaryContainer,
+              child: photoUrl == null
+                  ? Text(
+                      initials.isNotEmpty ? initials : 'K',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: theme.colorScheme.onPrimaryContainer,
+                      ),
+                    )
+                  : null,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    displayName,
+                    style: theme.textTheme.titleMedium,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (user?.email != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      user!.email!,
+                      style: theme.textTheme.bodySmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              color: theme.colorScheme.primary,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -204,16 +299,8 @@ class AppDrawer extends StatelessWidget {
       child: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  loc.translate('appTitle'),
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-              ),
-            ),
+            _DrawerHeader(onSelect: onSelect, pages: pages),
+            const Divider(),
             Expanded(
               child: ListView.builder(
                 itemCount: items.length,

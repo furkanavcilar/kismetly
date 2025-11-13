@@ -199,5 +199,21 @@
   "purchaseSuccess": "Purchase successful!",
   "purchaseError": "Purchase failed. Please try again.",
   "purchaseRestoreSuccess": "Purchases restored.",
-  "purchaseRestoreError": "No purchases found to restore."
+  "purchaseRestoreError": "No purchases found to restore.",
+  "menuProfile": "Profile",
+  "menuProfileSubtitle": "Your personal information",
+  "settingsTheme": "Theme",
+  "settingsThemeLight": "Light",
+  "settingsThemeDark": "Dark",
+  "settingsThemeSystem": "System",
+  "settingsThemeSaved": "Theme saved",
+  "settingsNotifications": "Notifications",
+  "settingsNotificationsDailyHoroscope": "Daily Horoscope",
+  "settingsNotificationsDailyHoroscopeDesc": "Receive daily horoscope notifications",
+  "settingsNotificationsNightly": "Nightly Motivation",
+  "settingsNotificationsNightlyDesc": "Receive nightly motivation messages",
+  "settingsData": "Data",
+  "settingsClearCache": "Clear Cache",
+  "settingsClearCacheDesc": "Clear saved readings cache",
+  "settingsCacheCleared": "Cache cleared"
 }

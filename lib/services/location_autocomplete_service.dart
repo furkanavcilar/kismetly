@@ -57,7 +57,6 @@ class LocationAutocompleteService {
                      address['county'] ??
                      item['display_name']?.toString().split(',').first ?? '';
         final country = address['country'] as String?;
-        final district = address['suburb'] ?? address['neighbourhood'] ?? '';
         
         // Prioritize Turkish cities for Turkish queries
         if (isTurkishQuery && country != 'Türkiye' && country != 'Turkey' && suggestions.length >= 3) {

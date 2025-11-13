@@ -1300,6 +1300,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No purchases found to restore.'**
   String get purchaseRestoreError;
+
+  /// No description provided for @menuProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get menuProfile;
+
+  /// No description provided for @menuProfileSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your personal information'**
+  String get menuProfileSubtitle;
+
+  /// No description provided for @settingsTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get settingsTheme;
+
+  /// No description provided for @settingsThemeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get settingsThemeLight;
+
+  /// No description provided for @settingsThemeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get settingsThemeDark;
+
+  /// No description provided for @settingsThemeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get settingsThemeSystem;
+
+  /// No description provided for @settingsThemeSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme saved'**
+  String get settingsThemeSaved;
+
+  /// No description provided for @settingsNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get settingsNotifications;
+
+  /// No description provided for @settingsNotificationsDailyHoroscope.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily Horoscope'**
+  String get settingsNotificationsDailyHoroscope;
+
+  /// No description provided for @settingsNotificationsDailyHoroscopeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Receive daily horoscope notifications'**
+  String get settingsNotificationsDailyHoroscopeDesc;
+
+  /// No description provided for @settingsNotificationsNightly.
+  ///
+  /// In en, this message translates to:
+  /// **'Nightly Motivation'**
+  String get settingsNotificationsNightly;
+
+  /// No description provided for @settingsNotificationsNightlyDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Receive nightly motivation messages'**
+  String get settingsNotificationsNightlyDesc;
+
+  /// No description provided for @settingsData.
+  ///
+  /// In en, this message translates to:
+  /// **'Data'**
+  String get settingsData;
+
+  /// No description provided for @settingsClearCache.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Cache'**
+  String get settingsClearCache;
+
+  /// No description provided for @settingsClearCacheDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear saved readings cache'**
+  String get settingsClearCacheDesc;
+
+  /// No description provided for @settingsCacheCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Cache cleared'**
+  String get settingsCacheCleared;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

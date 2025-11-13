@@ -640,4 +640,52 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get purchaseRestoreError => 'No purchases found to restore.';
+
+  @override
+  String get menuProfile => 'Profile';
+
+  @override
+  String get menuProfileSubtitle => 'Your personal information';
+
+  @override
+  String get settingsTheme => 'Theme';
+
+  @override
+  String get settingsThemeLight => 'Light';
+
+  @override
+  String get settingsThemeDark => 'Dark';
+
+  @override
+  String get settingsThemeSystem => 'System';
+
+  @override
+  String get settingsThemeSaved => 'Theme saved';
+
+  @override
+  String get settingsNotifications => 'Notifications';
+
+  @override
+  String get settingsNotificationsDailyHoroscope => 'Daily Horoscope';
+
+  @override
+  String get settingsNotificationsDailyHoroscopeDesc => 'Receive daily horoscope notifications';
+
+  @override
+  String get settingsNotificationsNightly => 'Nightly Motivation';
+
+  @override
+  String get settingsNotificationsNightlyDesc => 'Receive nightly motivation messages';
+
+  @override
+  String get settingsData => 'Data';
+
+  @override
+  String get settingsClearCache => 'Clear Cache';
+
+  @override
+  String get settingsClearCacheDesc => 'Clear saved readings cache';
+
+  @override
+  String get settingsCacheCleared => 'Cache cleared';
 }

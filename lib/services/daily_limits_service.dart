@@ -62,7 +62,8 @@ class DailyLimitsService {
         'coffee': true,
         'dream': true,
         'palm': true,
-        'zodiac': true,
+        'tarot': true,
+        'compatibility': true,
       };
     }
 
@@ -75,7 +76,8 @@ class DailyLimitsService {
           'coffee': true,
           'dream': true,
           'palm': true,
-          'zodiac': true,
+          'tarot': true,
+          'compatibility': true,
         };
       }
 
@@ -83,7 +85,7 @@ class DailyLimitsService {
       final now = DateTime.now();
       
       final limits = <String, bool>{};
-      for (final feature in ['coffee', 'dream', 'palm', 'zodiac']) {
+      for (final feature in ['coffee', 'dream', 'palm', 'tarot', 'compatibility']) {
         final lastUsed = dailyLimits[feature] as Timestamp?;
         if (lastUsed == null) {
           limits[feature] = true;
@@ -103,7 +105,8 @@ class DailyLimitsService {
         'coffee': true,
         'dream': true,
         'palm': true,
-        'zodiac': true,
+        'tarot': true,
+        'compatibility': true,
       };
     }
   }

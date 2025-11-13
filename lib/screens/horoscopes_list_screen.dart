@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
 import '../core/localization/app_localizations.dart';
 import '../core/localization/locale_provider.dart';
+import '../core/utils/locale_collator.dart';
 import '../data/zodiac_signs.dart';
 import '../services/ai_content_service.dart';
 import 'horoscope_detail.dart';
@@ -25,55 +27,98 @@ class _HoroscopesListScreenState extends State<HoroscopesListScreen> {
   @override
   void initState() {
     super.initState();
-    _loadHoroscopes();
+    // Don't call context-dependent code in initState
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_loading && _horoscopes.isEmpty) {
+      _loadHoroscopes();
+    }
   }
 
   Future<void> _loadHoroscopes() async {
+    if (!mounted) return;
+    
     setState(() {
       _loading = true;
-      _error = null;
+      _error = null; // Clear error immediately when retrying
     });
 
     try {
       final locale = LocaleScope.of(context).locale;
       final today = DateTime.now();
       
-      // Load horoscopes for all signs
+      // Load horoscopes for all signs - always fetch fresh from AI
       final horoscopes = <String, String>{};
-      for (final sign in zodiacSigns) {
+      final sortedSigns = _getSortedSigns(locale);
+      
+      // Load in parallel for better performance
+      final futures = sortedSigns.map((sign) async {
         try {
           final label = sign.labelFor(locale.languageCode);
-          // Generate today's horoscope for this sign
+          // Always fetch fresh from AI - no cache for list view
           final horoscope = await _aiService.fetchDailyHoroscope(
             sign: label,
             locale: locale,
             date: today,
+            forceRefresh: true, // Always refresh for the list
           );
-          horoscopes[sign.id] = horoscope;
+          return MapEntry(sign.id, horoscope.isNotEmpty 
+              ? horoscope 
+              : _getFallbackHoroscope(sign.id, locale.languageCode));
         } catch (e) {
+          debugPrint('Error loading horoscope for ${sign.id}: $e');
           // If generation fails, use a fallback
-          horoscopes[sign.id] = _getFallbackHoroscope(sign.id, locale.languageCode);
+          return MapEntry(sign.id, _getFallbackHoroscope(sign.id, locale.languageCode));
         }
+      });
+      
+      final results = await Future.wait(futures);
+      for (final entry in results) {
+        horoscopes[entry.key] = entry.value;
       }
 
       if (mounted) {
         setState(() {
           _horoscopes = horoscopes;
           _loading = false;
+          _error = null; // Ensure error is cleared on success
         });
       }
     } catch (e) {
+      debugPrint('Error in _loadHoroscopes: $e');
       if (mounted) {
         setState(() {
-          _error = e.toString();
+          _error = null; // Don't show technical error, just show retry option
           _loading = false;
         });
       }
     }
   }
 
+  List<ZodiacSign> _getSortedSigns(Locale locale) {
+    final collator = const LocaleCollator();
+    final sorted = [...zodiacSigns];
+    sorted.sort((a, b) {
+      final labelA = a.labelFor(locale.languageCode);
+      final labelB = b.labelFor(locale.languageCode);
+      return collator.compare(labelA, labelB, locale);
+    });
+    return sorted;
+  }
+
+  String _extractPreview(String fullText) {
+    if (fullText.isEmpty) return '';
+    // Extract first 2-3 sentences
+    final sentences = fullText.split(RegExp(r'[.!?]\s+'));
+    if (sentences.length <= 2) return fullText;
+    return sentences.take(2).join('. ') + '.';
+  }
+
   String _getFallbackHoroscope(String signId, String language) {
-    // Simple fallback - in production, these would be more varied
+    // This should rarely be used - AI service should handle fallbacks
     if (language == 'tr') {
       return 'Bugün kozmik enerjiler senin lehine çalışıyor. İç sesine güven ve adımlarını cesaretle at.';
     }
@@ -97,7 +142,7 @@ class _HoroscopesListScreenState extends State<HoroscopesListScreen> {
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : _error != null
+          : _horoscopes.isEmpty && !_loading
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -124,13 +169,15 @@ class _HoroscopesListScreenState extends State<HoroscopesListScreen> {
                         style: theme.textTheme.titleMedium,
                       ),
                       const SizedBox(height: 24),
-                      ...zodiacSigns.map((sign) {
+                      ..._getSortedSigns(locale).map((sign) {
                         final signLabel = sign.labelFor(locale.languageCode);
                         final horoscope = _horoscopes[sign.id] ?? '';
+                        // Extract first 2-3 sentences for preview
+                        final preview = _extractPreview(horoscope);
                         return _HoroscopeListItem(
                           sign: sign,
                           signLabel: signLabel,
-                          horoscope: horoscope,
+                          horoscope: preview,
                           onTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(

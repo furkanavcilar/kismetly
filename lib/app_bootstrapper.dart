@@ -8,6 +8,7 @@ import 'features/profile/user_profile_storage.dart';
 import 'features/profile/user_profile.dart';
 import 'main_shell.dart';
 import 'services/monetization/monetization_service.dart';
+import 'services/notification_service.dart';
 
 class AppBootstrapper extends StatefulWidget {
   const AppBootstrapper({super.key});
@@ -35,6 +36,15 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
     // Initialize monetization service (non-blocking for UI)
     MonetizationService.instance.init().catchError((e) {
       debugPrint('MonetizationService init error: $e');
+    });
+
+    // Initialize notifications (non-blocking)
+    NotificationService().initialize().then((_) {
+      // Schedule notifications if enabled
+      NotificationService().scheduleDailyHoroscope();
+      NotificationService().scheduleNightlyMotivation();
+    }).catchError((e) {
+      debugPrint('NotificationService init error: $e');
     });
     
     if (!mounted) return;

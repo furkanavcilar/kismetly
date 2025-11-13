@@ -10,6 +10,7 @@ import '../models/daily_ai_insights.dart';
 import '../models/weather_report.dart';
 import '../services/ai_content_service.dart';
 import '../services/weather_service.dart';
+import '../services/greeting_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -28,6 +29,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _aiService = AiContentService();
   final _weatherService = WeatherService();
+  final _greetingService = GreetingService();
   DailyAiInsights? _insights;
   WeatherReport? _weather;
   bool _loading = true;
@@ -36,6 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _weatherError;
   late UserProfileController _profileController;
   bool _initialized = false;
+  String? _greeting;
   
   // Cache formatters to avoid recreating on every build
   DateFormat? _cachedDateFormatter;
@@ -48,8 +51,25 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!_initialized) {
       _profileController = UserProfileScope.of(context);
       _profileController.addListener(_onProfileChanged);
+      _loadGreeting();
       _loadAll();
       _initialized = true;
+    }
+  }
+
+  Future<void> _loadGreeting() async {
+    final profile = _profileController.profile;
+    if (profile == null) return;
+    
+    final locale = LocaleScope.of(context).locale;
+    final greeting = await _greetingService.getGreeting(
+      now: DateTime.now(),
+      name: profile.name,
+      language: locale.languageCode,
+    );
+    
+    if (mounted) {
+      setState(() => _greeting = greeting);
     }
   }
 
@@ -148,7 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     final dateFormatter = _cachedDateFormatter!;
     final timeFormatter = _cachedTimeFormatter!;
-    final greeting = _greetingFor(now, locale.languageCode, profile.name);
+    final greeting = _greeting ?? loc.translate('onboardingGreeting');
     final sun = profile.sunSign != null
         ? findZodiacById(profile.sunSign!)?.labelFor(locale.languageCode)
         : null;
@@ -215,17 +235,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  String _greetingFor(DateTime now, String language, String name) {
-    final hour = now.hour;
-    if (language == 'tr') {
-      if (hour < 12) return 'Günaydın, $name 🌞';
-      if (hour < 18) return 'İyi akşamüstü, $name ✨';
-      return 'İyi geceler, $name 🌙';
-    }
-    if (hour < 12) return 'Good morning, $name 🌞';
-    if (hour < 18) return 'Good afternoon, $name ✨';
-    return 'Good evening, $name 🌙';
-  }
 }
 
 class _GreetingHeader extends StatelessWidget {
