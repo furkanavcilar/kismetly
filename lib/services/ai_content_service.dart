@@ -560,4 +560,30 @@ Use a personal, empathetic, poetic, and deeply human tone. Never mention AI, mod
       'themes': 'Evaluating yearly themes...',
     };
   }
+
+  /// Fetch dream interpretation
+  Future<String> fetchDreamInterpretation({
+    required String dreamText,
+    required Locale locale,
+    Map<String, dynamic>? userContext,
+  }) async {
+    try {
+      final result = await _orchestrator.generateDreamInterpretation(
+        dreamText: dreamText,
+        language: locale.languageCode,
+        userContext: userContext,
+      );
+      return result;
+    } catch (e) {
+      debugPrint('Dream interpretation failed: $e');
+      return _getFallbackDream(locale.languageCode);
+    }
+  }
+
+  String _getFallbackDream(String language) {
+    if (language == 'tr') {
+      return 'Rüyanız yenilenme döngüsüne hazır olduğunuzu gösteriyor. Bugün kendinizi merkezleyip şefkatli sözler seçin.';
+    }
+    return 'Your dream reflects a cycle of renewal. Focus on grounding rituals and speak kindly to yourself today.';
+  }
 }

@@ -8,6 +8,8 @@ import 'user_profile_scope.dart';
 import 'user_profile.dart';
 import '../../services/google_auth_service.dart';
 import '../../services/location_autocomplete_service.dart';
+import '../../services.dart' as services;
+import '../../data/zodiac_signs.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key, required this.onMenuTap});
@@ -38,7 +40,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _loadProfile();
+    // Load profile after first frame to ensure context is ready
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadProfile());
   }
 
   @override
@@ -207,16 +210,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     final suggestion = location.first;
+    
+    // Calculate sun and rising signs from birth data
+    final birthDateTime = DateTime(
+      _birthDate!.year,
+      _birthDate!.month,
+      _birthDate!.day,
+      _birthTime!.hour,
+      _birthTime!.minute,
+    );
+    
+    // Import astro service to calculate signs
+    final astroService = services.AstroService();
+    final sunSignLabel = astroService.sunSign(birthDateTime);
+    final sunSignId = _signIdFromLabel(sunSignLabel);
+    final risingSignId = _estimateRising(
+      birthTime: Duration(hours: _birthTime!.hour, minutes: _birthTime!.minute),
+      longitude: suggestion.longitude,
+    );
+    
     final profile = UserProfile(
       name: _nameController.text.trim(),
       birthDate: _birthDate!,
       birthTime: Duration(hours: _birthTime!.hour, minutes: _birthTime!.minute),
-      birthCity: suggestion.city,
+      birthCity: suggestion.city ?? _cityController.text.trim(),
       birthLatitude: suggestion.latitude,
       birthLongitude: suggestion.longitude,
       gender: _genderController.text.trim().isEmpty ? null : _genderController.text.trim(),
-      sunSign: controller.profile?.sunSign,
-      risingSign: controller.profile?.risingSign,
+      sunSign: sunSignId,
+      risingSign: risingSignId,
     );
 
     await controller.setProfile(profile);
@@ -239,9 +261,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (mounted) {
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profile saved')),
+        SnackBar(content: Text(loc.translate('profileSaveSuccess') ?? 'Profile saved')),
       );
     }
+  }
+
+  String? _signIdFromLabel(String label) {
+    final sign = zodiacSigns.firstWhere(
+      (element) => element.labels.values.contains(label),
+      orElse: () => zodiacSigns.first,
+    );
+    return sign.id;
+  }
+
+  String _estimateRising({required Duration birthTime, required double longitude}) {
+    final minutes = birthTime.inMinutes + longitude.round();
+    final index = (minutes ~/ 120) % zodiacSigns.length;
+    final normalized = (index % zodiacSigns.length + zodiacSigns.length) % zodiacSigns.length;
+    return zodiacSigns[normalized].id;
   }
 
   @override
@@ -288,7 +325,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         backgroundImage: _profileImageUrl != null
                             ? (_profileImageUrl!.startsWith('http')
                                 ? NetworkImage(_profileImageUrl!)
-                                : null)
+                                : (_profileImageUrl!.startsWith('/') || _profileImageUrl!.contains('\\')
+                                    ? null // Local file - would need FileImage, but skip for now
+                                    : null))
                             : null,
                         child: _profileImageUrl == null || !_profileImageUrl!.startsWith('http')
                             ? Icon(Icons.person, size: 50, color: theme.colorScheme.primary)
@@ -458,7 +497,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : Text('Save Profile'),
+                      : Text(loc.translate('actionSave') ?? 'Save Profile'),
                 ),
               ],
             ),
@@ -468,4 +507,5 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
+
 

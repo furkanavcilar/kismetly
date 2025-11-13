@@ -142,10 +142,15 @@ class AIOrchestrator {
     required String language,
     Map<String, dynamic>? userContext,
   }) async {
+    final now = DateTime.now();
+    // Include user context in seed for better variation
+    final contextHash = userContext != null
+        ? userContext.toString().hashCode
+        : 0;
     final seed = _generateSeed(
-      base: '$dreamText|$language',
-      date: DateTime.now(),
-      variant: DateTime.now().microsecondsSinceEpoch,
+      base: '$dreamText|$language|$contextHash',
+      date: now,
+      variant: now.microsecondsSinceEpoch,
     );
 
     final prompt = DreamPrompt.build(
@@ -159,7 +164,7 @@ class AIOrchestrator {
       userPrompt: prompt.userPrompt,
       language: language,
       seed: seed,
-      temperature: 0.9,
+      temperature: 0.95, // Slightly higher for more variation
     );
   }
 

@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/localization/locale_provider.dart';
 import '../../core/widgets/unicode_text_field.dart';
-import '../../services/ai_service.dart';
+import '../../services/ai_content_service.dart';
 import '../../services/monetization/monetization_service.dart';
 import '../../services/daily_limits_service.dart';
 import '../../features/paywall/upgrade_screen.dart';
@@ -24,7 +24,7 @@ class DreamInterpreterScreen extends StatefulWidget {
 
 class _DreamInterpreterScreenState extends State<DreamInterpreterScreen> {
   final _controller = TextEditingController();
-  final _aiService = AiService();
+  final _aiService = AiContentService();
   final _dailyLimits = DailyLimitsService();
   String? _result;
   bool _loading = false;
@@ -104,16 +104,26 @@ class _DreamInterpreterScreenState extends State<DreamInterpreterScreen> {
 
     final locale = LocaleScope.of(context).locale;
     final profile = UserProfileScope.of(context).profile;
-    final userSign = profile?.sunSign != null
-        ? findZodiacById(profile!.sunSign!)?.labelFor(locale.languageCode)
-        : null;
-    final userCity = profile?.birthCity;
     
-    final response = await _aiService.interpretDream(
-      prompt: text,
+    // Build user context for AI
+    final userContext = <String, dynamic>{};
+    if (profile?.sunSign != null) {
+      final signLabel = findZodiacById(profile!.sunSign!)?.labelFor(locale.languageCode);
+      if (signLabel != null) {
+        userContext['zodiacSign'] = signLabel;
+      }
+    }
+    if (profile?.birthCity != null) {
+      userContext['city'] = profile!.birthCity;
+    }
+    if (profile?.gender != null) {
+      userContext['gender'] = profile!.gender;
+    }
+    
+    final response = await _aiService.fetchDreamInterpretation(
+      dreamText: text,
       locale: locale,
-      userZodiacSign: userSign,
-      userCity: userCity,
+      userContext: userContext.isNotEmpty ? userContext : null,
     );
     if (mounted) {
       setState(() {
