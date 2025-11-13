@@ -109,7 +109,6 @@ class _CreditStoreScreenState extends State<CreditStoreScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(loc.translate('purchaseSuccess'))),
         );
-        setState(() {});
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(loc.translate('purchaseError'))),

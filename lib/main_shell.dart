@@ -62,7 +62,6 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context);
     final pages = _pages(context);
     return Scaffold(
       key: _scaffoldKey,
@@ -94,6 +93,8 @@ class _MainShellState extends State<MainShell> {
 
   List<ShellPage> _pages(BuildContext context) {
     final loc = AppLocalizations.of(context);
+    final openDrawer = _openDrawer;
+    final goTo = _goTo;
     return [
       ShellPage(
         id: 'home',
@@ -101,8 +102,8 @@ class _MainShellState extends State<MainShell> {
         subtitleKey: 'menuHomeSubtitle',
         icon: Icons.auto_awesome,
         builder: (context) => HomeScreen(
-          onMenuTap: _openDrawer,
-          onOpenCompatibility: () => _goTo(4),
+          onMenuTap: openDrawer,
+          onOpenCompatibility: () => goTo(4),
         ),
       ),
       ShellPage(
@@ -110,7 +111,7 @@ class _MainShellState extends State<MainShell> {
         titleKey: 'menuDreams',
         subtitleKey: 'menuDreamsSubtitle',
         icon: Icons.bedtime,
-        builder: (context) => DreamInterpreterScreen(onMenuTap: _openDrawer),
+        builder: (context) => DreamInterpreterScreen(onMenuTap: openDrawer),
       ),
       ShellPage(
         id: 'horoscopes',
@@ -118,7 +119,7 @@ class _MainShellState extends State<MainShell> {
         subtitleKey: 'menuHoroscopesSubtitle',
         icon: Icons.auto_graph,
         builder: (context) => PlaceholderScreen(
-          onMenuTap: _openDrawer,
+          onMenuTap: openDrawer,
           title: loc.translate('menuHoroscopes'),
           subtitle: loc.translate('menuHoroscopesSubtitle'),
         ),
@@ -129,7 +130,7 @@ class _MainShellState extends State<MainShell> {
         subtitleKey: 'menuPalmistrySubtitle',
         icon: Icons.front_hand,
         builder: (context) => PlaceholderScreen(
-          onMenuTap: _openDrawer,
+          onMenuTap: openDrawer,
           title: loc.translate('menuPalmistry'),
           subtitle: loc.translate('menuPalmistrySubtitle'),
         ),
@@ -139,14 +140,14 @@ class _MainShellState extends State<MainShell> {
         titleKey: 'menuCompatibility',
         subtitleKey: 'menuCompatibilitySubtitle',
         icon: Icons.favorite_outline,
-        builder: (context) => ZodiacCompatibilityScreen(onMenuTap: _openDrawer),
+        builder: (context) => ZodiacCompatibilityScreen(onMenuTap: openDrawer),
       ),
       ShellPage(
         id: 'coffee',
         titleKey: 'menuCoffee',
         subtitleKey: 'menuCoffeeSubtitle',
         icon: Icons.local_cafe_outlined,
-        builder: (context) => CoffeeReadingScreen(onMenuTap: _openDrawer),
+        builder: (context) => CoffeeReadingScreen(onMenuTap: openDrawer),
       ),
     ];
   }
@@ -169,6 +170,7 @@ class AppDrawer extends StatelessWidget {
     final loc = AppLocalizations.of(context);
     final locale = LocaleScope.of(context).locale;
     final collator = const LocaleCollator();
+    // Cache sorted items to avoid re-sorting on every build
     final items = List.generate(pages.length, (index) => index);
     items.sort((a, b) {
       final titleA = loc.translate(pages[a].titleKey);

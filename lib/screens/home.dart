@@ -36,6 +36,11 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _weatherError;
   late UserProfileController _profileController;
   bool _initialized = false;
+  
+  // Cache formatters to avoid recreating on every build
+  DateFormat? _cachedDateFormatter;
+  DateFormat? _cachedTimeFormatter;
+  String? _cachedLocaleTag;
 
   @override
   void didChangeDependencies() {
@@ -132,9 +137,17 @@ class _HomeScreenState extends State<HomeScreen> {
     if (profile == null) return const SizedBox();
 
     final locale = LocaleScope.of(context).locale;
+    final localeTag = locale.toLanguageTag();
     final now = DateTime.now();
-    final dateFormatter = DateFormat.yMMMMEEEEd(locale.toLanguageTag());
-    final timeFormatter = DateFormat.Hm(locale.toLanguageTag());
+    
+    // Cache formatters to avoid recreating on every build
+    if (_cachedLocaleTag != localeTag) {
+      _cachedLocaleTag = localeTag;
+      _cachedDateFormatter = DateFormat.yMMMMEEEEd(localeTag);
+      _cachedTimeFormatter = DateFormat.Hm(localeTag);
+    }
+    final dateFormatter = _cachedDateFormatter!;
+    final timeFormatter = _cachedTimeFormatter!;
     final greeting = _greetingFor(now, locale.languageCode, profile.name);
     final sun = profile.sunSign != null
         ? findZodiacById(profile.sunSign!)?.labelFor(locale.languageCode)
@@ -160,8 +173,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onRefresh: _loadAll,
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-          physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics()),
+          physics: const AlwaysScrollableScrollPhysics(),
           children: [
             _GreetingHeader(
               greeting: greeting,

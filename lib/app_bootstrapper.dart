@@ -27,13 +27,17 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
   }
 
   Future<void> _initialize() async {
+    // Initialize monetization service in parallel with profile loading
     final prefs = await SharedPreferences.getInstance();
     final storage = UserProfileStorage(prefs);
     final profile = storage.load();
     
-    // Initialize monetization service
-    await MonetizationService.instance.init();
+    // Initialize monetization service (non-blocking for UI)
+    MonetizationService.instance.init().catchError((e) {
+      debugPrint('MonetizationService init error: $e');
+    });
     
+    if (!mounted) return;
     setState(() {
       _controller = UserProfileController(storage, profile);
       _loading = false;
