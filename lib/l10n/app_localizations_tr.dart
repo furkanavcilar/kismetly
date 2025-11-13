@@ -688,4 +688,28 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get settingsCacheCleared => 'Önbellek temizlendi';
+
+  @override
+  String get settingsLanguage => 'Dil';
+
+  @override
+  String get settingsLanguageTurkish => 'Türkçe';
+
+  @override
+  String get settingsLanguageEnglish => 'İngilizce';
+
+  @override
+  String get settingsLanguageChanged => 'Dil değiştirildi. Lütfen uygulamayı yeniden başlatın.';
+
+  @override
+  String get settingsPurchases => 'Satın Alımlar';
+
+  @override
+  String get settingsRestorePurchases => 'Satın Alımları Geri Yükle';
+
+  @override
+  String get settingsRestorePurchasesDesc => 'Önceki satın alımlarınızı geri yükleyin';
+
+  @override
+  String get errorConnectionDesc => 'Lütfen internet bağlantınızı kontrol edin';
 }

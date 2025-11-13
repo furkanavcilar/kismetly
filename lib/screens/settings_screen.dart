@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/localization/app_localizations.dart';
+import '../core/localization/locale_provider.dart';
 import '../services/notification_service.dart';
+import '../services/monetization/monetization_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key, required this.onMenuTap});
@@ -17,6 +19,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   ThemeMode _themeMode = ThemeMode.system;
   bool _dailyHoroscopeNotifications = true;
   bool _nightlyMotivationNotifications = true;
+  String _currentLocale = 'tr';
   bool _loading = false;
 
   @override
@@ -33,6 +36,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _themeMode = ThemeMode.values[themeModeIndex.clamp(0, 2)];
       _dailyHoroscopeNotifications = prefs.getBool('notifications_daily_horoscope') ?? true;
       _nightlyMotivationNotifications = prefs.getBool('notifications_nightly_motivation') ?? true;
+      _currentLocale = prefs.getString('app_locale') ?? 'tr';
     } catch (e) {
       // Use defaults
     } finally {
@@ -168,6 +172,59 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(loc.translate('settingsCacheCleared') ?? 'Cache cleared'),
+                  ),
+                );
+              }
+            },
+          ),
+          const SizedBox(height: 32),
+          Text(
+            loc.translate('settingsLanguage') ?? 'Language',
+            style: theme.textTheme.titleLarge,
+          ),
+          const SizedBox(height: 12),
+          SwitchListTile(
+            title: Text(loc.translate('settingsLanguageTurkish') ?? 'Türkçe'),
+            subtitle: Text(loc.translate('settingsLanguageEnglish') ?? 'English'),
+            value: _currentLocale == 'tr',
+            onChanged: (value) async {
+              final newLocale = value ? 'tr' : 'en';
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setString('app_locale', newLocale);
+              if (mounted) {
+                setState(() => _currentLocale = newLocale);
+                // Trigger locale change
+                final localeProvider = LocaleProvider();
+                await localeProvider.setLocale(Locale(newLocale));
+                // Restart app to apply locale change
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(loc.translate('settingsLanguageChanged') ?? 'Language changed. Please restart the app.'),
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+              }
+            },
+          ),
+          const SizedBox(height: 32),
+          Text(
+            loc.translate('settingsPurchases') ?? 'Purchases',
+            style: theme.textTheme.titleLarge,
+          ),
+          const SizedBox(height: 12),
+          ListTile(
+            title: Text(loc.translate('settingsRestorePurchases') ?? 'Restore Purchases'),
+            subtitle: Text(loc.translate('settingsRestorePurchasesDesc') ?? 'Restore your previous purchases'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () async {
+              final monetization = MonetizationService.instance;
+              final success = await monetization.restorePurchases();
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(success 
+                        ? (loc.translate('purchaseRestoreSuccess') ?? 'Purchases restored')
+                        : (loc.translate('purchaseRestoreError') ?? 'No purchases found')),
                   ),
                 );
               }

@@ -3,7 +3,6 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter/foundation.dart';
 import 'ai_content_service.dart';
 import '../features/profile/user_profile_storage.dart';
 import '../data/zodiac_signs.dart';
@@ -21,6 +20,7 @@ class NotificationService {
     
     tz.initializeTimeZones();
     
+    // Request permissions for Android 13+
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
@@ -37,6 +37,12 @@ class NotificationService {
       initSettings,
       onDidReceiveNotificationResponse: _onNotificationTapped,
     );
+    
+    // Request Android 13+ notification permission
+    final androidImplementation = _notifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    if (androidImplementation != null) {
+      androidImplementation.requestNotificationsPermission();
+    }
     
     _initialized = true;
   }
@@ -57,7 +63,6 @@ class NotificationService {
     }
 
     try {
-      final prefs = await SharedPreferences.getInstance();
       final localeStr = prefs.getString('app_locale') ?? 'tr';
       final locale = Locale(localeStr);
       
@@ -98,7 +103,6 @@ class NotificationService {
     }
 
     try {
-      final prefs = await SharedPreferences.getInstance();
       final localeStr = prefs.getString('app_locale') ?? 'tr';
       final locale = Locale(localeStr);
       

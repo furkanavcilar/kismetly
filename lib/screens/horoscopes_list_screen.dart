@@ -159,9 +159,15 @@ class _HoroscopesListScreenState extends State<HoroscopesListScreen> {
                     ],
                   ),
                 )
-              : RefreshIndicator(
-                  onRefresh: _loadHoroscopes,
-                  child: ListView(
+                  : RefreshIndicator(
+                      onRefresh: () async {
+                        // Clear existing horoscopes to force fresh load
+                        setState(() {
+                          _horoscopes = {};
+                        });
+                        await _loadHoroscopes();
+                      },
+                      child: ListView(
                     padding: const EdgeInsets.all(16),
                     children: [
                       Text(

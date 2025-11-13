@@ -46,23 +46,35 @@ class _KismetlyAppState extends State<KismetlyApp> {
   void initState() {
     super.initState();
     _loadThemeMode();
+    // Listen for theme changes
+    _startThemeListener();
+  }
+
+  void _startThemeListener() async {
+    final prefs = await SharedPreferences.getInstance();
+    // Poll for theme changes every 500ms when app is active
+    // In production, could use a ValueNotifier or similar
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        _loadThemeMode();
+        _startThemeListener();
+      }
+    });
   }
 
   Future<void> _loadThemeMode() async {
     final prefs = await SharedPreferences.getInstance();
     final themeModeIndex = prefs.getInt('theme_mode') ?? 0;
-    if (mounted) {
+    final newMode = ThemeMode.values[themeModeIndex.clamp(0, 2)];
+    if (mounted && _themeMode != newMode) {
       setState(() {
-        _themeMode = ThemeMode.values[themeModeIndex.clamp(0, 2)];
+        _themeMode = newMode;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Reload theme mode on each build to catch changes from Settings
-    _loadThemeMode();
-    
     return AnimatedBuilder(
       animation: widget.localeProvider,
       builder: (context, _) {

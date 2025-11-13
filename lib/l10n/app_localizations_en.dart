@@ -688,4 +688,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsCacheCleared => 'Cache cleared';
+
+  @override
+  String get settingsLanguage => 'Language';
+
+  @override
+  String get settingsLanguageTurkish => 'Turkish';
+
+  @override
+  String get settingsLanguageEnglish => 'English';
+
+  @override
+  String get settingsLanguageChanged => 'Language changed. Please restart the app.';
+
+  @override
+  String get settingsPurchases => 'Purchases';
+
+  @override
+  String get settingsRestorePurchases => 'Restore Purchases';
+
+  @override
+  String get settingsRestorePurchasesDesc => 'Restore your previous purchases';
+
+  @override
+  String get errorConnectionDesc => 'Please check your internet connection';
 }

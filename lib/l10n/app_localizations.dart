@@ -1396,6 +1396,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cache cleared'**
   String get settingsCacheCleared;
+
+  /// No description provided for @settingsLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get settingsLanguage;
+
+  /// No description provided for @settingsLanguageTurkish.
+  ///
+  /// In en, this message translates to:
+  /// **'Turkish'**
+  String get settingsLanguageTurkish;
+
+  /// No description provided for @settingsLanguageEnglish.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get settingsLanguageEnglish;
+
+  /// No description provided for @settingsLanguageChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Language changed. Please restart the app.'**
+  String get settingsLanguageChanged;
+
+  /// No description provided for @settingsPurchases.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchases'**
+  String get settingsPurchases;
+
+  /// No description provided for @settingsRestorePurchases.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Purchases'**
+  String get settingsRestorePurchases;
+
+  /// No description provided for @settingsRestorePurchasesDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore your previous purchases'**
+  String get settingsRestorePurchasesDesc;
+
+  /// No description provided for @errorConnectionDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Please check your internet connection'**
+  String get errorConnectionDesc;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -88,19 +88,25 @@ class _ZodiacSignDetailScreenState extends State<ZodiacSignDetailScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        _error!,
-                        style: theme.textTheme.bodyLarge,
-                      ),
+                      Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
                       const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _loadDetails,
-                        child: Text(loc.translate('actionRetry')),
+                      Text(
+                        loc.translate('errorConnection') ?? 'Connection error',
+                        style: theme.textTheme.bodyLarge,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        loc.translate('errorConnectionDesc') ?? 'Please check your internet connection',
+                        style: theme.textTheme.bodySmall,
+                        textAlign: TextAlign.center,
                       ),
                     ],
                   ),
                 )
-              : SingleChildScrollView(
+              : RefreshIndicator(
+                  onRefresh: _loadDetails,
+                  child: SingleChildScrollView(
                   padding: const EdgeInsets.all(24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -153,6 +159,7 @@ class _ZodiacSignDetailScreenState extends State<ZodiacSignDetailScreen> {
                     ],
                   ),
                 ),
+              ),
     );
   }
 }

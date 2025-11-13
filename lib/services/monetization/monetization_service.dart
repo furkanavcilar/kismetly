@@ -271,5 +271,24 @@ class MonetizationService extends ChangeNotifier {
     _syncToFirestore();
     notifyListeners();
   }
+
+  Future<bool> restorePurchases() async {
+    try {
+      final customerInfo = await Purchases.restorePurchases();
+      final premiumEntitlement = customerInfo.entitlements.active['premium'];
+      _isPremium = premiumEntitlement != null;
+      if (premiumEntitlement != null && premiumEntitlement.expirationDate != null) {
+        _premiumUntil = DateTime.tryParse(premiumEntitlement.expirationDate!);
+      } else {
+        _premiumUntil = null;
+      }
+      await _syncToFirestore();
+      notifyListeners();
+      return _isPremium;
+    } catch (e) {
+      debugPrint('restorePurchases error: $e');
+      return false;
+    }
+  }
 }
 

@@ -155,17 +155,61 @@ class _TarotReadingScreenState extends State<TarotReadingScreen> {
             ),
             const SizedBox(height: 24),
             if (_drawnCards != null && _drawnCards!.isNotEmpty) ...[
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: _drawnCards!.map((dc) {
-                  final label = dc.card.labelFor(locale.languageCode);
-                  return _TarotCardWidget(
-                    label: label,
-                    reversed: dc.reversed,
-                    emoji: dc.card.emoji,
-                  );
-                }).toList(),
+              // 3-card spread: Past - Present - Future
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Text(
+                          locale.languageCode == 'tr' ? 'Geçmiş' : 'Past',
+                          style: theme.textTheme.labelMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        _TarotCardWidget(
+                          label: _drawnCards![0].card.labelFor(locale.languageCode),
+                          reversed: _drawnCards![0].reversed,
+                          emoji: _drawnCards![0].card.emoji,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Text(
+                          locale.languageCode == 'tr' ? 'Bugün' : 'Today',
+                          style: theme.textTheme.labelMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        _TarotCardWidget(
+                          label: _drawnCards![1].card.labelFor(locale.languageCode),
+                          reversed: _drawnCards![1].reversed,
+                          emoji: _drawnCards![1].card.emoji,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Text(
+                          locale.languageCode == 'tr' ? 'Gelecek' : 'Future',
+                          style: theme.textTheme.labelMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        _TarotCardWidget(
+                          label: _drawnCards![2].card.labelFor(locale.languageCode),
+                          reversed: _drawnCards![2].reversed,
+                          emoji: _drawnCards![2].card.emoji,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 24),
             ],

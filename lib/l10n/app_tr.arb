@@ -242,5 +242,13 @@
   "settingsData": "Veri",
   "settingsClearCache": "Önbelleği Temizle",
   "settingsClearCacheDesc": "Kaydedilmiş okumalar önbelleğini temizle",
-  "settingsCacheCleared": "Önbellek temizlendi"
+  "settingsCacheCleared": "Önbellek temizlendi",
+  "settingsLanguage": "Dil",
+  "settingsLanguageTurkish": "Türkçe",
+  "settingsLanguageEnglish": "İngilizce",
+  "settingsLanguageChanged": "Dil değiştirildi. Lütfen uygulamayı yeniden başlatın.",
+  "settingsPurchases": "Satın Alımlar",
+  "settingsRestorePurchases": "Satın Alımları Geri Yükle",
+  "settingsRestorePurchasesDesc": "Önceki satın alımlarınızı geri yükleyin",
+  "errorConnectionDesc": "Lütfen internet bağlantınızı kontrol edin"
 }
