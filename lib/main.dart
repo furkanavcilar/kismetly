@@ -41,6 +41,7 @@ class KismetlyApp extends StatelessWidget {
       builder: (context, _) {
         return MaterialApp(
           title: 'Kismetly',
+          debugShowCheckedModeBanner: false,
           theme: AppTheme.theme(),
           locale: localeProvider.locale,
           supportedLocales: AppLocalizations.supportedLocales,

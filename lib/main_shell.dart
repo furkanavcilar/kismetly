@@ -5,6 +5,7 @@ import 'core/localization/locale_provider.dart';
 import 'core/utils/locale_collator.dart';
 import 'features/coffee/coffee_reading_screen.dart';
 import 'features/dreams/dream_interpreter_screen.dart';
+import 'features/profile/profile_screen.dart';
 import 'screens/compatibility.dart';
 import 'screens/home.dart';
 
@@ -150,6 +151,13 @@ class _MainShellState extends State<MainShell> {
         icon: Icons.local_cafe_outlined,
         builder: (context) => CoffeeReadingScreen(onMenuTap: openDrawer),
       ),
+      ShellPage(
+        id: 'profile',
+        titleKey: 'menuSettings',
+        subtitleKey: 'menuSettingsSubtitle',
+        icon: Icons.person_outline,
+        builder: (context) => ProfileScreen(onMenuTap: openDrawer),
+      ),
     ];
   }
 }
@@ -179,7 +187,7 @@ class AppDrawer extends StatelessWidget {
       return collator.compare(titleA, titleB, locale);
     });
     return Drawer(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: Colors.white,
       child: SafeArea(
         child: Column(
           children: [
@@ -293,9 +301,16 @@ class _LocaleChip extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             color: selected
-                ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)
-                : Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(20),
+                ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
+                : Colors.transparent,
+            border: selected
+                ? Border(
+                    left: BorderSide(
+                      color: Theme.of(context).colorScheme.primary,
+                      width: 2,
+                    ),
+                  )
+                : null,
           ),
           child: Center(
             child: Text(

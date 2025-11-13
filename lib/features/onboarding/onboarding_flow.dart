@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart' as geo;
 
 import 'package:kismetly/services/weather_service.dart';
+import 'package:kismetly/services/location_autocomplete_service.dart';
+import 'package:kismetly/services/google_auth_service.dart';
 
 import '../../core/localization/app_localizations.dart';
 import '../../data/zodiac_signs.dart';
@@ -35,6 +37,12 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   WeatherReport? _weatherPreview;
   bool _weatherLoading = false;
   String? _weatherError;
+  final LocationAutocompleteService _autocompleteService = LocationAutocompleteService();
+  final GoogleAuthService _googleAuth = GoogleAuthService();
+  List<LocationSuggestion> _citySuggestions = [];
+  bool _showSuggestions = false;
+  final LayerLink _layerLink = LayerLink();
+  bool _signingIn = false;
 
   @override
   void dispose() {
@@ -47,11 +55,38 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
 
   void _begin() => setState(() => _step = 1);
 
-  void _scheduleWeatherLookup(String value) {
+  Future<void> _signInWithGoogle() async {
+    setState(() => _signingIn = true);
+    try {
+      final userCredential = await _googleAuth.signInWithGoogle();
+      if (userCredential?.user != null && mounted) {
+        final user = userCredential!.user!;
+        // Pre-fill name from Google account
+        if (user.displayName != null && _nameController.text.isEmpty) {
+          _nameController.text = user.displayName!;
+        }
+        setState(() {
+          _signingIn = false;
+          _step = 1;
+        });
+      } else if (mounted) {
+        setState(() => _signingIn = false);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _signingIn = false);
+      }
+    }
+  }
+
+  Future<void> _searchCities(String query) async {
     _cityDebounce?.cancel();
-    final trimmed = value.trim();
+    final trimmed = query.trim();
+    
     if (trimmed.length < 2) {
       setState(() {
+        _citySuggestions = [];
+        _showSuggestions = false;
         _weatherPreview = null;
         _weatherError = null;
         _weatherLoading = false;
@@ -61,27 +96,33 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       return;
     }
 
-    _cityDebounce = Timer(const Duration(milliseconds: 650), () async {
-      final location = await _resolveCity(trimmed);
+    _cityDebounce = Timer(const Duration(milliseconds: 400), () async {
+      final suggestions = await _autocompleteService.search(trimmed);
       if (!mounted) return;
-      if (location == null) {
-        setState(() {
-          _weatherLoading = false;
-          _weatherPreview = null;
-          _weatherError =
-              AppLocalizations.of(context).translate('onboardingCityError');
-          _resolvedLocation = null;
-          _resolvedQuery = null;
-        });
-        return;
-      }
-
       setState(() {
-        _resolvedLocation = location;
-        _resolvedQuery = trimmed.toLowerCase();
+        _citySuggestions = suggestions;
+        _showSuggestions = suggestions.isNotEmpty;
       });
-      await _loadWeatherPreview(location);
     });
+  }
+
+  void _selectCity(LocationSuggestion suggestion) {
+    setState(() {
+      _cityController.text = suggestion.displayName;
+      _showSuggestions = false;
+      _citySuggestions = [];
+      _resolvedLocation = _ResolvedLocation(
+        latitude: suggestion.latitude,
+        longitude: suggestion.longitude,
+        city: suggestion.city,
+      );
+      _resolvedQuery = suggestion.displayName.toLowerCase();
+    });
+    _loadWeatherPreview(_resolvedLocation!);
+  }
+
+  void _scheduleWeatherLookup(String value) {
+    _searchCities(value);
   }
 
   Future<void> _loadWeatherPreview(_ResolvedLocation location) async {
@@ -327,13 +368,19 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                   style: theme.textTheme.bodyLarge),
               const SizedBox(height: 48),
               ElevatedButton.icon(
-                onPressed: _begin,
-                icon: const Icon(Icons.auto_awesome),
+                onPressed: _signingIn ? null : _signInWithGoogle,
+                icon: _signingIn
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.login),
                 label: Text(loc.translate('onboardingSignGoogle')),
               ),
               const SizedBox(height: 12),
               OutlinedButton(
-                onPressed: _begin,
+                onPressed: _signingIn ? null : _begin,
                 child: Text(loc.translate('onboardingContinueGuest')),
               ),
             ],
@@ -342,15 +389,21 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(loc.translate('onboardingDetailsTitle')),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
+    return GestureDetector(
+      onTap: () {
+        if (_showSuggestions) {
+          setState(() => _showSuggestions = false);
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(loc.translate('onboardingDetailsTitle')),
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Form(
+            key: _formKey,
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(loc.translate('onboardingWelcome'),
@@ -388,16 +441,66 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                 ],
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _cityController,
-                decoration: InputDecoration(
-                  labelText: loc.translate('onboardingBirthCity'),
+              CompositedTransformTarget(
+                link: _layerLink,
+                child: TextFormField(
+                  controller: _cityController,
+                  decoration: InputDecoration(
+                    labelText: loc.translate('onboardingBirthCity'),
+                    suffixIcon: _cityController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              setState(() {
+                                _cityController.clear();
+                                _citySuggestions = [];
+                                _showSuggestions = false;
+                                _resolvedLocation = null;
+                                _weatherPreview = null;
+                              });
+                            },
+                          )
+                        : null,
+                  ),
+                  validator: (value) => value == null || value.trim().isEmpty
+                      ? loc.translate('onboardingCityError')
+                      : null,
+                  onChanged: _scheduleWeatherLookup,
+                  onTap: () {
+                    if (_cityController.text.isNotEmpty && _citySuggestions.isEmpty) {
+                      _searchCities(_cityController.text);
+                    }
+                  },
                 ),
-                validator: (value) => value == null || value.trim().isEmpty
-                    ? loc.translate('onboardingCityError')
-                    : null,
-                onChanged: _scheduleWeatherLookup,
               ),
+              if (_showSuggestions && _citySuggestions.isNotEmpty)
+                CompositedTransformFollower(
+                  link: _layerLink,
+                  showWhenUnlinked: false,
+                  offset: const Offset(0, 56),
+                  child: Material(
+                    elevation: 4,
+                    borderRadius: BorderRadius.circular(8),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 200),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: _citySuggestions.length,
+                        itemBuilder: (context, index) {
+                          final suggestion = _citySuggestions[index];
+                          return ListTile(
+                            dense: true,
+                            title: Text(suggestion.displayName),
+                            subtitle: suggestion.country != null
+                                ? Text(suggestion.country!)
+                                : null,
+                            onTap: () => _selectCity(suggestion),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ),
               const SizedBox(height: 12),
               _WeatherPeek(
                 loading: _weatherLoading,
@@ -435,6 +538,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
             ],
           ),
         ),
+      ),
       ),
     );
   }
@@ -589,13 +693,19 @@ class _OutlineCard extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 0),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: theme.dividerColor),
+          border: Border(
+            bottom: BorderSide(color: theme.dividerColor, width: 1),
+          ),
         ),
-        alignment: Alignment.center,
-        child: Text(label, style: theme.textTheme.bodyLarge),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label, style: theme.textTheme.bodyLarge),
+            Icon(Icons.arrow_forward_ios, size: 14, color: theme.colorScheme.primary),
+          ],
+        ),
       ),
     );
   }

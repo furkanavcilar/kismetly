@@ -243,22 +243,17 @@ class _GreetingHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1E1E28), Color(0xFF101018)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 0),
+      decoration: const BoxDecoration(
+        color: Colors.transparent,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(greeting, style: theme.textTheme.displayMedium),
-          const SizedBox(height: 12),
+          Text(greeting, style: theme.textTheme.displayLarge),
+          const SizedBox(height: 8),
           Text(date, style: theme.textTheme.bodyMedium),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(time, style: theme.textTheme.bodyMedium),
         ],
       ),
@@ -490,17 +485,16 @@ class _EnergyChip extends StatelessWidget {
     return GestureDetector(
       onTap: () => _showDetail(context),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: theme.dividerColor),
+        padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 12),
+        decoration: const BoxDecoration(
+          color: Colors.transparent,
         ),
         constraints: const BoxConstraints(minWidth: 120),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(label, style: theme.textTheme.labelLarge),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Text(value.isNotEmpty ? value : '-',
                 style: theme.textTheme.bodyMedium),
           ],
@@ -515,7 +509,7 @@ class _EnergyChip extends StatelessWidget {
       context: context,
       backgroundColor: theme.colorScheme.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(0)),
       ),
       builder: (context) {
         return Padding(
@@ -525,10 +519,10 @@ class _EnergyChip extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(label, style: theme.textTheme.titleMedium),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               Text(detail.isNotEmpty ? detail : '-',
                   style: theme.textTheme.bodyLarge),
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
             ],
           ),
         );
@@ -580,12 +574,14 @@ class _BlurCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 0),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        color: theme.colorScheme.surface.withValues(alpha: 0.72),
-        border: Border.all(
-          color: theme.dividerColor.withValues(alpha: 0.3),
+        color: Colors.transparent,
+        border: Border(
+          bottom: BorderSide(
+            color: theme.dividerColor,
+            width: 1,
+          ),
         ),
       ),
       child: child,
