@@ -79,8 +79,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeDailyCardTitle => 'Sun & Rising';
 
   @override
-  String get homeNoSelection =>
-      'Select your signs to unlock personalized insights.';
+  String get homeNoSelection => 'Select your signs to unlock personalized insights.';
 
   @override
   String get homeShortcutDream => 'Interpret Dream';
@@ -125,8 +124,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeInteractionsTitle => 'Today\'s Interactions';
 
   @override
-  String homeInteractionsDescription(
-      Object first, Object score, Object second, Object tone) {
+  String homeInteractionsDescription(Object first, Object score, Object second, Object tone) {
     return 'Energy between $first and $second feels $tone ($score%).';
   }
 
@@ -172,6 +170,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dreamEmpty => 'Write a dream to interpret.';
 
   @override
+  String get dreamSave => 'Save interpretation';
+
+  @override
+  String get dreamSaved => 'Dream saved to history.';
+
+  @override
+  String get dreamAlreadySaved => 'This interpretation is already saved.';
+
+  @override
+  String get dreamHistoryTitle => 'Saved interpretations';
+
+  @override
+  String get dreamHistoryEmpty => 'You haven\'t saved any interpretations yet.';
+
+  @override
+  String get dreamDelete => 'Delete';
+
+  @override
+  String get dreamDeleteConfirmation => 'Remove this saved interpretation?';
+
+  @override
+  String get dreamDeleteSuccess => 'Entry removed.';
+
+  @override
   String get coffeeTitle => 'Coffee Reading';
 
   @override
@@ -208,8 +230,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get coffeeHistory => 'Recent readings';
 
   @override
-  String get coffeePrivacy =>
-      'Images are used only for interpretation and stay on your device.';
+  String get coffeePrivacy => 'Images are used only for interpretation and stay on your device.';
 
   @override
   String get compatibilityTitle => 'Zodiac Compatibility';
@@ -248,8 +269,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String compatibilityAdviceTemplate(
-      Object advice, Object first, Object second) {
+  String compatibilityAdviceTemplate(Object advice, Object first, Object second) {
     return 'Tip for $first and $second today: $advice.';
   }
 
@@ -275,8 +295,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adviceFlux => 'Give space for differences and listen deeply.';
 
   @override
-  String get adviceTransform =>
-      'Transform tension with honest yet gentle conversations.';
+  String get adviceTransform => 'Transform tension with honest yet gentle conversations.';
 
   @override
   String get commentsTitle => 'Comments';
@@ -356,8 +375,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get coffeeHistoryEmpty => 'No saved readings yet.';
 
   @override
-  String get insightSunDefault =>
-      'Trust your intuition to balance today\'s energy.';
+  String get insightSunDefault => 'Trust your intuition to balance today\'s energy.';
 
   @override
   String get insightRisingDefault => 'Strengthen connections around you.';
@@ -378,4 +396,242 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get languageSwitchSaved => 'Language preference saved.';
+
+  @override
+  String get actionRetry => 'Retry';
+
+  @override
+  String get homeTitle => 'Cosmic Dashboard';
+
+  @override
+  String get homeDailyZodiac => 'Today\'s Chart';
+
+  @override
+  String homeSunRising(Object rising, Object sun) {
+    return 'Sun $sun • Rising $rising';
+  }
+
+  @override
+  String get homeInsightError => 'Insights could not load.';
+
+  @override
+  String get homeEnergyFocusTitle => 'Main energy focus';
+
+  @override
+  String get homeEnergyLove => 'Love';
+
+  @override
+  String get homeEnergyCareer => 'Career';
+
+  @override
+  String get homeEnergySpiritual => 'Spiritual';
+
+  @override
+  String get homeEnergySocial => 'Social';
+
+  @override
+  String get homeInsightEmpty => 'Insights will appear soon.';
+
+  @override
+  String get homeCosmicGuideTitle => 'Today\'s cosmic guide';
+
+  @override
+  String get homeWeatherErrorTitle => 'Weather unavailable';
+
+  @override
+  String get compatibilityErrorTitle => 'Connection unavailable right now';
+
+  @override
+  String get compatibilityEmpty => 'No insight yet — try again soon.';
+
+  @override
+  String get onboardingGreeting => 'Welcome to Kismetly';
+
+  @override
+  String get onboardingIntro => 'Your cosmic companion is ready to write daily guidance just for you.';
+
+  @override
+  String get onboardingSignGoogle => 'Sign in with Google';
+
+  @override
+  String get onboardingContinueGuest => 'Continue as guest';
+
+  @override
+  String get onboardingDetailsTitle => 'Tell us about you';
+
+  @override
+  String get onboardingWelcome => 'Hoş geldin 🌟 Let\'s attune to your energy.';
+
+  @override
+  String get onboardingName => 'Name';
+
+  @override
+  String get onboardingNameError => 'Please share your name.';
+
+  @override
+  String get onboardingBirthDate => 'Birth date';
+
+  @override
+  String get onboardingBirthTime => 'Birth time';
+
+  @override
+  String get onboardingBirthCity => 'Birth city';
+
+  @override
+  String get onboardingGenderOptional => 'Gender (optional)';
+
+  @override
+  String get onboardingMissingDate => 'Select your birth date and time.';
+
+  @override
+  String get onboardingCityError => 'We couldn\'t find that city. Try again.';
+
+  @override
+  String get onboardingFinish => 'Begin my journey';
+
+  @override
+  String get premiumTitle => 'Kismetly Pro';
+
+  @override
+  String get premiumSubtitle => 'Unlimited cosmic guidance';
+
+  @override
+  String get premiumMonthly => 'Monthly';
+
+  @override
+  String get premiumAnnual => 'Annual';
+
+  @override
+  String get premiumPriceMonthly => '\$\$7.99/month';
+
+  @override
+  String get premiumPriceAnnual => '\$\$49.99/year';
+
+  @override
+  String get premiumFeatureUnlimited => 'Unlimited AI Astrologer Questions';
+
+  @override
+  String get premiumFeatureReports => 'Monthly & Annual Personalized Reports';
+
+  @override
+  String get premiumFeatureCompatibility => 'Premium Compatibility Deep Dive';
+
+  @override
+  String get premiumFeatureAdFree => 'Ad-free Experience';
+
+  @override
+  String get premiumUpgrade => 'Upgrade to Pro';
+
+  @override
+  String get premiumRestore => 'Restore Purchases';
+
+  @override
+  String get premiumCurrent => 'Pro Member';
+
+  @override
+  String premiumExpires(Object date) {
+    return 'Your Pro membership expires on $date';
+  }
+
+  @override
+  String get creditsTitle => 'Credit Store';
+
+  @override
+  String creditsBalance(Object credits) {
+    return 'Balance: $credits credits';
+  }
+
+  @override
+  String get creditsPack20 => '20 Credits';
+
+  @override
+  String get creditsPack50 => '50 Credits';
+
+  @override
+  String get creditsPack100 => '100 Credits';
+
+  @override
+  String get creditsPrice20 => '\$\$4.99';
+
+  @override
+  String get creditsPrice50 => '\$\$9.99';
+
+  @override
+  String get creditsPrice100 => '\$\$17.99';
+
+  @override
+  String get creditsInsufficient => 'Insufficient Credits';
+
+  @override
+  String creditsNeeded(Object amount) {
+    return 'This feature requires $amount credits.';
+  }
+
+  @override
+  String get creditsBuy => 'Buy Credits';
+
+  @override
+  String get creditsUpgrade => 'Upgrade to Pro';
+
+  @override
+  String get lockPremium => 'This feature is for Pro members';
+
+  @override
+  String lockCredits(Object amount) {
+    return 'This feature requires $amount credits';
+  }
+
+  @override
+  String get lockUnlock => 'Unlock';
+
+  @override
+  String get lockUpgrade => 'Upgrade';
+
+  @override
+  String get paywallTitle => 'Premium Features';
+
+  @override
+  String get paywallSubtitle => 'Deepen your cosmic journey';
+
+  @override
+  String get paywallFeature1 => 'Unlimited AI Astrologer access';
+
+  @override
+  String get paywallFeature2 => 'Detailed compatibility reports';
+
+  @override
+  String get paywallFeature3 => 'Monthly and annual personal charts';
+
+  @override
+  String get paywallFeature4 => 'Ad-free experience';
+
+  @override
+  String get paywallTrial => '7-day free trial';
+
+  @override
+  String get paywallTerms => 'By continuing, you agree to Terms of Use and Privacy Policy.';
+
+  @override
+  String get creditCostDream => 'Dream interpretation: 3 credits';
+
+  @override
+  String get creditCostCoffee => 'Coffee reading: 5 credits';
+
+  @override
+  String get creditCostChat => 'AI Astrologer question: 5 credits';
+
+  @override
+  String get creditCostChart => 'Guest chart: 10 credits';
+
+  @override
+  String get purchaseSuccess => 'Purchase successful!';
+
+  @override
+  String get purchaseError => 'Purchase failed. Please try again.';
+
+  @override
+  String get purchaseRestoreSuccess => 'Purchases restored.';
+
+  @override
+  String get purchaseRestoreError => 'No purchases found to restore.';
 }

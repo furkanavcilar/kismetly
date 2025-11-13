@@ -79,8 +79,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get homeDailyCardTitle => 'Güneş & Yükselen';
 
   @override
-  String get homeNoSelection =>
-      'Burçlarınızı seçerek kişiselleştirilmiş içgörülere ulaşın.';
+  String get homeNoSelection => 'Burçlarınızı seçerek kişiselleştirilmiş içgörülere ulaşın.';
 
   @override
   String get homeShortcutDream => 'Rüya Yorumla';
@@ -125,8 +124,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get homeInteractionsTitle => 'Bugünün Etkileşimleri';
 
   @override
-  String homeInteractionsDescription(
-      Object first, Object score, Object second, Object tone) {
+  String homeInteractionsDescription(Object first, Object score, Object second, Object tone) {
     return '$first ve $second arasında enerji $tone seviyesinde (%$score).';
   }
 
@@ -166,18 +164,40 @@ class AppLocalizationsTr extends AppLocalizations {
   String get dreamLoading => 'Rüyanız yorumlanıyor...';
 
   @override
-  String get dreamError =>
-      'Yorumlanırken bir sorun oluştu. Lütfen tekrar deneyin.';
+  String get dreamError => 'Yorumlanırken bir sorun oluştu. Lütfen tekrar deneyin.';
 
   @override
   String get dreamEmpty => 'Paylaşılacak bir rüya yazın.';
 
   @override
+  String get dreamSave => 'Yorumu kaydet';
+
+  @override
+  String get dreamSaved => 'Rüya geçmişe kaydedildi.';
+
+  @override
+  String get dreamAlreadySaved => 'Bu yorum zaten kaydedildi.';
+
+  @override
+  String get dreamHistoryTitle => 'Kaydedilen yorumlar';
+
+  @override
+  String get dreamHistoryEmpty => 'Henüz kaydedilmiş yorumunuz yok.';
+
+  @override
+  String get dreamDelete => 'Sil';
+
+  @override
+  String get dreamDeleteConfirmation => 'Bu yorumu kaldırmak ister misiniz?';
+
+  @override
+  String get dreamDeleteSuccess => 'Kayıt silindi.';
+
+  @override
   String get coffeeTitle => 'Kahve Falı';
 
   @override
-  String get coffeeHint =>
-      'Kahve fincanı ve tabağınızın fotoğraflarını yükleyin';
+  String get coffeeHint => 'Kahve fincanı ve tabağınızın fotoğraflarını yükleyin';
 
   @override
   String get coffeeAddPhotos => 'Fotoğraf ekle';
@@ -210,8 +230,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get coffeeHistory => 'Son fal kayıtlarınız';
 
   @override
-  String get coffeePrivacy =>
-      'Fotoğraflar sadece yorum için kullanılır ve cihazınızda saklanır.';
+  String get coffeePrivacy => 'Fotoğraflar sadece yorum için kullanılır ve cihazınızda saklanır.';
 
   @override
   String get compatibilityTitle => 'Zodyak Uyumu';
@@ -250,8 +269,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String compatibilityAdviceTemplate(
-      Object advice, Object first, Object second) {
+  String compatibilityAdviceTemplate(Object advice, Object first, Object second) {
     return 'Bugün $first ve $second için öneri: $advice.';
   }
 
@@ -277,8 +295,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get adviceFlux => 'Farklılıklara alan açıp dikkatle dinleyin.';
 
   @override
-  String get adviceTransform =>
-      'Samimi ama yumuşak sohbetlerle dönüşümü başlatın.';
+  String get adviceTransform => 'Samimi ama yumuşak sohbetlerle dönüşümü başlatın.';
 
   @override
   String get commentsTitle => 'Yorumlar';
@@ -358,12 +375,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get coffeeHistoryEmpty => 'Henüz kayıtlı falınız yok.';
 
   @override
-  String get insightSunDefault =>
-      'Bugün enerjinizi dengelemek için sezgilerinize güvenin.';
+  String get insightSunDefault => 'Bugün enerjinizi dengelemek için sezgilerinize güvenin.';
 
   @override
-  String get insightRisingDefault =>
-      'Çevrenizle kurduğunuz bağları güçlendirin.';
+  String get insightRisingDefault => 'Çevrenizle kurduğunuz bağları güçlendirin.';
 
   @override
   String get pickerSun => 'Güneş Burcu';
@@ -381,4 +396,242 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get languageSwitchSaved => 'Dil tercihi kaydedildi.';
+
+  @override
+  String get actionRetry => 'Tekrar dene';
+
+  @override
+  String get homeTitle => 'Kozmik Pano';
+
+  @override
+  String get homeDailyZodiac => 'Bugünün Haritası';
+
+  @override
+  String homeSunRising(Object rising, Object sun) {
+    return 'Güneş $sun • Yükselen $rising';
+  }
+
+  @override
+  String get homeInsightError => 'İçgörüler yüklenemedi.';
+
+  @override
+  String get homeEnergyFocusTitle => 'Ana enerji odağı';
+
+  @override
+  String get homeEnergyLove => 'Aşk';
+
+  @override
+  String get homeEnergyCareer => 'Kariyer';
+
+  @override
+  String get homeEnergySpiritual => 'Ruhsal';
+
+  @override
+  String get homeEnergySocial => 'Sosyal';
+
+  @override
+  String get homeInsightEmpty => 'İçgörüler yolda, birazdan burada.';
+
+  @override
+  String get homeCosmicGuideTitle => 'Bugünün kozmik rehberi';
+
+  @override
+  String get homeWeatherErrorTitle => 'Hava bilgisi alınamadı';
+
+  @override
+  String get compatibilityErrorTitle => 'Bağlantı şu an kurulamıyor';
+
+  @override
+  String get compatibilityEmpty => 'Henüz içgörü yok — birazdan tekrar dene.';
+
+  @override
+  String get onboardingGreeting => 'Kismetly\'ye hoş geldin';
+
+  @override
+  String get onboardingIntro => 'Kozmik arkadaşın sana özel günlük rehberler yazmaya hazır.';
+
+  @override
+  String get onboardingSignGoogle => 'Google ile giriş yap';
+
+  @override
+  String get onboardingContinueGuest => 'Misafir olarak devam et';
+
+  @override
+  String get onboardingDetailsTitle => 'Bize kendinden bahset';
+
+  @override
+  String get onboardingWelcome => 'Hoş geldin 🌟 Enerjini birlikte ayarlayalım.';
+
+  @override
+  String get onboardingName => 'İsim';
+
+  @override
+  String get onboardingNameError => 'Lütfen adını paylaş.';
+
+  @override
+  String get onboardingBirthDate => 'Doğum tarihi';
+
+  @override
+  String get onboardingBirthTime => 'Doğum saati';
+
+  @override
+  String get onboardingBirthCity => 'Doğum şehri';
+
+  @override
+  String get onboardingGenderOptional => 'Cinsiyet (opsiyonel)';
+
+  @override
+  String get onboardingMissingDate => 'Doğum tarihini ve saatini seç.';
+
+  @override
+  String get onboardingCityError => 'Bu şehri bulamadık, tekrar dene.';
+
+  @override
+  String get onboardingFinish => 'Yolculuğum başlasın';
+
+  @override
+  String get premiumTitle => 'Kismetly Pro';
+
+  @override
+  String get premiumSubtitle => 'Sınırsız kozmik rehberlik';
+
+  @override
+  String get premiumMonthly => 'Aylık';
+
+  @override
+  String get premiumAnnual => 'Yıllık';
+
+  @override
+  String get premiumPriceMonthly => '\$\$7.99/ay';
+
+  @override
+  String get premiumPriceAnnual => '\$\$49.99/yıl';
+
+  @override
+  String get premiumFeatureUnlimited => 'Sınırsız AI Astrolog Soruları';
+
+  @override
+  String get premiumFeatureReports => 'Aylık ve Yıllık Kişisel Raporlar';
+
+  @override
+  String get premiumFeatureCompatibility => 'Premium Uyumluluk Analizi';
+
+  @override
+  String get premiumFeatureAdFree => 'Reklamsız Deneyim';
+
+  @override
+  String get premiumUpgrade => 'Pro\'ya Yükselt';
+
+  @override
+  String get premiumRestore => 'Satın Alımları Geri Yükle';
+
+  @override
+  String get premiumCurrent => 'Pro Üye';
+
+  @override
+  String premiumExpires(Object date) {
+    return 'Pro üyeliğin $date tarihinde sona eriyor';
+  }
+
+  @override
+  String get creditsTitle => 'Kredi Mağazası';
+
+  @override
+  String creditsBalance(Object credits) {
+    return 'Bakiyeniz: $credits kredi';
+  }
+
+  @override
+  String get creditsPack20 => '20 Kredi';
+
+  @override
+  String get creditsPack50 => '50 Kredi';
+
+  @override
+  String get creditsPack100 => '100 Kredi';
+
+  @override
+  String get creditsPrice20 => '\$\$4.99';
+
+  @override
+  String get creditsPrice50 => '\$\$9.99';
+
+  @override
+  String get creditsPrice100 => '\$\$17.99';
+
+  @override
+  String get creditsInsufficient => 'Yetersiz Kredi';
+
+  @override
+  String creditsNeeded(Object amount) {
+    return 'Bu özellik için $amount kredi gerekiyor.';
+  }
+
+  @override
+  String get creditsBuy => 'Kredi Satın Al';
+
+  @override
+  String get creditsUpgrade => 'Pro\'ya Yükselt';
+
+  @override
+  String get lockPremium => 'Bu özellik Pro üyeler için';
+
+  @override
+  String lockCredits(Object amount) {
+    return 'Bu özellik $amount kredi gerektirir';
+  }
+
+  @override
+  String get lockUnlock => 'Kilidi Aç';
+
+  @override
+  String get lockUpgrade => 'Yükselt';
+
+  @override
+  String get paywallTitle => 'Premium Özellikler';
+
+  @override
+  String get paywallSubtitle => 'Kozmik yolculuğunu derinleştir';
+
+  @override
+  String get paywallFeature1 => 'Sınırsız AI Astrolog erişimi';
+
+  @override
+  String get paywallFeature2 => 'Detaylı uyumluluk raporları';
+
+  @override
+  String get paywallFeature3 => 'Aylık ve yıllık kişisel haritalar';
+
+  @override
+  String get paywallFeature4 => 'Reklamsız deneyim';
+
+  @override
+  String get paywallTrial => '7 gün ücretsiz deneme';
+
+  @override
+  String get paywallTerms => 'Devam ederek Kullanım Koşulları ve Gizlilik Politikası\'nı kabul etmiş olursunuz.';
+
+  @override
+  String get creditCostDream => 'Rüya yorumu: 3 kredi';
+
+  @override
+  String get creditCostCoffee => 'Kahve falı: 5 kredi';
+
+  @override
+  String get creditCostChat => 'AI Astrolog sorusu: 5 kredi';
+
+  @override
+  String get creditCostChart => 'Misafir harita: 10 kredi';
+
+  @override
+  String get purchaseSuccess => 'Satın alma başarılı!';
+
+  @override
+  String get purchaseError => 'Satın alma başarısız. Lütfen tekrar deneyin.';
+
+  @override
+  String get purchaseRestoreSuccess => 'Satın alımlar geri yüklendi.';
+
+  @override
+  String get purchaseRestoreError => 'Geri yüklenecek satın alma bulunamadı.';
 }

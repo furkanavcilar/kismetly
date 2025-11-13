@@ -23,7 +23,10 @@ class AppLocalizations {
 
     final localization = AppLocalizations(locale);
     localization._localizedStrings = jsonMap.map((key, value) {
-      return MapEntry(key, value.toString());
+      // Convert ARB escape sequence $$ to single $ for literal dollar signs
+      String stringValue = value.toString();
+      stringValue = stringValue.replaceAll(r'$$', r'$');
+      return MapEntry(key, stringValue);
     });
     return localization;
   }

@@ -62,8 +62,7 @@ import 'app_localizations_tr.dart';
 /// be consistent with the languages listed in the AppLocalizations.supportedLocales
 /// property.
 abstract class AppLocalizations {
-  AppLocalizations(String locale)
-      : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+  AppLocalizations(String locale) : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -71,8 +70,7 @@ abstract class AppLocalizations {
     return Localizations.of<AppLocalizations>(context, AppLocalizations);
   }
 
-  static const LocalizationsDelegate<AppLocalizations> delegate =
-      _AppLocalizationsDelegate();
+  static const LocalizationsDelegate<AppLocalizations> delegate = _AppLocalizationsDelegate();
 
   /// A list of this localizations delegate along with the default localizations
   /// delegates.
@@ -84,8 +82,7 @@ abstract class AppLocalizations {
   /// Additional delegates can be added by appending to this list in
   /// MaterialApp. This list does not have to be used at all if a custom list
   /// of delegates is preferred or required.
-  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
-      <LocalizationsDelegate<dynamic>>[
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates = <LocalizationsDelegate<dynamic>>[
     delegate,
     GlobalMaterialLocalizations.delegate,
     GlobalCupertinoLocalizations.delegate,
@@ -324,8 +321,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Energy between {first} and {second} feels {tone} ({score}%).'**
-  String homeInteractionsDescription(
-      Object first, Object score, Object second, Object tone);
+  String homeInteractionsDescription(Object first, Object score, Object second, Object tone);
 
   /// No description provided for @homeInteractionsHint.
   ///
@@ -404,6 +400,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Write a dream to interpret.'**
   String get dreamEmpty;
+
+  /// No description provided for @dreamSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save interpretation'**
+  String get dreamSave;
+
+  /// No description provided for @dreamSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Dream saved to history.'**
+  String get dreamSaved;
+
+  /// No description provided for @dreamAlreadySaved.
+  ///
+  /// In en, this message translates to:
+  /// **'This interpretation is already saved.'**
+  String get dreamAlreadySaved;
+
+  /// No description provided for @dreamHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved interpretations'**
+  String get dreamHistoryTitle;
+
+  /// No description provided for @dreamHistoryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'You haven\'t saved any interpretations yet.'**
+  String get dreamHistoryEmpty;
+
+  /// No description provided for @dreamDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get dreamDelete;
+
+  /// No description provided for @dreamDeleteConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove this saved interpretation?'**
+  String get dreamDeleteConfirmation;
+
+  /// No description provided for @dreamDeleteSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Entry removed.'**
+  String get dreamDeleteSuccess;
 
   /// No description provided for @coffeeTitle.
   ///
@@ -547,8 +591,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Tip for {first} and {second} today: {advice}.'**
-  String compatibilityAdviceTemplate(
-      Object advice, Object first, Object second);
+  String compatibilityAdviceTemplate(Object advice, Object first, Object second);
 
   /// No description provided for @toneHigh.
   ///
@@ -789,10 +832,465 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Language preference saved.'**
   String get languageSwitchSaved;
+
+  /// No description provided for @actionRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get actionRetry;
+
+  /// No description provided for @homeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cosmic Dashboard'**
+  String get homeTitle;
+
+  /// No description provided for @homeDailyZodiac.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s Chart'**
+  String get homeDailyZodiac;
+
+  /// No description provided for @homeSunRising.
+  ///
+  /// In en, this message translates to:
+  /// **'Sun {sun} • Rising {rising}'**
+  String homeSunRising(Object rising, Object sun);
+
+  /// No description provided for @homeInsightError.
+  ///
+  /// In en, this message translates to:
+  /// **'Insights could not load.'**
+  String get homeInsightError;
+
+  /// No description provided for @homeEnergyFocusTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Main energy focus'**
+  String get homeEnergyFocusTitle;
+
+  /// No description provided for @homeEnergyLove.
+  ///
+  /// In en, this message translates to:
+  /// **'Love'**
+  String get homeEnergyLove;
+
+  /// No description provided for @homeEnergyCareer.
+  ///
+  /// In en, this message translates to:
+  /// **'Career'**
+  String get homeEnergyCareer;
+
+  /// No description provided for @homeEnergySpiritual.
+  ///
+  /// In en, this message translates to:
+  /// **'Spiritual'**
+  String get homeEnergySpiritual;
+
+  /// No description provided for @homeEnergySocial.
+  ///
+  /// In en, this message translates to:
+  /// **'Social'**
+  String get homeEnergySocial;
+
+  /// No description provided for @homeInsightEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Insights will appear soon.'**
+  String get homeInsightEmpty;
+
+  /// No description provided for @homeCosmicGuideTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s cosmic guide'**
+  String get homeCosmicGuideTitle;
+
+  /// No description provided for @homeWeatherErrorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Weather unavailable'**
+  String get homeWeatherErrorTitle;
+
+  /// No description provided for @compatibilityErrorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection unavailable right now'**
+  String get compatibilityErrorTitle;
+
+  /// No description provided for @compatibilityEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No insight yet — try again soon.'**
+  String get compatibilityEmpty;
+
+  /// No description provided for @onboardingGreeting.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to Kismetly'**
+  String get onboardingGreeting;
+
+  /// No description provided for @onboardingIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Your cosmic companion is ready to write daily guidance just for you.'**
+  String get onboardingIntro;
+
+  /// No description provided for @onboardingSignGoogle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with Google'**
+  String get onboardingSignGoogle;
+
+  /// No description provided for @onboardingContinueGuest.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue as guest'**
+  String get onboardingContinueGuest;
+
+  /// No description provided for @onboardingDetailsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us about you'**
+  String get onboardingDetailsTitle;
+
+  /// No description provided for @onboardingWelcome.
+  ///
+  /// In en, this message translates to:
+  /// **'Hoş geldin 🌟 Let\'s attune to your energy.'**
+  String get onboardingWelcome;
+
+  /// No description provided for @onboardingName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get onboardingName;
+
+  /// No description provided for @onboardingNameError.
+  ///
+  /// In en, this message translates to:
+  /// **'Please share your name.'**
+  String get onboardingNameError;
+
+  /// No description provided for @onboardingBirthDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Birth date'**
+  String get onboardingBirthDate;
+
+  /// No description provided for @onboardingBirthTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Birth time'**
+  String get onboardingBirthTime;
+
+  /// No description provided for @onboardingBirthCity.
+  ///
+  /// In en, this message translates to:
+  /// **'Birth city'**
+  String get onboardingBirthCity;
+
+  /// No description provided for @onboardingGenderOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Gender (optional)'**
+  String get onboardingGenderOptional;
+
+  /// No description provided for @onboardingMissingDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Select your birth date and time.'**
+  String get onboardingMissingDate;
+
+  /// No description provided for @onboardingCityError.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t find that city. Try again.'**
+  String get onboardingCityError;
+
+  /// No description provided for @onboardingFinish.
+  ///
+  /// In en, this message translates to:
+  /// **'Begin my journey'**
+  String get onboardingFinish;
+
+  /// No description provided for @premiumTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Kismetly Pro'**
+  String get premiumTitle;
+
+  /// No description provided for @premiumSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlimited cosmic guidance'**
+  String get premiumSubtitle;
+
+  /// No description provided for @premiumMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get premiumMonthly;
+
+  /// No description provided for @premiumAnnual.
+  ///
+  /// In en, this message translates to:
+  /// **'Annual'**
+  String get premiumAnnual;
+
+  /// No description provided for @premiumPriceMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'\$\$7.99/month'**
+  String get premiumPriceMonthly;
+
+  /// No description provided for @premiumPriceAnnual.
+  ///
+  /// In en, this message translates to:
+  /// **'\$\$49.99/year'**
+  String get premiumPriceAnnual;
+
+  /// No description provided for @premiumFeatureUnlimited.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlimited AI Astrologer Questions'**
+  String get premiumFeatureUnlimited;
+
+  /// No description provided for @premiumFeatureReports.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly & Annual Personalized Reports'**
+  String get premiumFeatureReports;
+
+  /// No description provided for @premiumFeatureCompatibility.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium Compatibility Deep Dive'**
+  String get premiumFeatureCompatibility;
+
+  /// No description provided for @premiumFeatureAdFree.
+  ///
+  /// In en, this message translates to:
+  /// **'Ad-free Experience'**
+  String get premiumFeatureAdFree;
+
+  /// No description provided for @premiumUpgrade.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade to Pro'**
+  String get premiumUpgrade;
+
+  /// No description provided for @premiumRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Purchases'**
+  String get premiumRestore;
+
+  /// No description provided for @premiumCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Pro Member'**
+  String get premiumCurrent;
+
+  /// No description provided for @premiumExpires.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Pro membership expires on {date}'**
+  String premiumExpires(Object date);
+
+  /// No description provided for @creditsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit Store'**
+  String get creditsTitle;
+
+  /// No description provided for @creditsBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance: {credits} credits'**
+  String creditsBalance(Object credits);
+
+  /// No description provided for @creditsPack20.
+  ///
+  /// In en, this message translates to:
+  /// **'20 Credits'**
+  String get creditsPack20;
+
+  /// No description provided for @creditsPack50.
+  ///
+  /// In en, this message translates to:
+  /// **'50 Credits'**
+  String get creditsPack50;
+
+  /// No description provided for @creditsPack100.
+  ///
+  /// In en, this message translates to:
+  /// **'100 Credits'**
+  String get creditsPack100;
+
+  /// No description provided for @creditsPrice20.
+  ///
+  /// In en, this message translates to:
+  /// **'\$\$4.99'**
+  String get creditsPrice20;
+
+  /// No description provided for @creditsPrice50.
+  ///
+  /// In en, this message translates to:
+  /// **'\$\$9.99'**
+  String get creditsPrice50;
+
+  /// No description provided for @creditsPrice100.
+  ///
+  /// In en, this message translates to:
+  /// **'\$\$17.99'**
+  String get creditsPrice100;
+
+  /// No description provided for @creditsInsufficient.
+  ///
+  /// In en, this message translates to:
+  /// **'Insufficient Credits'**
+  String get creditsInsufficient;
+
+  /// No description provided for @creditsNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'This feature requires {amount} credits.'**
+  String creditsNeeded(Object amount);
+
+  /// No description provided for @creditsBuy.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy Credits'**
+  String get creditsBuy;
+
+  /// No description provided for @creditsUpgrade.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade to Pro'**
+  String get creditsUpgrade;
+
+  /// No description provided for @lockPremium.
+  ///
+  /// In en, this message translates to:
+  /// **'This feature is for Pro members'**
+  String get lockPremium;
+
+  /// No description provided for @lockCredits.
+  ///
+  /// In en, this message translates to:
+  /// **'This feature requires {amount} credits'**
+  String lockCredits(Object amount);
+
+  /// No description provided for @lockUnlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock'**
+  String get lockUnlock;
+
+  /// No description provided for @lockUpgrade.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade'**
+  String get lockUpgrade;
+
+  /// No description provided for @paywallTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium Features'**
+  String get paywallTitle;
+
+  /// No description provided for @paywallSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Deepen your cosmic journey'**
+  String get paywallSubtitle;
+
+  /// No description provided for @paywallFeature1.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlimited AI Astrologer access'**
+  String get paywallFeature1;
+
+  /// No description provided for @paywallFeature2.
+  ///
+  /// In en, this message translates to:
+  /// **'Detailed compatibility reports'**
+  String get paywallFeature2;
+
+  /// No description provided for @paywallFeature3.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly and annual personal charts'**
+  String get paywallFeature3;
+
+  /// No description provided for @paywallFeature4.
+  ///
+  /// In en, this message translates to:
+  /// **'Ad-free experience'**
+  String get paywallFeature4;
+
+  /// No description provided for @paywallTrial.
+  ///
+  /// In en, this message translates to:
+  /// **'7-day free trial'**
+  String get paywallTrial;
+
+  /// No description provided for @paywallTerms.
+  ///
+  /// In en, this message translates to:
+  /// **'By continuing, you agree to Terms of Use and Privacy Policy.'**
+  String get paywallTerms;
+
+  /// No description provided for @creditCostDream.
+  ///
+  /// In en, this message translates to:
+  /// **'Dream interpretation: 3 credits'**
+  String get creditCostDream;
+
+  /// No description provided for @creditCostCoffee.
+  ///
+  /// In en, this message translates to:
+  /// **'Coffee reading: 5 credits'**
+  String get creditCostCoffee;
+
+  /// No description provided for @creditCostChat.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Astrologer question: 5 credits'**
+  String get creditCostChat;
+
+  /// No description provided for @creditCostChart.
+  ///
+  /// In en, this message translates to:
+  /// **'Guest chart: 10 credits'**
+  String get creditCostChart;
+
+  /// No description provided for @purchaseSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase successful!'**
+  String get purchaseSuccess;
+
+  /// No description provided for @purchaseError.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase failed. Please try again.'**
+  String get purchaseError;
+
+  /// No description provided for @purchaseRestoreSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchases restored.'**
+  String get purchaseRestoreSuccess;
+
+  /// No description provided for @purchaseRestoreError.
+  ///
+  /// In en, this message translates to:
+  /// **'No purchases found to restore.'**
+  String get purchaseRestoreError;
 }
 
-class _AppLocalizationsDelegate
-    extends LocalizationsDelegate<AppLocalizations> {
+class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override
@@ -801,25 +1299,25 @@ class _AppLocalizationsDelegate
   }
 
   @override
-  bool isSupported(Locale locale) =>
-      <String>['en', 'tr'].contains(locale.languageCode);
+  bool isSupported(Locale locale) => <String>['en', 'tr'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
 }
 
 AppLocalizations lookupAppLocalizations(Locale locale) {
+
+
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
-    case 'en':
-      return AppLocalizationsEn();
-    case 'tr':
-      return AppLocalizationsTr();
+    case 'en': return AppLocalizationsEn();
+    case 'tr': return AppLocalizationsTr();
   }
 
   throw FlutterError(
-      'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
-      'an issue with the localizations generation tool. Please file an issue '
-      'on GitHub with a reproducible sample app and the gen-l10n configuration '
-      'that was used.');
+    'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+    'an issue with the localizations generation tool. Please file an issue '
+    'on GitHub with a reproducible sample app and the gen-l10n configuration '
+    'that was used.'
+  );
 }
