@@ -11,6 +11,7 @@ import '../models/weather_report.dart';
 import '../services/ai_content_service.dart';
 import '../services/weather_service.dart';
 import '../services/greeting_service.dart';
+import '../services/ai_engine/ai_orchestrator.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -30,6 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final _aiService = AiContentService();
   final _weatherService = WeatherService();
   final _greetingService = GreetingService();
+  final _orchestrator = AIOrchestrator();
   DailyAiInsights? _insights;
   WeatherReport? _weather;
   bool _loading = true;
@@ -39,6 +41,8 @@ class _HomeScreenState extends State<HomeScreen> {
   late UserProfileController _profileController;
   bool _initialized = false;
   String? _greeting;
+  String? _mainEnergyFocus;
+  bool _energyFocusLoading = false;
   
   // Cache formatters to avoid recreating on every build
   DateFormat? _cachedDateFormatter;
@@ -116,7 +120,53 @@ class _HomeScreenState extends State<HomeScreen> {
         _error = e.toString();
       });
     }
+    
+    // Load main energy focus separately - always generate uniquely
+    await _loadMainEnergyFocus();
     await _loadWeather();
+  }
+
+  Future<void> _loadMainEnergyFocus() async {
+    final profile = _profileController.profile;
+    if (profile == null) return;
+    final locale = LocaleScope.of(context).locale;
+    
+    setState(() {
+      _energyFocusLoading = true;
+    });
+
+    String describe(String? id) {
+      if (id == null) return '';
+      final sign = findZodiacById(id);
+      return sign?.labelFor(locale.languageCode) ?? id;
+    }
+
+    try {
+      final sunSign = describe(profile.sunSign) ?? 'Unknown';
+      final risingSign = describe(profile.risingSign) ?? 'Unknown';
+      
+      final energyFocus = await _orchestrator.generateEnergyFocus(
+        sunSign: sunSign,
+        risingSign: risingSign,
+        language: locale.languageCode,
+        date: DateTime.now(),
+        userContext: {
+          'name': profile.name,
+          'birthCity': profile.birthCity,
+        },
+      );
+      
+      if (!mounted) return;
+      setState(() {
+        _mainEnergyFocus = energyFocus;
+        _energyFocusLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _energyFocusLoading = false;
+      });
+    }
   }
 
   Future<void> _loadWeather() async {
@@ -216,6 +266,13 @@ class _HomeScreenState extends State<HomeScreen> {
               sun: sun ?? '—',
               rising: rising ?? '—',
               onRetry: _loadAll,
+            ),
+            const SizedBox(height: 18),
+            _MainEnergyFocusCard(
+              energyFocus: _mainEnergyFocus,
+              loading: _energyFocusLoading,
+              onRetry: _loadMainEnergyFocus,
+              loc: loc,
             ),
             const SizedBox(height: 18),
             _EnergyFocusRow(
@@ -418,6 +475,65 @@ class _DailyZodiacCard extends StatelessWidget {
             )
           else if (insights != null)
             Text(insights!.summary, style: theme.textTheme.bodyLarge),
+        ],
+      ),
+    );
+  }
+}
+
+class _MainEnergyFocusCard extends StatelessWidget {
+  const _MainEnergyFocusCard({
+    required this.energyFocus,
+    required this.loading,
+    required this.onRetry,
+    required this.loc,
+  });
+
+  final String? energyFocus;
+  final bool loading;
+  final Future<void> Function() onRetry;
+  final AppLocalizations loc;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return _BlurCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.auto_awesome, color: theme.colorScheme.primary),
+              const SizedBox(width: 8),
+              Text(
+                loc.translate('homeMainEnergyFocus') ?? 'Ana Enerji Odağı',
+                style: theme.textTheme.titleMedium,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (loading)
+            const LinearProgressIndicator(minHeight: 3)
+          else if (energyFocus == null || energyFocus!.isEmpty)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  loc.translate('homeInsightEmpty') ?? 'Loading...',
+                  style: theme.textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: onRetry,
+                  child: Text(loc.translate('actionRetry') ?? 'Retry'),
+                ),
+              ],
+            )
+          else
+            Text(
+              energyFocus!,
+              style: theme.textTheme.bodyLarge,
+            ),
         ],
       ),
     );

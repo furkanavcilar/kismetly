@@ -5,16 +5,22 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/config/app_secrets.dart';
 import '../models/daily_ai_insights.dart';
+import 'ai_engine/ai_orchestrator.dart';
 
 class AiContentService {
-  AiContentService({http.Client? client, SharedPreferences? preferences})
-      : _client = client ?? http.Client(),
+  AiContentService({
+    http.Client? client,
+    SharedPreferences? preferences,
+    AIOrchestrator? orchestrator,
+  })  : _client = client ?? http.Client(),
         _prefsFuture = preferences != null
             ? Future.value(preferences)
-            : SharedPreferences.getInstance();
+            : SharedPreferences.getInstance(),
+        _orchestrator = orchestrator ?? AIOrchestrator();
 
   final http.Client _client;
   final Future<SharedPreferences> _prefsFuture;
+  final AIOrchestrator _orchestrator;
 
   String _dayStamp(DateTime date) {
     final mm = date.month.toString().padLeft(2, '0');
@@ -117,53 +123,36 @@ class AiContentService {
     required Locale locale,
     bool forceRefresh = false,
   }) async {
-    final today = DateTime.now();
-    final dayKey = _dayStamp(today);
-    final prefs = await _prefsFuture;
-
-    final cacheKey =
-        'ai_compat_${locale.languageCode}_${firstSign}_${secondSign}_$dayKey';
-    final cached = prefs.getString(cacheKey);
-    if (cached != null && !forceRefresh) {
-      try {
-        final decoded = jsonDecode(cached) as Map<String, dynamic>;
-        return decoded.map((key, value) => MapEntry(key, value.toString()));
-      } catch (_) {}
-    }
-
-    Map<String, String>? response;
-    final apiKey = AppSecrets.openAiApiKey;
-    final compatSeed = _compatibilitySeed(
-      firstSign: firstSign,
-      secondSign: secondSign,
-      locale: locale,
-      dayKey: dayKey,
-      variant: forceRefresh ? DateTime.now().microsecondsSinceEpoch : null,
-    );
-
-    if (apiKey != null && apiKey.isNotEmpty) {
-      try {
-        response = await _fetchCompatibilityFromOpenAi(
-          apiKey: apiKey,
+    try {
+      final result = await _orchestrator.generateCompatibility(
+        firstSign: firstSign,
+        secondSign: secondSign,
+        language: locale.languageCode,
+      );
+      
+      // Cache the result
+      final today = DateTime.now();
+      final dayKey = _dayStamp(today);
+      final prefs = await _prefsFuture;
+      final cacheKey =
+          'ai_compat_${locale.languageCode}_${firstSign}_${secondSign}_$dayKey';
+      await prefs.setString(cacheKey, jsonEncode(result));
+      
+      return result;
+    } catch (e) {
+      debugPrint('Compatibility generation failed: $e');
+      return _generateCompatibilityFallback(
+        firstSign: firstSign,
+        secondSign: secondSign,
+        locale: locale,
+        seed: _compatibilitySeed(
           firstSign: firstSign,
           secondSign: secondSign,
           locale: locale,
-          seed: compatSeed,
-        );
-      } catch (e) {
-        debugPrint('Compatibility fallback: $e');
-      }
+          dayKey: _dayStamp(DateTime.now()),
+        ),
+      );
     }
-
-    response ??= _generateCompatibilityFallback(
-      firstSign: firstSign,
-      secondSign: secondSign,
-      locale: locale,
-      seed: compatSeed,
-    );
-
-    await prefs.setString(cacheKey, jsonEncode(response));
-    return response;
   }
 
   Future<DailyAiInsights> _fetchFromOpenAi({
@@ -395,66 +384,18 @@ Use a personal, empathetic, poetic, and deeply human tone. Never mention AI, mod
     required DateTime date,
     bool forceRefresh = false,
   }) async {
-    final dayKey = _dayStamp(date);
-    final prefs = await _prefsFuture;
-    final cacheKey = 'horoscope_${locale.languageCode}_${sign}_$dayKey';
-    
-    // Only use cache if not forcing refresh
-    if (!forceRefresh) {
-      final cached = prefs.getString(cacheKey);
-      if (cached != null && cached.isNotEmpty) {
-        return cached;
-      }
+    try {
+      final result = await _orchestrator.generateHoroscope(
+        sign: sign,
+        language: locale.languageCode,
+        date: date,
+        forceRefresh: forceRefresh,
+      );
+      return result;
+    } catch (e) {
+      debugPrint('Horoscope generation failed: $e');
+      return _getFallbackHoroscope(sign, locale.languageCode);
     }
-
-    final apiKey = AppSecrets.openAiApiKey;
-    if (apiKey != null && apiKey.isNotEmpty) {
-      try {
-        final response = await _client.post(
-          Uri.parse('https://api.openai.com/v1/chat/completions'),
-          headers: {
-            'Authorization': 'Bearer $apiKey',
-            'Content-Type': 'application/json',
-          },
-          body: jsonEncode({
-            'model': 'gpt-4o-mini',
-            'messages': [
-              {
-                'role': 'system',
-                'content': _horoscopeSystemPrompt(locale.languageCode),
-              },
-              {
-                'role': 'user',
-                'content': locale.languageCode == 'tr'
-                    ? 'Sen sıcak, empatik bir astrologsun. $sign burcu için bugünün (${date.day}/${date.month}/${date.year}) horoskopunu yaz. Bu horoskop SADECE $sign burcu için özel olmalı - diğer burçlardan tamamen farklı olmalı. 4-6 uzun paragraf yaz. Her paragraf en az 3-4 cümle içermeli. Aşk, kariyer, ruhsal gelişim ve sosyal bağlantılar hakkında özel içgörüler ver. Tarihi ve burç özelliklerini kullanarak benzersiz, tekrar etmeyen içerik oluştur. Kişiye doğrudan "sen" diye hitap et. Yapay zeka, modeller veya teknolojiden asla bahsetme. Dilini, cümle yapını değiştir ve tekrarlayan ifadelerden kaçın. Bu horoskop $sign burcu için bugün özel olmalı ve diğer tüm burçlardan farklı olmalı.'
-                    : 'You are a warm, empathetic astrologer. Write today\'s (${date.day}/${date.month}/${date.year}) horoscope for the $sign sign. This horoscope must be SPECIFIC to the $sign sign only - completely different from all other signs. Write 4-6 long paragraphs. Each paragraph should contain at least 3-4 sentences. Provide specific insights about love, career, spiritual growth, and social connections. Use the date and sign characteristics to create unique, non-repetitive content. Speak directly to the person using "you". Never mention AI, models, or technology. Vary your language, sentence structure, and avoid repetitive phrases. This horoscope must be special for the $sign sign today and different from all other signs.',
-              },
-            ],
-            'temperature': 0.95, // Higher temperature for more variation
-            'seed': date.day * 100 + date.month + date.year % 100 + sign.hashCode % 1000, // Add sign hash for uniqueness
-          }),
-        );
-
-        if (response.statusCode >= 200 && response.statusCode < 300) {
-          final data = jsonDecode(response.body) as Map<String, dynamic>;
-          final choices = data['choices'] as List<dynamic>?;
-          if (choices != null && choices.isNotEmpty) {
-            final message = choices.first['message'] as Map<String, dynamic>?;
-            final content = message?['content'] as String?;
-            if (content != null && content.trim().isNotEmpty) {
-              final horoscope = content.trim();
-              await prefs.setString(cacheKey, horoscope);
-              return horoscope;
-            }
-          }
-        }
-      } catch (e) {
-        debugPrint('Horoscope generation failed: $e');
-      }
-    }
-
-    // Fallback
-    return _getFallbackHoroscope(sign, locale.languageCode);
   }
 
   String _horoscopeSystemPrompt(String language) {
@@ -475,68 +416,19 @@ Use a personal, empathetic, poetic, and deeply human tone. Never mention AI, mod
   Future<Map<String, String>> fetchZodiacSignDetails({
     required String sign,
     required Locale locale,
+    bool forceRefresh = false,
   }) async {
-    final prefs = await _prefsFuture;
-    final cacheKey = 'zodiac_details_${locale.languageCode}_$sign';
-    
-    final cached = prefs.getString(cacheKey);
-    if (cached != null) {
-      try {
-        final decoded = jsonDecode(cached) as Map<String, dynamic>;
-        return Map<String, String>.from(decoded);
-      } catch (_) {
-        // Invalid cache, continue to generate
-      }
+    try {
+      final result = await _orchestrator.generateZodiacDetails(
+        sign: sign,
+        language: locale.languageCode,
+        forceRefresh: forceRefresh,
+      );
+      return result;
+    } catch (e) {
+      debugPrint('Zodiac details generation failed: $e');
+      return _getFallbackZodiacDetails(sign, locale.languageCode);
     }
-
-    final apiKey = AppSecrets.openAiApiKey;
-    if (apiKey != null && apiKey.isNotEmpty) {
-      try {
-        final response = await _client.post(
-          Uri.parse('https://api.openai.com/v1/chat/completions'),
-          headers: {
-            'Authorization': 'Bearer $apiKey',
-            'Content-Type': 'application/json',
-          },
-          body: jsonEncode({
-            'model': 'gpt-4o-mini',
-            'messages': [
-              {
-                'role': 'system',
-                'content': _zodiacDetailsSystemPrompt(locale.languageCode),
-              },
-              {
-                'role': 'user',
-                'content': locale.languageCode == 'tr'
-                    ? 'Sen deneyimli bir astrologsun. $sign burcu hakkında detaylı, zengin ve kişisel bir açıklama yaz. Şu bölümleri içermeli: Genel Özellikler (3-4 paragraf, bu burcun temel karakteristiklerini anlat - $sign burcuna özgü, diğer burçlardan farklı), Güçlü Yönler (3-4 paragraf, bu burcun güçlü yanlarını detaylandır - $sign burcuna özel güçler), Zorluklar (3-4 paragraf, bu burcun zayıf yönlerini ve gelişim alanlarını açıkla - $sign burcuna özgü zorluklar), Aşk & İlişkiler (3-4 paragraf, bu burcun aşk hayatındaki yaklaşımını ve ilişki dinamiklerini anlat - $sign burcuna özel aşk tarzı), Kariyer & Para (3-4 paragraf, bu burcun iş hayatı ve finansal yaklaşımını detaylandır - $sign burcuna özel kariyer yolu), Duygusal Manzara (3-4 paragraf, bu burcun duygusal dünyasını ve içsel yolculuğunu anlat - $sign burcuna özel duygusal özellikler), Ruhsal Yolculuk (3-4 paragraf, bu burcun ruhsal gelişim yolunu ve manevi arayışını açıkla - $sign burcuna özel ruhsal yol). Her bölümü $sign burcuna özgü, benzersiz ve detaylı yaz. Her burç için farklı cümle yapıları, farklı örnekler ve farklı odak noktaları kullan. Yapay zeka, modeller veya teknolojiden asla bahsetme. Kişiye doğrudan "sen" diye hitap et. Her burç için tamamen farklı içerik üret - aynı metni kopyalama. $sign burcu diğer tüm burçlardan farklıdır, bu farklılığı her bölümde vurgula.'
-                    : 'You are an experienced astrologer. Write a detailed, rich, and personal description about the $sign zodiac sign. Include these sections: General Traits (3-4 paragraphs describing the core characteristics of this sign - specific to $sign, different from other signs), Strengths (3-4 paragraphs detailing the strong points of this sign - $sign-specific strengths), Challenges (3-4 paragraphs explaining the weaknesses and growth areas of this sign - $sign-specific challenges), Love & Relationships (3-4 paragraphs describing this sign\'s approach to love and relationship dynamics - $sign-specific love style), Career & Money (3-4 paragraphs detailing this sign\'s work life and financial approach - $sign-specific career path), Emotional Landscape (3-4 paragraphs describing this sign\'s emotional world and inner journey - $sign-specific emotional traits), Spiritual Path (3-4 paragraphs explaining this sign\'s spiritual development path and spiritual quest - $sign-specific spiritual journey). Write each section uniquely and specifically for the $sign sign. Use different sentence structures, different examples, and different focus points for each sign. Never mention AI, models, or technology. Speak directly to the person using "you". Generate completely different content for each sign - do not copy the same text. The $sign sign is different from all other signs, emphasize this difference in every section.',
-              },
-            ],
-            'temperature': 0.85, // Higher temperature for more variation between signs
-            'seed': _hashString('$sign|${locale.languageCode}'), // Unique seed per sign
-          }),
-        );
-
-        if (response.statusCode >= 200 && response.statusCode < 300) {
-          final data = jsonDecode(response.body) as Map<String, dynamic>;
-          final choices = data['choices'] as List<dynamic>?;
-          if (choices != null && choices.isNotEmpty) {
-            final message = choices.first['message'] as Map<String, dynamic>?;
-            final content = message?['content'] as String?;
-            if (content != null && content.trim().isNotEmpty) {
-              final details = _parseZodiacDetails(content, locale.languageCode);
-              await prefs.setString(cacheKey, jsonEncode(details));
-              return details;
-            }
-          }
-        }
-      } catch (e) {
-        debugPrint('Zodiac details generation failed: $e');
-      }
-    }
-
-    // Fallback
-    return _getFallbackZodiacDetails(sign, locale.languageCode);
   }
 
   String _zodiacDetailsSystemPrompt(String language) {

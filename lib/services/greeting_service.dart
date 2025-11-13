@@ -52,22 +52,19 @@ class GreetingService {
       // New day - reset
       await prefs.setString(_lastGreetingDateKey, todayKey);
       await prefs.setInt('${_dailyOpenCountKey}_$todayKey', 1);
+      // First open of the day - use time-aware greeting
+      return getTimeAwareGreeting(now: now, name: name, language: language);
     } else {
       // Same day - increment
-      await prefs.setInt('${_dailyOpenCountKey}_$todayKey', openCount + 1);
-    }
-
-    // Use "welcome back" occasionally if user opens multiple times
-    if (openCount > 0 && openCount % 3 == 0) {
+      final newCount = openCount + 1;
+      await prefs.setInt('${_dailyOpenCountKey}_$todayKey', newCount);
+      // If user opens again same day, use "welcome back"
       if (language == 'tr') {
         return 'Tekrar hoş geldin, $name';
       } else {
         return 'Welcome back, $name';
       }
     }
-
-    // Otherwise use time-aware greeting
-    return getTimeAwareGreeting(now: now, name: name, language: language);
   }
 }
 
