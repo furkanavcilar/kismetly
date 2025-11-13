@@ -17,18 +17,18 @@ class AppTheme {
       useMaterial3: true,
     );
 
-    // Co-Star typography: Serif for titles (Playfair Display / Merriweather style)
+    // Co-Star typography: Serif for titles (Playfair Display / Cormorant Garamond style)
     final serif = GoogleFonts.playfairDisplay(
       color: text,
-      height: 1.3,
-      letterSpacing: -0.5,
+      height: 1.4,
+      letterSpacing: -0.3,
     );
     
-    // Light sans-serif for body (Inter / Source Sans Pro style)
+    // Light sans-serif for body (Inter / SF Pro Text style)
     final sans = GoogleFonts.inter(
       color: text,
-      height: 1.5,
-      letterSpacing: 0,
+      height: 1.6,
+      letterSpacing: 0.1,
       fontWeight: FontWeight.w300,
     );
 
@@ -88,15 +88,15 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: false,
         hintStyle: sans.copyWith(color: subtext),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 20),
         enabledBorder: UnderlineInputBorder(
-          borderSide: BorderSide(color: stroke, width: 1),
+          borderSide: BorderSide(color: stroke, width: 0.5),
         ),
         focusedBorder: UnderlineInputBorder(
-          borderSide: BorderSide(color: primary, width: 1.5),
+          borderSide: BorderSide(color: primary, width: 1),
         ),
         border: UnderlineInputBorder(
-          borderSide: BorderSide(color: stroke, width: 1),
+          borderSide: BorderSide(color: stroke, width: 0.5),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(

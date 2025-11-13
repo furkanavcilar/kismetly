@@ -3,8 +3,11 @@ import 'package:intl/intl.dart';
 
 import '../../core/localization/app_localizations.dart';
 import '../../core/localization/locale_provider.dart';
+import '../../core/widgets/unicode_text_field.dart';
 import '../../services/ai_service.dart';
 import '../../services/monetization/monetization_service.dart';
+import '../../services/daily_limits_service.dart';
+import '../../features/paywall/upgrade_screen.dart';
 import 'dream_history_entry.dart';
 import 'dream_history_store.dart';
 
@@ -20,26 +23,58 @@ class DreamInterpreterScreen extends StatefulWidget {
 class _DreamInterpreterScreenState extends State<DreamInterpreterScreen> {
   final _controller = TextEditingController();
   final _aiService = AiService();
+  final _dailyLimits = DailyLimitsService();
   String? _result;
   bool _loading = false;
   String? _error;
   DreamHistoryStore? _historyStore;
   List<DreamHistoryEntry> _history = const [];
   bool _historyLoading = true;
+  bool _canUseFree = true;
+  bool _checkingLimit = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHistory();
+    _checkDailyLimit();
+  }
+
+  Future<void> _checkDailyLimit() async {
+    setState(() => _checkingLimit = true);
+    final canUse = await _dailyLimits.canUseFeature('dream');
+    if (mounted) {
+      setState(() {
+        _canUseFree = canUse;
+        _checkingLimit = false;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   Future<void> _submit() async {
     final text = _controller.text.trim();
     final loc = AppLocalizations.of(context);
     final monetization = MonetizationService.instance;
-    const creditCost = 3;
 
     if (text.isEmpty) {
       setState(() => _error = loc.translate('dreamEmpty'));
       return;
     }
 
-    if (!monetization.canAfford(creditCost)) {
-      setState(() => _error = loc.translate('creditsNeeded', params: {'amount': creditCost.toString()}));
+    // Check daily free limit first
+    if (!_canUseFree && !monetization.isPremium) {
+      // Show paywall
+      if (mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const UpgradeScreen()),
+        );
+      }
       return;
     }
 
@@ -48,13 +83,21 @@ class _DreamInterpreterScreenState extends State<DreamInterpreterScreen> {
       _error = null;
     });
 
-    final deducted = await monetization.deductCredits(creditCost);
-    if (!deducted) {
-      setState(() {
-        _loading = false;
-        _error = loc.translate('creditsNeeded', params: {'amount': creditCost.toString()});
-      });
-      return;
+    // Record usage if free
+    if (_canUseFree && !monetization.isPremium) {
+      await _dailyLimits.recordFeatureUse('dream');
+      setState(() => _canUseFree = false);
+    } else if (!monetization.isPremium) {
+      // Premium users don't have limits, but we still check credits for non-premium
+      const creditCost = 3;
+      if (!monetization.canAfford(creditCost)) {
+        setState(() {
+          _loading = false;
+          _error = loc.translate('creditsNeeded', params: {'amount': creditCost.toString()});
+        });
+        return;
+      }
+      await monetization.deductCredits(creditCost);
     }
 
     final locale = LocaleScope.of(context).locale;
@@ -62,25 +105,15 @@ class _DreamInterpreterScreenState extends State<DreamInterpreterScreen> {
       prompt: text,
       locale: locale,
     );
-    setState(() {
-      _loading = false;
-      _result = response;
-      if (response.isEmpty) {
-        _error = loc.translate('dreamError');
-      }
-    });
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _loadHistory();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+    if (mounted) {
+      setState(() {
+        _loading = false;
+        _result = response;
+        if (response.isEmpty) {
+          _error = loc.translate('dreamError');
+        }
+      });
+    }
   }
 
   Future<void> _loadHistory() async {
@@ -214,20 +247,35 @@ class _DreamInterpreterScreenState extends State<DreamInterpreterScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            TextField(
+            UnicodeTextFormField(
               controller: _controller,
               minLines: 5,
               maxLines: 8,
               style: theme.textTheme.bodyMedium,
-              decoration: InputDecoration(
-                hintText: loc.translate('dreamHint'),
-                filled: true,
-                fillColor: theme.colorScheme.surface,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
+              hintText: loc.translate('dreamHint'),
+            ),
+            if (!_canUseFree && !MonetizationService.instance.isPremium) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: theme.colorScheme.primary, size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Daily free limit reached. Upgrade to Pro for unlimited access.',
+                        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.primary),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
+            ],
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,

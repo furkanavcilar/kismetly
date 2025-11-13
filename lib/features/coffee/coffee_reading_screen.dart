@@ -11,6 +11,8 @@ import '../../core/localization/app_localizations.dart';
 import '../../core/localization/locale_provider.dart';
 import '../../services/ai_service.dart';
 import '../../services/monetization/monetization_service.dart';
+import '../../services/daily_limits_service.dart';
+import '../../features/paywall/upgrade_screen.dart';
 
 class CoffeeReadingScreen extends StatefulWidget {
   const CoffeeReadingScreen({super.key, required this.onMenuTap});
@@ -24,16 +26,26 @@ class CoffeeReadingScreen extends StatefulWidget {
 class _CoffeeReadingScreenState extends State<CoffeeReadingScreen> {
   final ImagePicker _picker = ImagePicker();
   final AiService _aiService = AiService();
+  final DailyLimitsService _dailyLimits = DailyLimitsService();
   final List<XFile> _files = [];
   Map<String, String>? _result;
   bool _loading = false;
   String? _message;
   List<Map<String, String>> _history = [];
+  bool _canUseFree = true;
 
   @override
   void initState() {
     super.initState();
     _loadHistory();
+    _checkDailyLimit();
+  }
+
+  Future<void> _checkDailyLimit() async {
+    final canUse = await _dailyLimits.canUseFeature('coffee');
+    if (mounted) {
+      setState(() => _canUseFree = canUse);
+    }
   }
 
   Future<void> _loadHistory() async {
@@ -76,7 +88,6 @@ class _CoffeeReadingScreenState extends State<CoffeeReadingScreen> {
   Future<void> _submit() async {
     final loc = AppLocalizations.of(context);
     final monetization = MonetizationService.instance;
-    const creditCost = 5;
 
     if (_files.isEmpty) {
       setState(() {
@@ -85,10 +96,13 @@ class _CoffeeReadingScreenState extends State<CoffeeReadingScreen> {
       return;
     }
 
-    if (!monetization.canAfford(creditCost)) {
-      setState(() {
-        _message = loc.translate('creditsNeeded', params: {'amount': creditCost.toString()});
-      });
+    // Check daily free limit first
+    if (!_canUseFree && !monetization.isPremium) {
+      if (mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const UpgradeScreen()),
+        );
+      }
       return;
     }
 
@@ -97,13 +111,20 @@ class _CoffeeReadingScreenState extends State<CoffeeReadingScreen> {
       _message = null;
     });
 
-    final deducted = await monetization.deductCredits(creditCost);
-    if (!deducted) {
-      setState(() {
-        _loading = false;
-        _message = loc.translate('creditsNeeded', params: {'amount': creditCost.toString()});
-      });
-      return;
+    // Record usage if free
+    if (_canUseFree && !monetization.isPremium) {
+      await _dailyLimits.recordFeatureUse('coffee');
+      setState(() => _canUseFree = false);
+    } else if (!monetization.isPremium) {
+      const creditCost = 5;
+      if (!monetization.canAfford(creditCost)) {
+        setState(() {
+          _loading = false;
+          _message = loc.translate('creditsNeeded', params: {'amount': creditCost.toString()});
+        });
+        return;
+      }
+      await monetization.deductCredits(creditCost);
     }
 
     final locale = LocaleScope.of(context).locale;
