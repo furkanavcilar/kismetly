@@ -62,6 +62,7 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     final pages = _pages(context);
     return Scaffold(
       key: _scaffoldKey,
