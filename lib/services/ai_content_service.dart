@@ -406,10 +406,11 @@ Use a personal, empathetic, poetic, and deeply human tone. Never mention AI, mod
   }
 
   String _getFallbackHoroscope(String sign, String language) {
+    // DO NOT return static astrology text - show error message instead
     if (language == 'tr') {
-      return 'Bugün kozmik enerjiler senin lehine çalışıyor. İç sesine güven ve adımlarını cesaretle at. Aşk hayatında yeni fırsatlar belirebilir, kariyerinde ilerleme kaydedebilirsin. Ruhsal gelişim için meditasyon ve iç gözlem zamanı ayır.';
+      return 'Şu anda $sign burcu için yorum üretilemiyor. Lütfen tekrar deneyin.';
     }
-    return 'Today cosmic energies are working in your favor. Trust your inner voice and take steps with courage. New opportunities may appear in love, and you may make progress in your career. Take time for meditation and inner reflection for spiritual growth.';
+    return 'Cannot generate horoscope for $sign sign right now. Please try again.';
   }
 
   /// Fetch detailed information about a zodiac sign

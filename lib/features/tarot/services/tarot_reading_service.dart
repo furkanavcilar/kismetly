@@ -173,21 +173,31 @@ $cardsList
 Write 1-2 paragraphs per card, then provide a combined reading for all cards (2-3 paragraphs). Explain each card's meaning and how they interact with each other.''';
 
     try {
+      // Generate unique seed based on card selection + timestamp
+      final cardsHash = selectedCards.map((c) => c.card.id.hashCode ^ (c.isReversed ? 1 : 0)).reduce((a, b) => a ^ b);
+      final seed = (cardsHash ^ DateTime.now().millisecondsSinceEpoch) & 0x7FFFFFFF;
+      
       final result = await _orchestrator.generate(
         featureKey: _featureKey,
         systemPrompt: systemPrompt,
         userPrompt: userPrompt,
         languageCode: language,
+        date: DateTime.now(),
+        explicitSeed: seed,
         context: {
           'cardCount': selectedCards.length,
-          'cards': selectedCards.map((c) => {'id': c.card.id, 'reversed': c.isReversed}).toList(),
+          'cards': selectedCards.map((c) => {
+            'id': c.card.id,
+            'reversed': c.isReversed,
+            'name': c.card.labelFor(language),
+          }).toList(),
         },
       );
 
       return _parseReading(result, selectedCards, language);
     } catch (e) {
       debugPrint('TarotReadingService: Error generating reading: $e');
-      // Fallback reading
+      // Fallback reading (error message, not static text)
       return _getFallbackReading(selectedCards, language);
     }
   }
@@ -250,16 +260,18 @@ Write 1-2 paragraphs per card, then provide a combined reading for all cards (2-
   }
 
   String _getCardFallback(SelectedTarotCard card, String language) {
+    // DO NOT return static tarot text
     final cardLabel = card.card.labelFor(language);
     return language == 'tr'
-        ? '$cardLabel kartı bugün özel bir mesaj taşıyor. Bu kartın enerjisi senin için önemli.'
-        : 'The $cardLabel card carries a special message today. This card\'s energy is important for you.';
+        ? '$cardLabel kartı için yorum üretilemiyor. Lütfen tekrar deneyin.'
+        : 'Cannot generate interpretation for $cardLabel card. Please try again.';
   }
 
   String _getCombinedFallback(String language) {
+    // DO NOT return static tarot text
     return language == 'tr'
-        ? 'Bu kartlar birlikte güçlü bir mesaj veriyor. Kozmik enerjiler seni destekliyor.'
-        : 'These cards together give a powerful message. Cosmic energies support you.';
+        ? 'Birleşik okuma üretilemiyor. Lütfen tekrar deneyin.'
+        : 'Cannot generate combined reading. Please try again.';
   }
 
   TarotReading _getFallbackReading(List<SelectedTarotCard> selectedCards, String language) {

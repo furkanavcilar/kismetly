@@ -123,10 +123,10 @@ $dreamDescription''';
       return result.trim();
     } catch (e) {
       debugPrint('DreamInterpretationService: Error generating interpretation: $e');
-      // Fallback message
+      // Fallback message (no static astrology text)
       return language == 'tr'
-          ? 'Rüya analizi yükleniyor. Lütfen tekrar deneyin.'
-          : 'Dream analysis is loading. Please try again.';
+          ? 'Rüya analizi üretilemiyor. Lütfen tekrar deneyin.'
+          : 'Cannot generate dream analysis. Please try again.';
     }
   }
 }

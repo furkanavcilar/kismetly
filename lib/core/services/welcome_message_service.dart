@@ -113,10 +113,10 @@ class WelcomeMessageService {
       return result.trim();
     } catch (e) {
       debugPrint('WelcomeMessageService: Error generating greeting: $e');
-      // Fallback message
+      // Fallback message (no static astrology text)
       return language == 'tr'
-          ? 'Merhaba $username! Bugünün kozmik enerjileri seninle birlikte. 🌟'
-          : 'Hello $username! Today\'s cosmic energies are with you. 🌟';
+          ? 'Merhaba $username! Hoş geldin. 🌟'
+          : 'Hello $username! Welcome. 🌟';
     }
   }
 

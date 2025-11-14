@@ -64,7 +64,7 @@ class UsageLimiter {
   /// Returns true if:
   /// - User has premium subscription
   /// - User hasn't exceeded 3 free uses today
-  /// - In dev mode with test user
+  /// - In debug mode (for testing)
   Future<bool> canUseFeature(String featureKey) async {
     // Check if premium user
     final monetization = _monetizationService ?? MonetizationService.instance;
@@ -72,7 +72,13 @@ class UsageLimiter {
       return true;
     }
 
-    // Dev bypass
+    // Debug mode bypass - allow unlimited uses in debug/profile builds
+    if (kDebugMode) {
+      debugPrint('UsageLimiter: Debug mode - allowing unlimited usage for testing');
+      return true;
+    }
+
+    // Dev bypass (legacy support)
     if (AppConfig.kIsDevPreview) {
       // Allow unlimited in dev mode
       return true;

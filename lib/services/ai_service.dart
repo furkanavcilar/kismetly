@@ -293,14 +293,16 @@ class AiService {
     if (locale.languageCode == 'en') {
       return 'The cards reveal a journey of transformation and growth. Trust your intuition as you navigate the path ahead. The cosmic energies are aligning in your favor.';
     }
-    return 'Kartlar dönüşüm ve büyüme yolculuğunu gösteriyor. Önündeki yolda sezgilerine güven. Kozmik enerjiler senin lehine hizalanıyor.';
+    // DO NOT return static tarot text
+    return 'Şu anda tarot okuması üretilemiyor. Lütfen tekrar deneyin.';
   }
 
   String _offlinePalm(Locale locale) {
     if (locale.languageCode == 'en') {
       return 'Your palm reveals a path of emotional depth and intuitive understanding. The lines suggest a journey of personal growth and meaningful connections. Trust your inner wisdom as you navigate life\'s opportunities.';
     }
-    return 'Avuç içi çizgilerin, duygusal derinlik ve sezgisel anlayış yolunu gösteriyor. Çizgiler kişisel gelişim ve anlamlı bağlantılar yolculuğuna işaret ediyor. Yaşamın fırsatlarında iç bilgeliğine güven.';
+    // DO NOT return static palm reading text
+    return 'Şu anda el falı okuması üretilemiyor. Lütfen tekrar deneyin.';
   }
 
   String _coffeeSystemPrompt(String language) {

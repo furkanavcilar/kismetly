@@ -139,22 +139,29 @@ Social: 2-3 sentences
 Write each category on separate lines with headers.''';
 
     try {
+      // Generate unique seed for this sun sign + rising sign + date combination
+      final seed = (sunSign.hashCode ^ (risingSign?.hashCode ?? 0) ^ date.millisecondsSinceEpoch) & 0x7FFFFFFF;
+      
       final result = await _orchestrator.generate(
         featureKey: _featureKey,
         systemPrompt: systemPrompt,
         userPrompt: userPrompt,
         languageCode: language,
+        date: date,
+        explicitSeed: seed,
         context: {
           'sunSign': sunSign,
           if (risingSign != null) 'risingSign': risingSign,
           'date': dateStr,
+          'dayOfWeek': date.weekday,
+          'dayOfYear': date.difference(DateTime(date.year, 1, 1)).inDays,
         },
       );
 
       return _parseInsights(result, language);
     } catch (e) {
       debugPrint('HomeInsightsService: Error generating insights: $e');
-      // Fallback insights
+      // Fallback insights (error message, not static text)
       return _getFallbackInsights(language);
     }
   }

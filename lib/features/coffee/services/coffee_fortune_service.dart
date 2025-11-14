@@ -161,20 +161,28 @@ Warnings: 1 paragraph
 Write each section with separate headers.''';
 
     try {
+      // Generate unique seed based on description + timestamp
+      final descHash = description.hashCode;
+      final seed = (descHash ^ DateTime.now().millisecondsSinceEpoch) & 0x7FFFFFFF;
+      
       final result = await _orchestrator.generate(
         featureKey: _featureKey,
         systemPrompt: systemPrompt,
         userPrompt: userPrompt,
         languageCode: language,
+        date: DateTime.now(),
+        explicitSeed: seed,
         context: {
-          'hasImage': false,
+          'hasImage': imageBase64 != null && imageBase64.isNotEmpty,
+          'descriptionLength': description.length,
+          'hasMultipleSymbols': description.split(RegExp(r'[,\s]+')).length > 3,
         },
       );
 
       return _parseReading(result, language);
     } catch (e) {
       debugPrint('CoffeeFortuneService: Error generating reading: $e');
-      // Fallback reading
+      // Fallback reading (error message, not static text)
       return _getFallbackReading(language);
     }
   }
@@ -250,20 +258,21 @@ Write each section with separate headers.''';
   }
 
   CoffeeFortuneReading _getFallbackReading(String language) {
+    // DO NOT return static coffee reading text
     if (language == 'tr') {
       return CoffeeFortuneReading(
-        general: 'Genel olarak pozitif enerjiler var. Kahve telvesi senin için umut verici mesajlar taşıyor.',
-        love: 'Aşk alanında yeni fırsatlar var. Bağlantılarını güçlendirme zamanı.',
-        career: 'Kariyer alanında ilerleme görünüyor. Yeni projeler için uygun bir zaman.',
-        warnings: 'Dikkatli ol ve sezgilerine güven. Aceleci kararlardan kaçın.',
+        general: 'Kahve falı okuması üretilemiyor. Lütfen tekrar deneyin.',
+        love: 'Şu anda aşk yorumu üretilemiyor.',
+        career: 'Şu anda kariyer yorumu üretilemiyor.',
+        warnings: 'Şu anda uyarılar üretilemiyor.',
         createdAt: DateTime.now(),
       );
     } else {
       return CoffeeFortuneReading(
-        general: 'Generally positive energies present. The coffee grounds carry hopeful messages for you.',
-        love: 'New opportunities in love. Time to strengthen connections.',
-        career: 'Progress visible in career. A good time for new projects.',
-        warnings: 'Be careful and trust your intuition. Avoid hasty decisions.',
+        general: 'Cannot generate coffee fortune reading. Please try again.',
+        love: 'Cannot generate love reading right now.',
+        career: 'Cannot generate career reading right now.',
+        warnings: 'Cannot generate warnings right now.',
         createdAt: DateTime.now(),
       );
     }

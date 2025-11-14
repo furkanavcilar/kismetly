@@ -183,23 +183,31 @@ class HoroscopeDetailsService {
         : '''Write the "$sectionLabel" section for $sign sign. $sectionPrompt. Write 2-3 paragraphs.''';
 
     try {
+      // Generate unique seed for this sign + section combination
+      final signHash = sign.hashCode;
+      final sectionHash = section.hashCode;
+      final seed = (signHash ^ sectionHash ^ DateTime.now().millisecondsSinceEpoch) & 0x7FFFFFFF;
+      
       final result = await _orchestrator.generate(
         featureKey: _featureKey,
         systemPrompt: systemPrompt,
         userPrompt: userPrompt,
         languageCode: language,
+        date: DateTime.now(),
+        explicitSeed: seed,
         context: {
           'sign': sign,
           'section': section,
+          'sectionLabel': sectionLabel,
         },
       );
       return result.trim();
     } catch (e) {
       debugPrint('HoroscopeDetailsService: Error generating section: $e');
-      // Fallback content
+      // Fallback content (error message, not static text)
       return language == 'tr'
-          ? '$sign burcu için $sectionLabel bölümü yükleniyor...'
-          : 'Loading $sectionLabel section for $sign sign...';
+          ? '$sign burcu için $sectionLabel bölümü üretilemiyor. Lütfen tekrar deneyin.'
+          : 'Cannot generate $sectionLabel section for $sign sign. Please try again.';
     }
   }
 }

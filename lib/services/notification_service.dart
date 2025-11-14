@@ -256,7 +256,7 @@ class NotificationService {
     }
     final localeStr = (await SharedPreferences.getInstance()).getString('app_locale') ?? 'tr';
     return localeStr == 'tr'
-        ? 'Bugünün kozmik enerjilerini düşün.'
+        ? 'Bugünün enerjilerini düşün.'
         : 'Take a moment to reflect on today\'s cosmic energies.';
   }
 }

@@ -118,11 +118,11 @@ class _HoroscopesListScreenState extends State<HoroscopesListScreen> {
   }
 
   String _getFallbackHoroscope(String signId, String language) {
-    // This should rarely be used - AI service should handle fallbacks
+    // DO NOT return static astrology text - show loading/error message instead
     if (language == 'tr') {
-      return 'Bugün kozmik enerjiler senin lehine çalışıyor. İç sesine güven ve adımlarını cesaretle at.';
+      return 'Şu anda $signId burcu için yorum yükleniyor...';
     }
-    return 'Today cosmic energies are working in your favor. Trust your inner voice and take steps with courage.';
+    return 'Loading horoscope for $signId sign...';
   }
 
   @override

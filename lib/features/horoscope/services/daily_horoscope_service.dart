@@ -176,22 +176,29 @@ Spiritual: 2-3 paragraphs
 Write each section with separate headers.''';
 
     try {
+      // Generate unique seed for this sign + date combination
+      final seed = (sign.hashCode ^ date.millisecondsSinceEpoch ^ (risingSign?.hashCode ?? 0)) & 0x7FFFFFFF;
+      
       final result = await _orchestrator.generate(
         featureKey: _featureKey,
         systemPrompt: systemPrompt,
         userPrompt: userPrompt,
         languageCode: language,
+        date: date,
+        explicitSeed: seed,
         context: {
           'sign': sign,
           if (risingSign != null) 'risingSign': risingSign,
           'date': dateStr,
+          'dayOfWeek': date.weekday,
+          'dayOfYear': date.difference(DateTime(date.year, 1, 1)).inDays,
         },
       );
 
       return _parseHoroscope(result, language);
     } catch (e) {
       debugPrint('DailyHoroscopeService: Error generating horoscope: $e');
-      // Fallback horoscope
+      // Fallback horoscope (error message, not static text)
       return _getFallbackHoroscope(language);
     }
   }
@@ -251,19 +258,20 @@ Write each section with separate headers.''';
   }
 
   DailyHoroscopeData _getFallbackHoroscope(String language) {
+    // DO NOT return static horoscope - show error message instead
     if (language == 'tr') {
       return DailyHoroscopeData(
-        general: 'Bugün genel enerjiler dengeli ve uyumlu. Kozmik döngüler seni destekliyor.',
-        love: 'Aşk alanında yeni fırsatlar var. Bağlantılarını güçlendirme zamanı.',
-        career: 'Kariyer alanında ilerleme görünüyor. Yeni projeler için uygun bir gün.',
-        spiritual: 'Ruhsal gelişim için uygun zaman. İç sesini dinlemeye odaklan.',
+        general: 'Şu anda genel yorum üretilemiyor. Lütfen tekrar deneyin.',
+        love: 'Şu anda aşk yorumu üretilemiyor. Lütfen tekrar deneyin.',
+        career: 'Şu anda kariyer yorumu üretilemiyor. Lütfen tekrar deneyin.',
+        spiritual: 'Şu anda ruhsal yorum üretilemiyor. Lütfen tekrar deneyin.',
       );
     } else {
       return DailyHoroscopeData(
-        general: 'Today\'s general energies are balanced and harmonious. Cosmic cycles support you.',
-        love: 'New opportunities in love. Time to strengthen connections.',
-        career: 'Progress is visible in career. A good day for new projects.',
-        spiritual: 'Good time for spiritual growth. Focus on listening to your inner voice.',
+        general: 'Cannot generate general reading right now. Please try again.',
+        love: 'Cannot generate love reading right now. Please try again.',
+        career: 'Cannot generate career reading right now. Please try again.',
+        spiritual: 'Cannot generate spiritual reading right now. Please try again.',
       );
     }
   }

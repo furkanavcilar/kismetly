@@ -107,26 +107,36 @@ class WelcomeMessageService {
         : '''Write today's ($dateStr at $timeStr) greeting message for $username. ${zodiacSign != null ? 'Zodiac sign: $zodiacSign. ' : ''}${city != null ? 'City: $city. ' : ''}Message should be 1-2 paragraphs, personal and warm. Use a mystical tone.''';
 
     try {
+      // Generate unique seed for this user + date + time combination
+      final userHash = username.hashCode;
+      final zodiacHash = zodiacSign?.hashCode ?? 0;
+      final cityHash = city?.hashCode ?? 0;
+      final seed = (userHash ^ zodiacHash ^ cityHash ^ date.millisecondsSinceEpoch ^ date.hour) & 0x7FFFFFFF;
+      
       final result = await _orchestrator.generate(
         featureKey: _featureKey,
         systemPrompt: systemPrompt,
         userPrompt: userPrompt,
         languageCode: language,
+        date: date,
+        explicitSeed: seed,
         context: {
           'username': username,
           if (zodiacSign != null) 'zodiacSign': zodiacSign,
           if (city != null) 'city': city,
           'date': dateStr,
           'time': timeStr,
+          'hourOfDay': date.hour,
+          'dayOfWeek': date.weekday,
         },
       );
       return result.trim();
     } catch (e) {
       debugPrint('WelcomeMessageService: Error generating greeting: $e');
-      // Fallback message
+      // Fallback message (no static astrology text)
       return language == 'tr'
-          ? 'Merhaba $username! Bugünün kozmik enerjileri seninle birlikte. 🌟'
-          : 'Hello $username! Today\'s cosmic energies are with you. 🌟';
+          ? 'Merhaba $username! Hoş geldin. 🌟'
+          : 'Hello $username! Welcome. 🌟';
     }
   }
 
