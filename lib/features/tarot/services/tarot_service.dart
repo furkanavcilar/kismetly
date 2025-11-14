@@ -6,9 +6,9 @@ import '../../../services/daily_limits_service.dart';
 import '../../../services/monetization/monetization_service.dart';
 import '../../../features/paywall/upgrade_screen.dart';
 
-/// Compatibility Service - Uses new AI Engine
-class CompatibilityService {
-  CompatibilityService({
+/// Tarot Reading Service - Uses new AI Engine
+class TarotService {
+  TarotService({
     AIOrchestrator? orchestrator,
     DailyLimitsService? dailyLimits,
     MonetizationService? monetization,
@@ -20,17 +20,20 @@ class CompatibilityService {
   final DailyLimitsService _dailyLimits;
   final MonetizationService _monetization;
 
-  /// Generate compatibility analysis (1 free per day)
-  /// Returns all required sections: emotional harmony, sexual chemistry, communication flow, life path alignment, conflict resolution, long-term advice
-  Future<Map<String, String>?> generateCompatibility({
-    required String firstSign,
-    required String secondSign,
+  /// Generate tarot reading (1 free per day)
+  Future<String?> generateTarotReading({
+    required List<String> cardNames,
     required String language,
+    required String spreadType,
     Map<String, dynamic>? userContext,
     BuildContext? context,
   }) async {
+    if (cardNames.isEmpty) {
+      return null;
+    }
+
     // Check daily limit
-    final canUse = await _dailyLimits.canUseFeature('compatibility');
+    final canUse = await _dailyLimits.canUseFeature('tarot');
     if (!canUse && !_monetization.isPremium) {
       if (context != null && context.mounted) {
         Navigator.of(context).push(
@@ -41,24 +44,23 @@ class CompatibilityService {
     }
 
     try {
-      final result = await _orchestrator.generateCompatibility(
-        firstSign: firstSign,
-        secondSign: secondSign,
+      final result = await _orchestrator.generateTarotReading(
+        cardNames: cardNames,
         language: language,
+        spreadType: spreadType,
         userContext: userContext,
       );
 
       // Record usage
-      await _dailyLimits.recordFeatureUse('compatibility');
+      await _dailyLimits.recordFeatureUse('tarot');
 
       return result;
     } catch (e) {
-      debugPrint('CompatibilityService: Error - $e');
-      return {
-        'summary': language == 'tr'
-            ? 'Uyumluluk analizi üretilemiyor. Lütfen tekrar deneyin.'
-            : 'Cannot generate compatibility analysis. Please try again.',
-      };
+      debugPrint('TarotService: Error - $e');
+      return language == 'tr'
+          ? 'Tarot okuması üretilemiyor. Lütfen tekrar deneyin.'
+          : 'Cannot generate tarot reading. Please try again.';
     }
   }
 }
+

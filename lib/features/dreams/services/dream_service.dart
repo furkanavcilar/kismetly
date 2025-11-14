@@ -4,11 +4,12 @@ import 'package:flutter/material.dart';
 import '../../../core/ai_engine/ai_orchestrator.dart';
 import '../../../services/daily_limits_service.dart';
 import '../../../services/monetization/monetization_service.dart';
+import '../../../core/widgets/premium_dialog.dart';
 import '../../../features/paywall/upgrade_screen.dart';
 
-/// Compatibility Service - Uses new AI Engine
-class CompatibilityService {
-  CompatibilityService({
+/// Dream Interpretation Service - Uses new AI Engine
+class DreamService {
+  DreamService({
     AIOrchestrator? orchestrator,
     DailyLimitsService? dailyLimits,
     MonetizationService? monetization,
@@ -20,17 +21,19 @@ class CompatibilityService {
   final DailyLimitsService _dailyLimits;
   final MonetizationService _monetization;
 
-  /// Generate compatibility analysis (1 free per day)
-  /// Returns all required sections: emotional harmony, sexual chemistry, communication flow, life path alignment, conflict resolution, long-term advice
-  Future<Map<String, String>?> generateCompatibility({
-    required String firstSign,
-    required String secondSign,
+  /// Interpret dream (1 free per day)
+  Future<String?> interpretDream({
+    required String dreamText,
     required String language,
     Map<String, dynamic>? userContext,
     BuildContext? context,
   }) async {
+    if (dreamText.trim().isEmpty) {
+      return null;
+    }
+
     // Check daily limit
-    final canUse = await _dailyLimits.canUseFeature('compatibility');
+    final canUse = await _dailyLimits.canUseFeature('dream');
     if (!canUse && !_monetization.isPremium) {
       if (context != null && context.mounted) {
         Navigator.of(context).push(
@@ -41,24 +44,22 @@ class CompatibilityService {
     }
 
     try {
-      final result = await _orchestrator.generateCompatibility(
-        firstSign: firstSign,
-        secondSign: secondSign,
+      final result = await _orchestrator.generateDreamInterpretation(
+        dreamText: dreamText,
         language: language,
         userContext: userContext,
       );
 
       // Record usage
-      await _dailyLimits.recordFeatureUse('compatibility');
+      await _dailyLimits.recordFeatureUse('dream');
 
       return result;
     } catch (e) {
-      debugPrint('CompatibilityService: Error - $e');
-      return {
-        'summary': language == 'tr'
-            ? 'Uyumluluk analizi üretilemiyor. Lütfen tekrar deneyin.'
-            : 'Cannot generate compatibility analysis. Please try again.',
-      };
+      debugPrint('DreamService: Error - $e');
+      return language == 'tr'
+          ? 'Rüya analizi üretilemiyor. Lütfen tekrar deneyin.'
+          : 'Cannot generate dream analysis. Please try again.';
     }
   }
 }
+

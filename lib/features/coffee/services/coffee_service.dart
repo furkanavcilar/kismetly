@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -6,9 +7,9 @@ import '../../../services/daily_limits_service.dart';
 import '../../../services/monetization/monetization_service.dart';
 import '../../../features/paywall/upgrade_screen.dart';
 
-/// Compatibility Service - Uses new AI Engine
-class CompatibilityService {
-  CompatibilityService({
+/// Coffee Fortune Service - Uses new AI Engine with Vision AI
+class CoffeeService {
+  CoffeeService({
     AIOrchestrator? orchestrator,
     DailyLimitsService? dailyLimits,
     MonetizationService? monetization,
@@ -20,17 +21,20 @@ class CompatibilityService {
   final DailyLimitsService _dailyLimits;
   final MonetizationService _monetization;
 
-  /// Generate compatibility analysis (1 free per day)
-  /// Returns all required sections: emotional harmony, sexual chemistry, communication flow, life path alignment, conflict resolution, long-term advice
-  Future<Map<String, String>?> generateCompatibility({
-    required String firstSign,
-    required String secondSign,
+  /// Generate coffee reading from image (1 free per day)
+  /// Returns 5-8 paragraphs as specified
+  Future<String?> generateCoffeeReading({
+    required List<String> imageBase64,
     required String language,
     Map<String, dynamic>? userContext,
     BuildContext? context,
   }) async {
+    if (imageBase64.isEmpty) {
+      return null;
+    }
+
     // Check daily limit
-    final canUse = await _dailyLimits.canUseFeature('compatibility');
+    final canUse = await _dailyLimits.canUseFeature('coffee');
     if (!canUse && !_monetization.isPremium) {
       if (context != null && context.mounted) {
         Navigator.of(context).push(
@@ -41,24 +45,22 @@ class CompatibilityService {
     }
 
     try {
-      final result = await _orchestrator.generateCompatibility(
-        firstSign: firstSign,
-        secondSign: secondSign,
+      final result = await _orchestrator.generateCoffeeReading(
+        imageBase64: imageBase64,
         language: language,
         userContext: userContext,
       );
 
       // Record usage
-      await _dailyLimits.recordFeatureUse('compatibility');
+      await _dailyLimits.recordFeatureUse('coffee');
 
       return result;
     } catch (e) {
-      debugPrint('CompatibilityService: Error - $e');
-      return {
-        'summary': language == 'tr'
-            ? 'Uyumluluk analizi üretilemiyor. Lütfen tekrar deneyin.'
-            : 'Cannot generate compatibility analysis. Please try again.',
-      };
+      debugPrint('CoffeeService: Error - $e');
+      return language == 'tr'
+          ? 'Kahve falı okuması üretilemiyor. Lütfen tekrar deneyin.'
+          : 'Cannot generate coffee reading. Please try again.';
     }
   }
 }
+

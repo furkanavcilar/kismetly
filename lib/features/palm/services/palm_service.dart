@@ -6,9 +6,9 @@ import '../../../services/daily_limits_service.dart';
 import '../../../services/monetization/monetization_service.dart';
 import '../../../features/paywall/upgrade_screen.dart';
 
-/// Compatibility Service - Uses new AI Engine
-class CompatibilityService {
-  CompatibilityService({
+/// Palm Reading Service - Uses new AI Engine with Vision AI
+class PalmService {
+  PalmService({
     AIOrchestrator? orchestrator,
     DailyLimitsService? dailyLimits,
     MonetizationService? monetization,
@@ -20,17 +20,21 @@ class CompatibilityService {
   final DailyLimitsService _dailyLimits;
   final MonetizationService _monetization;
 
-  /// Generate compatibility analysis (1 free per day)
-  /// Returns all required sections: emotional harmony, sexual chemistry, communication flow, life path alignment, conflict resolution, long-term advice
-  Future<Map<String, String>?> generateCompatibility({
-    required String firstSign,
-    required String secondSign,
+  /// Generate palm reading from image (1 free per day)
+  /// Returns 6+ paragraphs as specified
+  Future<String?> generatePalmReading({
+    required List<String> imageBase64,
     required String language,
+    required String handType, // 'left' or 'right'
     Map<String, dynamic>? userContext,
     BuildContext? context,
   }) async {
+    if (imageBase64.isEmpty) {
+      return null;
+    }
+
     // Check daily limit
-    final canUse = await _dailyLimits.canUseFeature('compatibility');
+    final canUse = await _dailyLimits.canUseFeature('palm');
     if (!canUse && !_monetization.isPremium) {
       if (context != null && context.mounted) {
         Navigator.of(context).push(
@@ -41,24 +45,23 @@ class CompatibilityService {
     }
 
     try {
-      final result = await _orchestrator.generateCompatibility(
-        firstSign: firstSign,
-        secondSign: secondSign,
+      final result = await _orchestrator.generatePalmReading(
+        imageBase64: imageBase64,
         language: language,
+        handType: handType,
         userContext: userContext,
       );
 
       // Record usage
-      await _dailyLimits.recordFeatureUse('compatibility');
+      await _dailyLimits.recordFeatureUse('palm');
 
       return result;
     } catch (e) {
-      debugPrint('CompatibilityService: Error - $e');
-      return {
-        'summary': language == 'tr'
-            ? 'Uyumluluk analizi üretilemiyor. Lütfen tekrar deneyin.'
-            : 'Cannot generate compatibility analysis. Please try again.',
-      };
+      debugPrint('PalmService: Error - $e');
+      return language == 'tr'
+          ? 'El falı okuması üretilemiyor. Lütfen tekrar deneyin.'
+          : 'Cannot generate palm reading. Please try again.';
     }
   }
 }
+
