@@ -65,20 +65,6 @@ class _KismetlyAppState extends State<KismetlyApp> {
   void initState() {
     super.initState();
     _loadThemeMode();
-    // Listen for theme changes
-    _startThemeListener();
-  }
-
-  void _startThemeListener() async {
-    final prefs = await SharedPreferences.getInstance();
-    // Poll for theme changes every 500ms when app is active
-    // In production, could use a ValueNotifier or similar
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (mounted) {
-        _loadThemeMode();
-        _startThemeListener();
-      }
-    });
   }
 
   Future<void> _loadThemeMode() async {
@@ -111,15 +97,7 @@ class _KismetlyAppState extends State<KismetlyApp> {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-		  
-          home: const Scaffold(
-			body: Center(
-			child: Text(
-			'Kismetly test screen',
-			style: TextStyle(fontSize: 24),
-    ),
-  ),
-)
+          home: const AppBootstrapper(),
         );
       },
     );

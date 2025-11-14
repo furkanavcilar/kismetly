@@ -52,6 +52,16 @@ class NotificationService {
     debugPrint('Notification tapped: ${response.payload}');
   }
 
+  Future<bool> requestPermission() async {
+    await initialize();
+    final androidImplementation = _notifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    if (androidImplementation != null) {
+      final granted = await androidImplementation.requestNotificationsPermission();
+      return granted ?? false;
+    }
+    return true; // iOS or other platforms
+  }
+
   Future<void> scheduleDailyHoroscope() async {
     await initialize();
     

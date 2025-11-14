@@ -39,10 +39,20 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
     });
 
     // Initialize notifications (non-blocking)
-    NotificationService().initialize().then((_) {
-      // Schedule notifications if enabled
-      NotificationService().scheduleDailyHoroscope();
-      NotificationService().scheduleNightlyMotivation();
+    NotificationService().initialize().then((_) async {
+      // Check if permission granted before scheduling
+      final granted = await NotificationService().requestPermission();
+      if (granted) {
+        // Schedule notifications if enabled
+        NotificationService().scheduleDailyHoroscope().catchError((e) {
+          debugPrint('Error scheduling daily horoscope: $e');
+        });
+        NotificationService().scheduleNightlyMotivation().catchError((e) {
+          debugPrint('Error scheduling nightly motivation: $e');
+        });
+      } else {
+        debugPrint('NotificationService - Permission not granted, skipping scheduling');
+      }
     }).catchError((e) {
       debugPrint('NotificationService init error: $e');
     });
@@ -55,9 +65,14 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
   }
 
   Future<void> _completeProfile(UserProfile profile) async {
+    debugPrint('Onboarding completed: $profile');
     final controller = _controller;
-    if (controller == null) return;
+    if (controller == null) {
+      debugPrint('AppBootstrapper._completeProfile() - Controller is null!');
+      return;
+    }
     await controller.setProfile(profile);
+    debugPrint('AppBootstrapper._completeProfile() - Profile saved successfully');
   }
 
   @override
@@ -69,13 +84,20 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
     }
 
     final controller = _controller!;
+    debugPrint('AppBootstrapper.build() - Profile: ${controller.profile}');
+    
     return UserProfileScope(
       notifier: controller,
       child: AnimatedBuilder(
         animation: controller,
         builder: (context, _) {
           final profile = controller.profile;
-          return OnboardingFlow(onCompleted: _completeProfile);
+          debugPrint('AppBootstrapper.build() - Profile at build(): $profile');
+          
+          if (profile == null) {
+            return OnboardingFlow(onCompleted: _completeProfile);
+          }
+          
           return const MainShell();
         },
       ),
