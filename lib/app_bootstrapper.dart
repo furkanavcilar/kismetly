@@ -75,9 +75,7 @@ class _AppBootstrapperState extends State<AppBootstrapper> {
         animation: controller,
         builder: (context, _) {
           final profile = controller.profile;
-          if (profile == null) {
-            return OnboardingFlow(onCompleted: _completeProfile);
-          }
+          return OnboardingFlow(onCompleted: _completeProfile);
           return const MainShell();
         },
       ),

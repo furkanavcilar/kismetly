@@ -111,7 +111,15 @@ class _KismetlyAppState extends State<KismetlyApp> {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          home: const AppBootstrapper(),
+		  
+          home: const Scaffold(
+			body: Center(
+			child: Text(
+			'Kismetly test screen',
+			style: TextStyle(fontSize: 24),
+    ),
+  ),
+)
         );
       },
     );
