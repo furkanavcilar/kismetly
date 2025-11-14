@@ -43,5 +43,6 @@ flutter:
   assets:
     - lib/l10n/
     - lib/data/
+    - assets/config/.env
 
   generate: true

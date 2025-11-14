@@ -1,10 +1,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.kismetly.app">
 
-    <!-- Konum + internet -->
+    <!-- Network permissions -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    
+    <!-- Location permissions -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
+    
+    <!-- Exact alarm permission (Android 13+) -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
 
     <application
         android:label="kismetly"
@@ -21,6 +27,13 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        
+        <!-- Geolocator foreground service -->
+        <service
+            android:name="com.baseflow.geolocator.ForegroundGeolocatorService"
+            android:foregroundServiceType="location"
+            android:exported="false"/>
+        
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />

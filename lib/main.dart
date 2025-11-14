@@ -14,23 +14,33 @@ import 'firebase_options.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Load .env file
+  // Load .env file - MUST be loaded before runApp()
   try {
-    await dotenv.load(fileName: '.env');
+    await dotenv.load(fileName: 'assets/config/.env');
+    debugPrint('✅ .env file loaded successfully');
   } catch (e) {
-    debugPrint('Could not load .env file: $e');
+    debugPrint('⚠️ Could not load .env file: $e');
+    // Continue without .env - app should still work
   }
   
+  // Initialize date formatting
   await initializeDateFormatting('tr_TR');
   await initializeDateFormatting('en_US');
+  
+  // Initialize Firebase (non-blocking if fails)
   try {
     await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform);
-  } catch (_) {
-    debugPrint('Firebase not configured, continuing without it.');
+    debugPrint('✅ Firebase initialized');
+  } catch (e) {
+    debugPrint('⚠️ Firebase not configured, continuing without it: $e');
   }
+  
+  // Load saved locale
   final localeProvider = LocaleProvider();
   await localeProvider.loadSavedLocale();
+  
+  // Run app
   runApp(
     LocaleScope(
       notifier: localeProvider,

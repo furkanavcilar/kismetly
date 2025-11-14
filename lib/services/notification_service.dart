@@ -68,25 +68,55 @@ class NotificationService {
       
       // Schedule for 9:00 AM local time
       final notificationText = await _getDailyHoroscopeText();
-      await _notifications.zonedSchedule(
-        1,
-        locale.languageCode == 'tr' ? 'Günlük Horoskop' : 'Daily Horoscope',
-        notificationText,
-        _nextInstanceOfTime(9, 0),
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'daily_horoscope',
-            'Daily Horoscope',
-            channelDescription: 'Daily horoscope notifications',
-            importance: Importance.high,
-            priority: Priority.high,
+      
+      // Try exact scheduling first, fallback to inexact if permission denied
+      try {
+        await _notifications.zonedSchedule(
+          1,
+          locale.languageCode == 'tr' ? 'Günlük Horoskop' : 'Daily Horoscope',
+          notificationText,
+          _nextInstanceOfTime(9, 0),
+          const NotificationDetails(
+            android: AndroidNotificationDetails(
+              'daily_horoscope',
+              'Daily Horoscope',
+              channelDescription: 'Daily horoscope notifications',
+              importance: Importance.high,
+              priority: Priority.high,
+            ),
+            iOS: DarwinNotificationDetails(),
           ),
-          iOS: DarwinNotificationDetails(),
-        ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-        matchDateTimeComponents: DateTimeComponents.time,
-      );
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+          matchDateTimeComponents: DateTimeComponents.time,
+        );
+      } catch (exactError) {
+        // If exact alarm fails, try inexact scheduling
+        if (exactError.toString().contains('exact_alarms_not_permitted')) {
+          debugPrint('Exact alarms not permitted, using inexact scheduling');
+          await _notifications.zonedSchedule(
+            1,
+            locale.languageCode == 'tr' ? 'Günlük Horoskop' : 'Daily Horoscope',
+            notificationText,
+            _nextInstanceOfTime(9, 0),
+            const NotificationDetails(
+              android: AndroidNotificationDetails(
+                'daily_horoscope',
+                'Daily Horoscope',
+                channelDescription: 'Daily horoscope notifications',
+                importance: Importance.high,
+                priority: Priority.high,
+              ),
+              iOS: DarwinNotificationDetails(),
+            ),
+            androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+            uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+            matchDateTimeComponents: DateTimeComponents.time,
+          );
+        } else {
+          rethrow;
+        }
+      }
     } catch (e) {
       debugPrint('Error scheduling daily horoscope: $e');
     }
@@ -110,25 +140,54 @@ class NotificationService {
       final notificationText = await _getNightlyMotivationText();
       final title = locale.languageCode == 'tr' ? 'Akşam Rehberliği' : 'Nightly Guidance';
       
-      await _notifications.zonedSchedule(
-        2,
-        title,
-        notificationText,
-        _nextInstanceOfTime(22, 30),
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'nightly_motivation',
-            'Nightly Motivation',
-            channelDescription: 'Nightly motivation notifications',
-            importance: Importance.high,
-            priority: Priority.high,
+      // Try exact scheduling first, fallback to inexact if permission denied
+      try {
+        await _notifications.zonedSchedule(
+          2,
+          title,
+          notificationText,
+          _nextInstanceOfTime(22, 30),
+          const NotificationDetails(
+            android: AndroidNotificationDetails(
+              'nightly_motivation',
+              'Nightly Motivation',
+              channelDescription: 'Nightly motivation notifications',
+              importance: Importance.high,
+              priority: Priority.high,
+            ),
+            iOS: DarwinNotificationDetails(),
           ),
-          iOS: DarwinNotificationDetails(),
-        ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-        matchDateTimeComponents: DateTimeComponents.time,
-      );
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+          matchDateTimeComponents: DateTimeComponents.time,
+        );
+      } catch (exactError) {
+        // If exact alarm fails, try inexact scheduling
+        if (exactError.toString().contains('exact_alarms_not_permitted')) {
+          debugPrint('Exact alarms not permitted, using inexact scheduling');
+          await _notifications.zonedSchedule(
+            2,
+            title,
+            notificationText,
+            _nextInstanceOfTime(22, 30),
+            const NotificationDetails(
+              android: AndroidNotificationDetails(
+                'nightly_motivation',
+                'Nightly Motivation',
+                channelDescription: 'Nightly motivation notifications',
+                importance: Importance.high,
+                priority: Priority.high,
+              ),
+              iOS: DarwinNotificationDetails(),
+            ),
+            androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+            uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+            matchDateTimeComponents: DateTimeComponents.time,
+          );
+        } else {
+          rethrow;
+        }
+      }
       
       // Mark as scheduled for today
       final todayKey = DateTime.now().toIso8601String().split('T')[0];
