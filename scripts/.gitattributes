@@ -1,0 +1,3 @@
+# Ensure merge script is executable
+scripts/auto-merge.ts text eol=lf
+

@@ -1,0 +1,117 @@
+import { Router, Request, Response } from 'express';
+import { aiRouter } from '../services/aiRouter';
+
+const router = Router();
+
+const tarotCards = [
+  // Major Arcana
+  { id: 0, name: 'The Fool', arcana: 'major' },
+  { id: 1, name: 'The Magician', arcana: 'major' },
+  { id: 2, name: 'The High Priestess', arcana: 'major' },
+  { id: 3, name: 'The Empress', arcana: 'major' },
+  { id: 4, name: 'The Emperor', arcana: 'major' },
+  { id: 5, name: 'The Hierophant', arcana: 'major' },
+  { id: 6, name: 'The Lovers', arcana: 'major' },
+  { id: 7, name: 'The Chariot', arcana: 'major' },
+  { id: 8, name: 'Strength', arcana: 'major' },
+  { id: 9, name: 'The Hermit', arcana: 'major' },
+  { id: 10, name: 'Wheel of Fortune', arcana: 'major' },
+  { id: 11, name: 'Justice', arcana: 'major' },
+  { id: 12, name: 'The Hanged Man', arcana: 'major' },
+  { id: 13, name: 'Death', arcana: 'major' },
+  { id: 14, name: 'Temperance', arcana: 'major' },
+  { id: 15, name: 'The Devil', arcana: 'major' },
+  { id: 16, name: 'The Tower', arcana: 'major' },
+  { id: 17, name: 'The Star', arcana: 'major' },
+  { id: 18, name: 'The Moon', arcana: 'major' },
+  { id: 19, name: 'The Sun', arcana: 'major' },
+  { id: 20, name: 'Judgement', arcana: 'major' },
+  { id: 21, name: 'The World', arcana: 'major' },
+];
+
+interface TarotRequest {
+  question: string;
+  spreadType?: 'single' | 'threesome' | 'celtic_cross' | 'horseshoe';
+}
+
+function drawCards(count: number): typeof tarotCards {
+  const drawn = [];
+  const available = [...tarotCards];
+  
+  for (let i = 0; i < count && available.length > 0; i++) {
+    const index = Math.floor(Math.random() * available.length);
+    drawn.push(available[index]);
+    available.splice(index, 1);
+  }
+  
+  return drawn;
+}
+
+router.post('/draw', async (req: Request, res: Response) => {
+  try {
+    const { question, spreadType = 'single' } = req.body as TarotRequest;
+
+    if (!question) {
+      return res.status(400).json({ error: 'Question required for tarot reading' });
+    }
+
+    let cardCount = 1;
+    let spreadName = 'Single Card';
+
+    if (spreadType === 'threesome') {
+      cardCount = 3;
+      spreadName = 'Past-Present-Future';
+    } else if (spreadType === 'celtic_cross') {
+      cardCount = 10;
+      spreadName = 'Celtic Cross';
+    } else if (spreadType === 'horseshoe') {
+      cardCount = 7;
+      spreadName = 'Horseshoe';
+    }
+
+    const drawnCards = drawCards(cardCount);
+    const cardNames = drawnCards.map(c => c.name).join(', ');
+    const reversed = drawnCards.map(() => Math.random() > 0.5).map((r, i) => r ? `${drawnCards[i].name} (Reversed)` : drawnCards[i].name);
+
+    const context = `User is asking: "${question}"
+    
+Tarot Spread: ${spreadName}
+Cards drawn: ${cardNames}
+Card positions (reversed if applicable): ${reversed.join(' | ')}
+
+Provide a nuanced, personalized tarot interpretation that:
+1. Acknowledges the specific question and emotional weight behind it
+2. Interprets each card in relation to the question and spread position
+3. Weaves a narrative that connects the cards into cohesive guidance
+4. Explores both surface and deeper symbolic meanings
+5. Provides actionable spiritual insight
+6. Includes 1-2 follow-up questions to deepen the reading
+
+Make this feel like a reading from an experienced, empathetic tarot reader. Never use generic card meanings. Customize based on the question.`;
+
+    const reading = await aiRouter.generate(
+      'Provide a deeply personalized, emotionally resonant tarot reading that feels like guidance from a spiritual advisor.',
+      context
+    );
+
+    res.json({
+      question,
+      spreadType,
+      spreadName,
+      cards: drawnCards,
+      reversedCards: reversed,
+      reading,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error: any) {
+    console.error('Tarot reading error:', error);
+    res.status(500).json({ error: 'Failed to generate tarot reading' });
+  }
+});
+
+router.get('/cards', (req: Request, res: Response) => {
+  res.json({ cards: tarotCards });
+});
+
+export default router;
+
