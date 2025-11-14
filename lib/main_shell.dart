@@ -294,8 +294,9 @@ class AppDrawer extends StatelessWidget {
       final titleB = loc.translate(pages[b].titleKey);
       return collator.compare(titleA, titleB, locale);
     });
+    final theme = Theme.of(context);
     return Drawer(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.colorScheme.surface,
       child: SafeArea(
         child: Column(
           children: [

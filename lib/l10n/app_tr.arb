@@ -256,5 +256,15 @@
   "compatibilityChallenges": "Zorluklar",
   "compatibilityCommunication": "İletişim Önerileri",
   "compatibilityLongTerm": "Uzun Vadeli Potansiyel",
-  "profileLoadError": "Profil yüklenirken hata oluştu"
+  "profileLoadError": "Profil yüklenirken hata oluştu",
+  "usageLimitExceeded": "Günlük Limit Aşıldı",
+  "usageLimitMessage": "Günlük ücretsiz limitinize ulaştınız. Sınırsız erişim için Pro'ya yükseltin.",
+  "usageLimitBenefits": "Pro özellikler:\n• Sınırsız AI okumalar\n• Detaylı raporlar\n• Reklamsız deneyim",
+  "actionDismiss": "Belki Sonra",
+  "actionUpgrade": "Pro'ya Yükselt",
+  "homeMainEnergyFocus": "Ana Enerji Odağı",
+  "homeEnergyInsightsLove": "Aşk",
+  "homeEnergyInsightsCareer": "Kariyer",
+  "homeEnergyInsightsSpiritual": "Ruhsal",
+  "homeEnergyInsightsSocial": "Sosyal"
 }

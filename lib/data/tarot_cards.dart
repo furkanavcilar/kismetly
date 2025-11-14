@@ -3,14 +3,26 @@ class TarotCard {
     required this.id,
     required this.labels,
     this.emoji,
+    this.uprightMeanings,
+    this.reversedMeanings,
   });
 
   final String id;
   final Map<String, String> labels;
   final String? emoji;
+  final Map<String, String>? uprightMeanings;
+  final Map<String, String>? reversedMeanings;
 
   String labelFor(String languageCode) {
     return labels[languageCode] ?? labels['en'] ?? id;
+  }
+
+  String? uprightMeaningFor(String languageCode) {
+    return uprightMeanings?[languageCode] ?? uprightMeanings?['en'];
+  }
+
+  String? reversedMeaningFor(String languageCode) {
+    return reversedMeanings?[languageCode] ?? reversedMeanings?['en'];
   }
 }
 

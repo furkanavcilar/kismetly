@@ -229,5 +229,15 @@
   "compatibilityChallenges": "Challenges",
   "compatibilityCommunication": "Communication Tips",
   "compatibilityLongTerm": "Long-Term Potential",
-  "profileLoadError": "Error loading profile"
+  "profileLoadError": "Error loading profile",
+  "usageLimitExceeded": "Daily Limit Reached",
+  "usageLimitMessage": "You've reached your daily free limit. Upgrade to Pro for unlimited access.",
+  "usageLimitBenefits": "Pro features:\n• Unlimited AI readings\n• Detailed reports\n• Ad-free experience",
+  "actionDismiss": "Maybe Later",
+  "actionUpgrade": "Upgrade to Pro",
+  "homeMainEnergyFocus": "Main Energy Focus",
+  "homeEnergyInsightsLove": "Love",
+  "homeEnergyInsightsCareer": "Career",
+  "homeEnergyInsightsSpiritual": "Spiritual",
+  "homeEnergyInsightsSocial": "Social"
 }

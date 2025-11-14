@@ -30,6 +30,7 @@ dependencies:
   cached_network_image: ^3.3.1
   uuid: ^4.3.3
   phone_numbers_parser: ^9.0.16
+  flutter_dotenv: ^5.1.0
 
 dev_dependencies:
   flutter_test:
