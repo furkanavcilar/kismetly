@@ -148,6 +148,9 @@ class AppTheme {
         contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
         dense: true,
       ),
+      drawerTheme: DrawerThemeData(
+        backgroundColor: bg,
+      ),
     );
   }
 
@@ -286,6 +289,9 @@ class AppTheme {
       listTileTheme: ListTileThemeData(
         contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
         dense: true,
+      ),
+      drawerTheme: DrawerThemeData(
+        backgroundColor: const Color(0xFF1A1A1A),
       ),
     );
   }

@@ -61,9 +61,13 @@ class AppSecrets {
 
   static String? get copilotApiKey {
     // Try flutter_dotenv first
-    final dotenvKey = dotenv.env['COPILOT_API_KEY'];
-    if (dotenvKey != null && dotenvKey.isNotEmpty) {
-      return dotenvKey;
+    try {
+      final dotenvKey = dotenv.env['COPILOT_API_KEY'];
+      if (dotenvKey != null && dotenvKey.isNotEmpty) {
+        return dotenvKey;
+      }
+    } catch (_) {
+      // dotenv not loaded, continue
     }
     
     // Fallback to environment variables
@@ -72,6 +76,29 @@ class AppSecrets {
       return envKey;
     }
     final runtimeKey = Platform.environment['KISMETLY_COPILOT_KEY'];
+    if (runtimeKey != null && runtimeKey.isNotEmpty) {
+      return runtimeKey;
+    }
+    return null;
+  }
+
+  static String? get deepSeekApiKey {
+    // Try flutter_dotenv first
+    try {
+      final dotenvKey = dotenv.env['DEEPSEEK_API_KEY'];
+      if (dotenvKey != null && dotenvKey.isNotEmpty) {
+        return dotenvKey;
+      }
+    } catch (_) {
+      // dotenv not loaded, continue
+    }
+    
+    // Fallback to environment variables
+    const envKey = String.fromEnvironment('KISMETLY_DEEPSEEK_KEY');
+    if (envKey.isNotEmpty) {
+      return envKey;
+    }
+    final runtimeKey = Platform.environment['KISMETLY_DEEPSEEK_KEY'];
     if (runtimeKey != null && runtimeKey.isNotEmpty) {
       return runtimeKey;
     }

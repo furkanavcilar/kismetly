@@ -24,7 +24,7 @@ class PremiumDialog extends StatelessWidget {
     return AlertDialog(
       backgroundColor: theme.colorScheme.surface,
       title: Text(
-        loc.translate('usageLimitExceeded') ?? 'Daily Limit Reached',
+        loc.translate('limitExceededTitle') ?? 'Daily Limit Reached',
         style: theme.textTheme.titleLarge,
       ),
       content: Column(
@@ -32,7 +32,7 @@ class PremiumDialog extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            loc.translate('usageLimitMessage') ??
+            loc.translate('limitExceededBody') ??
                 'You\'ve reached your daily free limit. Upgrade to Pro for unlimited access.',
             style: theme.textTheme.bodyMedium,
           ),
@@ -65,7 +65,7 @@ class PremiumDialog extends StatelessWidget {
             }
             Navigator.of(context).pop();
           },
-          child: Text(loc.translate('actionUpgrade') ?? 'Upgrade to Pro'),
+          child: Text(loc.translate('actionUpgrade') ?? 'Premium soon'),
         ),
       ],
     );

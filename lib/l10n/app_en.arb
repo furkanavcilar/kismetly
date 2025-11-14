@@ -239,5 +239,7 @@
   "homeEnergyInsightsLove": "Love",
   "homeEnergyInsightsCareer": "Career",
   "homeEnergyInsightsSpiritual": "Spiritual",
-  "homeEnergyInsightsSocial": "Social"
+  "homeEnergyInsightsSocial": "Social",
+  "limitExceededTitle": "Daily Limit Reached",
+  "limitExceededBody": "You've reached your daily free limit. Upgrade to Pro for unlimited access."
 }

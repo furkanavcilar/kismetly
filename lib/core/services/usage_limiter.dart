@@ -10,13 +10,14 @@ import '../../services/monetization/monetization_service.dart';
 /// Provides 3 free uses per feature per day.
 /// After 3 uses, shows premium dialog.
 /// 
-/// Feature keys:
+/// Feature keys (constants):
 /// - dream_interpretation
 /// - tarot_reading
 /// - coffee_fortune
 /// - zodiac_ai_query
 /// - home_energy_insights
 /// - daily_horoscope
+/// - welcome_message (optional, can be exempted if desired)
 class UsageLimiter {
   UsageLimiter({
     SharedPreferences? prefs,
@@ -30,6 +31,25 @@ class UsageLimiter {
   final MonetizationService? _monetizationService;
 
   static const int _freeUsesPerDay = 3;
+
+  /// Feature keys constants
+  static const String featureDreamInterpretation = 'dream_interpretation';
+  static const String featureCoffeeFortune = 'coffee_fortune';
+  static const String featureTarotReading = 'tarot_reading';
+  static const String featureDailyHoroscope = 'daily_horoscope';
+  static const String featureZodiacAiQuery = 'zodiac_ai_query';
+  static const String featureHomeEnergyInsights = 'home_energy_insights';
+  static const String featureWelcomeMessage = 'welcome_message'; // Optional
+  static const String _storageKey = 'feature_usage';
+
+  // Feature key constants
+  static const String dreamInterpretation = 'dream_interpretation';
+  static const String tarotReading = 'tarot_reading';
+  static const String coffeeFortune = 'coffee_fortune';
+  static const String zodiacAiQuery = 'zodiac_ai_query';
+  static const String homeEnergyInsights = 'home_energy_insights';
+  static const String dailyHoroscope = 'daily_horoscope';
+  static const String welcomeMessage = 'welcome_message';
 
   /// Get date key for today (YYYY-MM-DD)
   String _todayKey() {
@@ -86,7 +106,7 @@ class UsageLimiter {
     }
   }
 
-  /// Record feature usage
+  /// Register feature usage
   /// 
   /// Increments daily usage counter for the feature
   Future<void> recordUsage(String featureKey) async {
@@ -100,7 +120,7 @@ class UsageLimiter {
     final todayKey = _todayKey();
     final usageKey = 'usage_$featureKey';
     final usageData = prefs.getString(usageKey);
-
+    
     int count = 0;
     String? lastDate;
 
@@ -132,6 +152,8 @@ class UsageLimiter {
   }
 
   /// Get remaining free uses for today
+  /// 
+  /// Returns 3 - currentCount
   Future<int> getRemainingUses(String featureKey) async {
     final monetization = _monetizationService ?? MonetizationService.instance;
     if (monetization.isPremium) {
@@ -173,12 +195,13 @@ class UsageLimiter {
     } else {
       // Reset all feature usage
       final featureKeys = [
-        'dream_interpretation',
-        'tarot_reading',
-        'coffee_fortune',
-        'zodiac_ai_query',
-        'home_energy_insights',
-        'daily_horoscope',
+        dreamInterpretation,
+        tarotReading,
+        coffeeFortune,
+        zodiacAiQuery,
+        homeEnergyInsights,
+        dailyHoroscope,
+        welcomeMessage,
       ];
       
       for (final key in featureKeys) {

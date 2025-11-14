@@ -266,5 +266,7 @@
   "homeEnergyInsightsLove": "Aşk",
   "homeEnergyInsightsCareer": "Kariyer",
   "homeEnergyInsightsSpiritual": "Ruhsal",
-  "homeEnergyInsightsSocial": "Sosyal"
+  "homeEnergyInsightsSocial": "Sosyal",
+  "limitExceededTitle": "Günlük Limit Aşıldı",
+  "limitExceededBody": "Günlük ücretsiz limitinize ulaştınız. Sınırsız erişim için Pro'ya yükseltin."
 }
