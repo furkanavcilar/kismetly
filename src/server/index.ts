@@ -15,8 +15,13 @@ import chatRoutes from './routes/chat';
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(cors());
+// Middleware - CORS configured for Flutter emulator
+app.use(cors({
+  origin: '*', // Allow all origins (for development)
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: false
+}));
 app.use(express.json());
 
 // Health check
@@ -42,18 +47,23 @@ app.use((err: any, req: any, res: any, next: any) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-app.listen(PORT, () => {
+// Listen on 0.0.0.0 to allow connections from Android emulator (10.0.2.2)
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`
 ╔═══════════════════════════════════════════╗
 ║         ✨ KISMETLY ✨ LAUNCHED            ║
 ║    AI-Driven Spiritual Guidance App       ║
 ║                                           ║
-║  Server running on: http://localhost:${PORT}   ║
+║  Server running on: http://0.0.0.0:${PORT}      ║
+║  Accessible from: http://localhost:${PORT}     ║
+║  Android emulator: http://10.0.2.2:${PORT}     ║
+║                                           ║
 ║  🔮 Dream Interpretation: /api/dreams     ║
 ║  ♈ Horoscopes: /api/horoscope             ║
 ║  🃏 Tarot Readings: /api/tarot             ║
 ║  💕 Love Compatibility: /api/compatibility ║
 ║  💬 Chat & Guidance: /api/chat             ║
+║  ❤️  Health Check: /health                 ║
 ╚═══════════════════════════════════════════╝
   `);
 });

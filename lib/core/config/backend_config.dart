@@ -1,11 +1,11 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Backend configuration service
-/// Loads BACKEND_URL from .env file
+/// Loads BASE_URL from .env file
 class BackendConfig {
   static String get baseUrl {
     // Try to get from .env file
-    final envUrl = dotenv.env['BACKEND_URL'];
+    final envUrl = dotenv.env['BASE_URL'];
     if (envUrl != null && envUrl.isNotEmpty) {
       return envUrl;
     }

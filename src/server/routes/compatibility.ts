@@ -27,17 +27,26 @@ router.post('/analyze', async (req: Request, res: Response) => {
       birthTime2
     } = req.body as CompatibilityRequest;
 
-    if (!name1 || !name2) {
-      return res.status(400).json({ error: 'Two names required' });
+    // Support both name-based and sign-based compatibility
+    if (!sign1 || !sign2) {
+      if (!name1 || !name2) {
+        return res.status(400).json({ error: 'Two names or two zodiac signs required' });
+      }
     }
 
-    const context = `Analyze the love compatibility between ${name1} and ${name2}.
-${birthDate1 ? `${name1}'s birthdate: ${birthDate1}` : ''}
-${birthDate2 ? `${name2}'s birthdate: ${birthDate2}` : ''}
-${sign1 ? `${name1}'s zodiac sign: ${sign1}` : ''}
-${sign2 ? `${name2}'s zodiac sign: ${sign2}` : ''}
-${birthTime1 ? `${name1}'s birth time: ${birthTime1}` : ''}
-${birthTime2 ? `${name2}'s birth time: ${birthTime2}` : ''}
+    // Use sign-based analysis if signs provided, otherwise use names
+    const person1 = sign1 ? `${sign1.toUpperCase()} sign` : name1;
+    const person2 = sign2 ? `${sign2.toUpperCase()} sign` : name2;
+    
+    const context = `Analyze the love compatibility between ${person1} and ${person2}.
+${name1 ? `${person1}'s name: ${name1}` : ''}
+${name2 ? `${person2}'s name: ${name2}` : ''}
+${birthDate1 ? `${person1}'s birthdate: ${birthDate1}` : ''}
+${birthDate2 ? `${person2}'s birthdate: ${birthDate2}` : ''}
+${sign1 ? `${person1}'s zodiac sign: ${sign1.toUpperCase()}` : ''}
+${sign2 ? `${person2}'s zodiac sign: ${sign2.toUpperCase()}` : ''}
+${birthTime1 ? `${person1}'s birth time: ${birthTime1}` : ''}
+${birthTime2 ? `${person2}'s birth time: ${birthTime2}` : ''}
 
 Create a deeply personal, emotionally intelligent compatibility reading that includes:
 
@@ -55,13 +64,15 @@ Create a deeply personal, emotionally intelligent compatibility reading that inc
 Make this reading feel like it was written specifically for these two individuals. Use vivid, poetic language. Never use templates. End with a reflective question about their feelings for each other.`;
 
     const analysis = await aiRouter.generate(
-      `Create a uniquely personalized love compatibility reading between ${name1} and ${name2} that feels emotionally intelligent and spiritually guided.`,
+      `Create a uniquely personalized love compatibility reading between ${person1} and ${person2} that feels emotionally intelligent and spiritually guided.`,
       context
     );
 
     res.json({
-      person1: name1,
-      person2: name2,
+      person1: name1 || sign1?.toUpperCase(),
+      person2: name2 || sign2?.toUpperCase(),
+      sign1: sign1?.toUpperCase(),
+      sign2: sign2?.toUpperCase(),
       analysis,
       timestamp: new Date().toISOString()
     });

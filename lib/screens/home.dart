@@ -12,6 +12,7 @@ import '../services/ai_content_service.dart';
 import '../services/weather_service.dart';
 import '../services/greeting_service.dart';
 import '../services/ai_engine/ai_orchestrator.dart';
+import '../services/api_health_check.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -32,6 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final _weatherService = WeatherService();
   final _greetingService = GreetingService();
   final _orchestrator = AIOrchestrator();
+  final _healthCheck = ApiHealthCheck();
   DailyAiInsights? _insights;
   WeatherReport? _weather;
   bool _loading = true;
@@ -55,9 +57,17 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!_initialized) {
       _profileController = UserProfileScope.of(context);
       _profileController.addListener(_onProfileChanged);
+      _checkApiHealth();
       _loadGreeting();
       _loadAll();
       _initialized = true;
+    }
+  }
+
+  Future<void> _checkApiHealth() async {
+    final isHealthy = await _healthCheck.healthCheck();
+    if (!isHealthy) {
+      debugPrint('⚠️ API health check failed - backend may be unreachable');
     }
   }
 

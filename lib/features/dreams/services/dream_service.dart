@@ -1,23 +1,22 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../../../core/ai_engine/ai_orchestrator.dart';
+import '../../../services/backend_api.dart';
 import '../../../services/daily_limits_service.dart';
 import '../../../services/monetization/monetization_service.dart';
-import '../../../core/widgets/premium_dialog.dart';
 import '../../../features/paywall/upgrade_screen.dart';
 
-/// Dream Interpretation Service - Uses new AI Engine
+/// Dream Interpretation Service - Uses Backend API
 class DreamService {
   DreamService({
-    AIOrchestrator? orchestrator,
+    BackendApi? api,
     DailyLimitsService? dailyLimits,
     MonetizationService? monetization,
-  })  : _orchestrator = orchestrator ?? AIOrchestrator(),
+  })  : _api = api ?? BackendApi(),
         _dailyLimits = dailyLimits ?? DailyLimitsService(),
         _monetization = monetization ?? MonetizationService.instance;
 
-  final AIOrchestrator _orchestrator;
+  final BackendApi _api;
   final DailyLimitsService _dailyLimits;
   final MonetizationService _monetization;
 
@@ -44,21 +43,26 @@ class DreamService {
     }
 
     try {
-      final result = await _orchestrator.generateDreamInterpretation(
-        dreamText: dreamText,
-        language: language,
-        userContext: userContext,
-      );
+      final response = await _api.post('/api/dreams/interpret', body: {
+        'description': dreamText,
+        'mood': userContext?['mood'],
+        'date': DateTime.now().toIso8601String(),
+      });
+
+      final interpretation = response['interpretation'] as String?;
+      if (interpretation == null || interpretation.isEmpty) {
+        throw Exception('Empty response from backend');
+      }
 
       // Record usage
       await _dailyLimits.recordFeatureUse('dream');
 
-      return result;
+      return interpretation;
     } catch (e) {
       debugPrint('DreamService: Error - $e');
-      return language == 'tr'
-          ? 'Rüya analizi üretilemiyor. Lütfen tekrar deneyin.'
-          : 'Cannot generate dream analysis. Please try again.';
+      throw Exception(language == 'tr'
+          ? 'Rüya analizi üretilemiyor: $e'
+          : 'Cannot generate dream analysis: $e');
     }
   }
 }

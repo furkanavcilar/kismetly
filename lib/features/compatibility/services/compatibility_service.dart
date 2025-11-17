@@ -1,22 +1,22 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../../../core/ai_engine/ai_orchestrator.dart';
+import '../../../services/backend_api.dart';
 import '../../../services/daily_limits_service.dart';
 import '../../../services/monetization/monetization_service.dart';
 import '../../../features/paywall/upgrade_screen.dart';
 
-/// Compatibility Service - Uses new AI Engine
+/// Compatibility Service - Uses Backend API
 class CompatibilityService {
   CompatibilityService({
-    AIOrchestrator? orchestrator,
+    BackendApi? api,
     DailyLimitsService? dailyLimits,
     MonetizationService? monetization,
-  })  : _orchestrator = orchestrator ?? AIOrchestrator(),
+  })  : _api = api ?? BackendApi(),
         _dailyLimits = dailyLimits ?? DailyLimitsService(),
         _monetization = monetization ?? MonetizationService.instance;
 
-  final AIOrchestrator _orchestrator;
+  final BackendApi _api;
   final DailyLimitsService _dailyLimits;
   final MonetizationService _monetization;
 
@@ -41,24 +41,37 @@ class CompatibilityService {
     }
 
     try {
-      final result = await _orchestrator.generateCompatibility(
-        firstSign: firstSign,
-        secondSign: secondSign,
-        language: language,
-        userContext: userContext,
-      );
+      final response = await _api.post('/api/compatibility/analyze', body: {
+        'sign1': firstSign.toLowerCase(),
+        'sign2': secondSign.toLowerCase(),
+      });
+
+      final analysis = response['analysis'] as String?;
+      if (analysis == null || analysis.isEmpty) {
+        throw Exception('Empty response from backend');
+      }
+
+      // Parse analysis into sections
+      final sections = <String, String>{
+        'summary': analysis,
+        'love': analysis,
+        'family': analysis,
+        'career': analysis,
+        'strengths': analysis,
+        'challenges': analysis,
+        'communication': analysis,
+        'longTerm': analysis,
+      };
 
       // Record usage
       await _dailyLimits.recordFeatureUse('compatibility');
 
-      return result;
+      return sections;
     } catch (e) {
       debugPrint('CompatibilityService: Error - $e');
-      return {
-        'summary': language == 'tr'
-            ? 'Uyumluluk analizi üretilemiyor. Lütfen tekrar deneyin.'
-            : 'Cannot generate compatibility analysis. Please try again.',
-      };
+      throw Exception(language == 'tr'
+          ? 'Uyumluluk analizi üretilemiyor: $e'
+          : 'Cannot generate compatibility analysis: $e');
     }
   }
 }

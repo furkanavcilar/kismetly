@@ -107,13 +107,26 @@ NODE_ENV=development
 - **Perplexity**: https://www.perplexity.ai/api
 
 ### 4. Start development server
+
+**Backend only (for Flutter app):**
+```bash
+npm run server:dev
+```
+
+**Full stack (web app):**
 ```bash
 npm run dev
 ```
 
+**Important for Flutter/Android Emulator:**
+- The backend listens on `0.0.0.0:3000` to allow connections from Android emulator
+- Access from host machine: http://localhost:3000
+- Access from Android emulator: http://10.0.2.2:3000
+- Health check endpoint: http://localhost:3000/health
+
 This starts:
-- **Backend**: http://localhost:3000
-- **Frontend**: http://localhost:5173
+- **Backend**: http://0.0.0.0:3000 (accessible from localhost and emulator)
+- **Frontend** (if using `npm run dev`): http://localhost:5173
 
 ### 5. Build for production
 ```bash
@@ -145,9 +158,13 @@ npm start
 - `POST /api/compatibility/soulmate-insight` - Get soulmate guidance
 
 ### Chat
+- `GET /api/chat/test` - Test endpoint to verify AI router is working
 - `POST /api/chat/ask` - Ask Kismet a question
 - `POST /api/chat/daily-guidance` - Get daily spiritual guidance
 - `POST /api/chat/spiritual-advice` - Get spiritual advice
+
+### Health Check
+- `GET /health` - Server health check (returns `{ status: 'Kismetly is running ✨' }`)
 
 ## 🔄 AI Router Failover System
 

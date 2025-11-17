@@ -1,22 +1,22 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../../../core/ai_engine/ai_orchestrator.dart';
+import '../../../services/backend_api.dart';
 import '../../../services/daily_limits_service.dart';
 import '../../../services/monetization/monetization_service.dart';
 import '../../../features/paywall/upgrade_screen.dart';
 
-/// Tarot Reading Service - Uses new AI Engine
+/// Tarot Reading Service - Uses Backend API
 class TarotService {
   TarotService({
-    AIOrchestrator? orchestrator,
+    BackendApi? api,
     DailyLimitsService? dailyLimits,
     MonetizationService? monetization,
-  })  : _orchestrator = orchestrator ?? AIOrchestrator(),
+  })  : _api = api ?? BackendApi(),
         _dailyLimits = dailyLimits ?? DailyLimitsService(),
         _monetization = monetization ?? MonetizationService.instance;
 
-  final AIOrchestrator _orchestrator;
+  final BackendApi _api;
   final DailyLimitsService _dailyLimits;
   final MonetizationService _monetization;
 
@@ -44,22 +44,25 @@ class TarotService {
     }
 
     try {
-      final result = await _orchestrator.generateTarotReading(
-        cardNames: cardNames,
-        language: language,
-        spreadType: spreadType,
-        userContext: userContext,
-      );
+      final response = await _api.post('/api/tarot/draw', body: {
+        'question': userContext?['question'] ?? 'General guidance',
+        'spreadType': spreadType,
+      });
+
+      final reading = response['reading'] as String?;
+      if (reading == null || reading.isEmpty) {
+        throw Exception('Empty response from backend');
+      }
 
       // Record usage
       await _dailyLimits.recordFeatureUse('tarot');
 
-      return result;
+      return reading;
     } catch (e) {
       debugPrint('TarotService: Error - $e');
-      return language == 'tr'
-          ? 'Tarot okuması üretilemiyor. Lütfen tekrar deneyin.'
-          : 'Cannot generate tarot reading. Please try again.';
+      throw Exception(language == 'tr'
+          ? 'Tarot okuması üretilemiyor: $e'
+          : 'Cannot generate tarot reading: $e');
     }
   }
 }
