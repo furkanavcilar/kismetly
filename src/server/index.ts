@@ -15,9 +15,9 @@ import chatRoutes from './routes/chat';
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware - CORS configured for Flutter emulator
+// Middleware - CORS configured
 app.use(cors({
-  origin: '*', // Allow all origins (for development)
+  origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: false
@@ -47,26 +47,15 @@ app.use((err: any, req: any, res: any, next: any) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-// Listen on 0.0.0.0 to allow connections from Android emulator (10.0.2.2)
+// Start server
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`
-╔═══════════════════════════════════════════╗
-║         ✨ KISMETLY ✨ LAUNCHED            ║
-║    AI-Driven Spiritual Guidance App       ║
-║                                           ║
-║  Server running on: http://0.0.0.0:${PORT}      ║
-║  Accessible from: http://localhost:${PORT}     ║
-║  Android emulator: http://10.0.2.2:${PORT}     ║
-║                                           ║
-║  🔮 Dream Interpretation: /api/dreams     ║
-║  ♈ Horoscopes: /api/horoscope             ║
-║  🃏 Tarot Readings: /api/tarot             ║
-║  💕 Love Compatibility: /api/compatibility ║
-║  💬 Chat & Guidance: /api/chat             ║
-║  ❤️  Health Check: /health                 ║
-╚═══════════════════════════════════════════╝
-  `);
+  console.log(`✨ Kismetly server running on port ${PORT}`);
+  console.log(`🔮 Dream Interpretation: /api/dreams`);
+  console.log(`♈ Horoscopes: /api/horoscope`);
+  console.log(`🃏 Tarot Readings: /api/tarot`);
+  console.log(`💕 Love Compatibility: /api/compatibility`);
+  console.log(`💬 Chat & Guidance: /api/chat`);
+  console.log(`❤️  Health Check: /health`);
 });
 
 export default app;
-
