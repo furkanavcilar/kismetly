@@ -78,11 +78,15 @@ class AiContentService {
     }
 
     try {
+      final focusText = locale.languageCode == 'tr'
+          ? '$sunSign güneş burcu ve $risingSign yükselen burcu için günlük içgörüler'
+          : 'Daily insights for $sunSign with $risingSign rising';
+      
       final response = await _api.post('/api/chat/daily-guidance', 
         body: {
           'sign': sunSign,
           'name': '',
-          'focus': 'Daily insights for $sunSign with $risingSign rising',
+          'focus': focusText,
         },
         language: locale.languageCode,
       );
