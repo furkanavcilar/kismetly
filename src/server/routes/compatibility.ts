@@ -1,5 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { aiRouter } from '../services/aiRouter';
+import { getLanguageFromRequest } from '../services/language';
+import { compatibilitySystemPrompts, compatibilityUserPrompt } from '../services/prompts';
 
 const router = Router();
 
@@ -26,46 +28,37 @@ router.post('/analyze', async (req: Request, res: Response) => {
       birthTime1,
       birthTime2
     } = req.body as CompatibilityRequest;
+    const language = getLanguageFromRequest(req);
 
     // Support both name-based and sign-based compatibility
     if (!sign1 || !sign2) {
       if (!name1 || !name2) {
-        return res.status(400).json({ error: 'Two names or two zodiac signs required' });
+        const errorMsg = language === 'tr' ? 'İki isim veya iki burç adı gerekli' : 'Two names or two zodiac signs required';
+        return res.status(400).json({ error: errorMsg });
       }
     }
+
+    console.log('[AI] Compatibility analysis language =', language);
 
     // Use sign-based analysis if signs provided, otherwise use names
     const person1 = sign1 ? `${sign1.toUpperCase()} sign` : name1;
     const person2 = sign2 ? `${sign2.toUpperCase()} sign` : name2;
     
-    const context = `Analyze the love compatibility between ${person1} and ${person2}.
-${name1 ? `${person1}'s name: ${name1}` : ''}
-${name2 ? `${person2}'s name: ${name2}` : ''}
-${birthDate1 ? `${person1}'s birthdate: ${birthDate1}` : ''}
-${birthDate2 ? `${person2}'s birthdate: ${birthDate2}` : ''}
-${sign1 ? `${person1}'s zodiac sign: ${sign1.toUpperCase()}` : ''}
-${sign2 ? `${person2}'s zodiac sign: ${sign2.toUpperCase()}` : ''}
-${birthTime1 ? `${person1}'s birth time: ${birthTime1}` : ''}
-${birthTime2 ? `${person2}'s birth time: ${birthTime2}` : ''}
-
-Create a deeply personal, emotionally intelligent compatibility reading that includes:
-
-1. **Relationship Energy**: Describe the overall energetic dynamic between these two
-2. **Love Compatibility**: Physical, emotional, and spiritual attraction potential
-3. **Communication Dynamics**: How they likely understand each other
-4. **Emotional Connection**: Depth and authenticity potential
-5. **Shared Values**: What might bind them together
-6. **Potential Challenges**: Honest obstacles they may face
-7. **Growth Together**: How they could help each other evolve
-8. **Intimacy Potential**: Physical and emotional closeness
-9. **Long-term Viability**: Sustainability of the relationship
-10. **Compatibility Insight**: A personalized, thought-provoking observation unique to their connection
-
-Make this reading feel like it was written specifically for these two individuals. Use vivid, poetic language. Never use templates. End with a reflective question about their feelings for each other.`;
+    const systemPrompt = compatibilitySystemPrompts[language];
+    const userPrompt = compatibilityUserPrompt(language, person1, person2, {
+      name1,
+      name2,
+      sign1,
+      sign2,
+      birthDate1,
+      birthDate2
+    });
+    const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
 
     const analysis = await aiRouter.generate(
-      `Create a uniquely personalized love compatibility reading between ${person1} and ${person2} that feels emotionally intelligent and spiritually guided.`,
-      context
+      fullPrompt,
+      undefined,
+      language
     );
 
     res.json({
@@ -85,12 +78,35 @@ Make this reading feel like it was written specifically for these two individual
 router.post('/soulmate-insight', async (req: Request, res: Response) => {
   try {
     const { name, birthDate, sign, question } = req.body;
+    const language = getLanguageFromRequest(req);
 
     if (!name) {
-      return res.status(400).json({ error: 'Name required' });
+      const errorMsg = language === 'tr' ? 'İsim gerekli' : 'Name required';
+      return res.status(400).json({ error: errorMsg });
     }
 
-    const context = `Provide soulmate and romantic guidance for ${name}.
+    console.log('[AI] Soulmate insight language =', language);
+
+    const systemPrompt = compatibilitySystemPrompts[language];
+    const userPrompt = language === 'tr'
+      ? `${name} için ruh eşi ve romantik rehberlik sağla.
+${birthDate ? `Doğum tarihi: ${birthDate}` : ''}
+${sign ? `Burç: ${sign}` : ''}
+${question ? `Sorusu/endişesi: ${question}` : ''}
+
+Romantik yolları hakkında kişiselleştirilmiş bir ruhsal okuma oluştur:
+1. Romantik enerjileri ve doğal olarak çektikleri
+2. Ruhlarının aradığı partner türü
+3. Mevcut ilişki kalıpları ve karma
+4. Aşk için zamanlama ve hazır olma
+5. Yakınlık etrafındaki engeller veya korkular
+6. Romantik yolculuklarındaki ruhsal dersler
+7. Gerçek eşlerinde aramaları gereken işaretler
+8. Düşünmeleri gereken sonraki adımlar
+9. Aşk yolculukları için güçlü bir onaylama
+
+Bu okumanın derinlemesine kişisel ve ruhsal olarak yönlendirilmiş olduğunu hissettir. Sezgisel, sıcak dil kullan. Bir yansıtıcı soru ekle.`
+      : `Provide soulmate and romantic guidance for ${name}.
 ${birthDate ? `Birthdate: ${birthDate}` : ''}
 ${sign ? `Zodiac sign: ${sign}` : ''}
 ${question ? `Their question/concern: ${question}` : ''}
@@ -108,9 +124,12 @@ Create a personalized spiritual reading about their romantic path that includes:
 
 Make this feel deeply personal and spiritually guided. Use intuitive, warm language. Include one reflective question.`;
 
+    const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
+
     const insight = await aiRouter.generate(
-      `Provide a deeply personal, spiritually-guided soulmate and romantic insight for ${name}.`,
-      context
+      fullPrompt,
+      undefined,
+      language
     );
 
     res.json({

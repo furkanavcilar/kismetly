@@ -1,5 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { aiRouter } from '../services/aiRouter';
+import { getLanguageFromRequest } from '../services/language';
+import { tarotSystemPrompts, tarotUserPrompt } from '../services/prompts';
 
 const router = Router();
 
@@ -50,48 +52,41 @@ function drawCards(count: number): typeof tarotCards {
 router.post('/draw', async (req: Request, res: Response) => {
   try {
     const { question, spreadType = 'single' } = req.body as TarotRequest;
+    const language = getLanguageFromRequest(req);
 
     if (!question) {
-      return res.status(400).json({ error: 'Question required for tarot reading' });
+      const errorMsg = language === 'tr' ? 'Tarot okuması için soru gerekli' : 'Question required for tarot reading';
+      return res.status(400).json({ error: errorMsg });
     }
 
+    console.log('[AI] Tarot reading language =', language);
+
     let cardCount = 1;
-    let spreadName = 'Single Card';
+    let spreadName = language === 'tr' ? 'Tek Kart' : 'Single Card';
 
     if (spreadType === 'threesome') {
       cardCount = 3;
-      spreadName = 'Past-Present-Future';
+      spreadName = language === 'tr' ? 'Geçmiş-Şimdi-Gelecek' : 'Past-Present-Future';
     } else if (spreadType === 'celtic_cross') {
       cardCount = 10;
-      spreadName = 'Celtic Cross';
+      spreadName = language === 'tr' ? 'Kelt Haçı' : 'Celtic Cross';
     } else if (spreadType === 'horseshoe') {
       cardCount = 7;
-      spreadName = 'Horseshoe';
+      spreadName = language === 'tr' ? 'At Nalı' : 'Horseshoe';
     }
 
     const drawnCards = drawCards(cardCount);
     const cardNames = drawnCards.map(c => c.name).join(', ');
     const reversed = drawnCards.map(() => Math.random() > 0.5).map((r, i) => r ? `${drawnCards[i].name} (Reversed)` : drawnCards[i].name);
 
-    const context = `User is asking: "${question}"
-    
-Tarot Spread: ${spreadName}
-Cards drawn: ${cardNames}
-Card positions (reversed if applicable): ${reversed.join(' | ')}
-
-Provide a nuanced, personalized tarot interpretation that:
-1. Acknowledges the specific question and emotional weight behind it
-2. Interprets each card in relation to the question and spread position
-3. Weaves a narrative that connects the cards into cohesive guidance
-4. Explores both surface and deeper symbolic meanings
-5. Provides actionable spiritual insight
-6. Includes 1-2 follow-up questions to deepen the reading
-
-Make this feel like a reading from an experienced, empathetic tarot reader. Never use generic card meanings. Customize based on the question.`;
+    const systemPrompt = tarotSystemPrompts[language];
+    const userPrompt = tarotUserPrompt(language, question, spreadName, cardNames, reversed);
+    const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
 
     const reading = await aiRouter.generate(
-      'Provide a deeply personalized, emotionally resonant tarot reading that feels like guidance from a spiritual advisor.',
-      context
+      fullPrompt,
+      undefined,
+      language
     );
 
     res.json({

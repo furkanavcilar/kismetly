@@ -13,7 +13,7 @@ import compatibilityRoutes from './routes/compatibility';
 import chatRoutes from './routes/chat';
 
 const app: Express = express();
-const PORT = process.env.PORT || 3000;
+const PORT = parseInt(process.env.PORT || '3000', 10);
 
 // Middleware - CORS configured
 app.use(cors({

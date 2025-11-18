@@ -1,5 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { aiRouter } from '../services/aiRouter';
+import { getLanguageFromRequest } from '../services/language';
+import { horoscopeSystemPrompts, horoscopeUserPrompt } from '../services/prompts';
 
 const router = Router();
 
@@ -16,28 +18,23 @@ interface HoroscopeRequest {
 router.post('/generate', async (req: Request, res: Response) => {
   try {
     const { sign, timeframe = 'daily' } = req.body as HoroscopeRequest;
+    const language = getLanguageFromRequest(req);
 
     if (!sign || !zodiacSigns.includes(sign.toLowerCase())) {
-      return res.status(400).json({ error: 'Valid zodiac sign required' });
+      const errorMsg = language === 'tr' ? 'Geçerli bir burç adı gerekli' : 'Valid zodiac sign required';
+      return res.status(400).json({ error: errorMsg });
     }
 
-    const context = `Generate a ${timeframe} horoscope for ${sign.toUpperCase()} that is completely unique, warm, and personally resonant.
+    console.log('[AI] Horoscope generation language =', language);
 
-Include sections for:
-1. Overall Energy & Mood
-2. Love & Relationships
-3. Career & Finance
-4. Health & Wellness
-5. Lucky Element (color, number, time)
-6. Main Challenge
-7. Opportunity
-8. Personal Reflection Question
-
-Make this feel like it was written specifically for this person's current moment. Use emotional, intuitive language. Never repeat standard phrases. Include follow-up questions that feel natural and curiosity-driven.`;
+    const systemPrompt = horoscopeSystemPrompts[language];
+    const userPrompt = horoscopeUserPrompt(language, sign, timeframe);
+    const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
 
     const horoscope = await aiRouter.generate(
-      `Create a deeply personalized, emotionally rich ${timeframe} horoscope for ${sign} that makes them feel seen and guided.`,
-      context
+      fullPrompt,
+      undefined,
+      language
     );
 
     res.json({
@@ -55,12 +52,31 @@ Make this feel like it was written specifically for this person's current moment
 router.post('/compatibility', async (req: Request, res: Response) => {
   try {
     const { sign1, sign2 } = req.body;
+    const language = getLanguageFromRequest(req);
 
     if (!sign1 || !sign2 || !zodiacSigns.includes(sign1.toLowerCase()) || !zodiacSigns.includes(sign2.toLowerCase())) {
-      return res.status(400).json({ error: 'Two valid zodiac signs required' });
+      const errorMsg = language === 'tr' ? 'İki geçerli burç adı gerekli' : 'Two valid zodiac signs required';
+      return res.status(400).json({ error: errorMsg });
     }
 
-    const context = `Analyze the astrological compatibility between ${sign1.toUpperCase()} and ${sign2.toUpperCase()}.
+    console.log('[AI] Horoscope compatibility language =', language);
+
+    const systemPrompt = horoscopeSystemPrompts[language];
+    const userPrompt = language === 'tr'
+      ? `${sign1.toUpperCase()} ve ${sign2.toUpperCase()} arasındaki astrolojik uyumluluğu analiz et.
+
+Şunları içeren benzersiz bir okuma yap:
+1. Elemental Uyumluluk
+2. Aşk ve Romantik Potansiyel
+3. Arkadaşlık Dinamikleri
+4. İletişim Tarzı
+5. Yönlendirilecek Zorluklar
+6. Çift Olarak Güçlü Yönler
+7. Büyüme Fırsatları
+8. Uyumluluk Skoru (nüanslı açıklama ile)
+
+Bu okumanın kişisel olduğunu hissettir, genel değil. Bu dinamikleri nasıl deneyimledikleri hakkında bir takip sorusu sor.`
+      : `Analyze the astrological compatibility between ${sign1.toUpperCase()} and ${sign2.toUpperCase()}.
 
 Provide a unique reading including:
 1. Elemental Compatibility
@@ -74,9 +90,12 @@ Provide a unique reading including:
 
 Make this feel like a personal reading, not generic. Ask a follow-up question about how they've experienced this dynamic.`;
 
+    const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
+
     const compatibility = await aiRouter.generate(
-      `Create a deeply personalized zodiac compatibility reading between ${sign1} and ${sign2} that feels unique and emotionally intelligent.`,
-      context
+      fullPrompt,
+      undefined,
+      language
     );
 
     res.json({

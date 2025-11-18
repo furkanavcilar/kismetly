@@ -2,10 +2,12 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import axios from 'axios';
+import { SupportedLanguage } from './language';
+import { baseSystemPrompts } from './prompts';
 
 interface AIProvider {
   name: string;
-  generateText(prompt: string, context?: string): Promise<string>;
+  generateText(prompt: string, context?: string, language?: SupportedLanguage): Promise<string>;
 }
 
 // OpenAI Provider
@@ -17,9 +19,10 @@ class OpenAIProvider implements AIProvider {
     this.apiKey = apiKey;
   }
 
-  async generateText(prompt: string, context?: string): Promise<string> {
+  async generateText(prompt: string, context?: string, language: SupportedLanguage = 'en'): Promise<string> {
     try {
       const fullPrompt = context ? `${context}\n\n${prompt}` : prompt;
+      const systemPrompt = baseSystemPrompts[language];
       
       const response = await axios.post(
         'https://api.openai.com/v1/chat/completions',
@@ -28,7 +31,7 @@ class OpenAIProvider implements AIProvider {
           messages: [
             {
               role: 'system',
-              content: 'You are a warm, empathetic spiritual guide. Your responses are deeply personal, emotionally intelligent, conversational, and unique. Always ask follow-up questions. Never use templates. Minimum 3 paragraphs for insights.'
+              content: systemPrompt
             },
             {
               role: 'user',
@@ -68,9 +71,10 @@ class GeminiProvider implements AIProvider {
     this.apiKey = apiKey;
   }
 
-  async generateText(prompt: string, context?: string): Promise<string> {
+  async generateText(prompt: string, context?: string, language: SupportedLanguage = 'en'): Promise<string> {
     try {
       const fullPrompt = context ? `${context}\n\n${prompt}` : prompt;
+      const systemPrompt = baseSystemPrompts[language];
       
       const response = await axios.post(
         `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`,
@@ -79,7 +83,7 @@ class GeminiProvider implements AIProvider {
             {
               parts: [
                 {
-                  text: `You are a warm, empathetic spiritual guide. Your responses are deeply personal, emotionally intelligent, conversational, and unique. Always ask follow-up questions. Never use templates. Minimum 3 paragraphs for insights.\n\n${fullPrompt}`
+                  text: `${systemPrompt}\n\n${fullPrompt}`
                 }
               ]
             }
@@ -122,8 +126,11 @@ class ClaudeProvider implements AIProvider {
     this.apiKey = apiKey;
   }
 
-  async generateText(prompt: string, context?: string): Promise<string> {
+  async generateText(prompt: string, context?: string, language: SupportedLanguage = 'en'): Promise<string> {
     try {
+      const systemPrompt = baseSystemPrompts[language];
+      const fullPrompt = context ? `${context}\n\n${prompt}` : prompt;
+      
       const response = await axios.post(
         'https://api.anthropic.com/v1/messages',
         {
@@ -132,10 +139,10 @@ class ClaudeProvider implements AIProvider {
           messages: [
             {
               role: 'user',
-              content: `You are a warm, empathetic spiritual guide. Your responses are deeply personal, emotionally intelligent, conversational, and unique. Always ask follow-up questions. Never use templates. Minimum 3 paragraphs for insights.\n\n${context ? context + '\n\n' : ''}${prompt}`
+              content: `${systemPrompt}\n\n${fullPrompt}`
             }
           ],
-          system: 'You are a warm, empathetic spiritual guide who provides unique, emotionally intelligent guidance.'
+          system: systemPrompt
         },
         {
           headers: {
@@ -164,8 +171,11 @@ class DeepSeekProvider implements AIProvider {
     this.apiKey = apiKey;
   }
 
-  async generateText(prompt: string, context?: string): Promise<string> {
+  async generateText(prompt: string, context?: string, language: SupportedLanguage = 'en'): Promise<string> {
     try {
+      const systemPrompt = baseSystemPrompts[language];
+      const fullPrompt = context ? `${context}\n\n${prompt}` : prompt;
+      
       const response = await axios.post(
         'https://api.deepseek.com/v1/chat/completions',
         {
@@ -173,11 +183,11 @@ class DeepSeekProvider implements AIProvider {
           messages: [
             {
               role: 'system',
-              content: 'You are a warm, empathetic spiritual guide. Your responses are deeply personal, emotionally intelligent, conversational, and unique. Always ask follow-up questions. Never use templates. Minimum 3 paragraphs for insights.'
+              content: systemPrompt
             },
             {
               role: 'user',
-              content: context ? `${context}\n\n${prompt}` : prompt
+              content: fullPrompt
             }
           ],
           temperature: 0.8,
@@ -209,8 +219,11 @@ class GrokProvider implements AIProvider {
     this.apiKey = apiKey;
   }
 
-  async generateText(prompt: string, context?: string): Promise<string> {
+  async generateText(prompt: string, context?: string, language: SupportedLanguage = 'en'): Promise<string> {
     try {
+      const systemPrompt = baseSystemPrompts[language];
+      const fullPrompt = context ? `${context}\n\n${prompt}` : prompt;
+      
       const response = await axios.post(
         'https://api.x.ai/v1/chat/completions',
         {
@@ -218,11 +231,11 @@ class GrokProvider implements AIProvider {
           messages: [
             {
               role: 'system',
-              content: 'You are a warm, empathetic spiritual guide. Your responses are deeply personal, emotionally intelligent, conversational, and unique. Always ask follow-up questions. Never use templates. Minimum 3 paragraphs for insights.'
+              content: systemPrompt
             },
             {
               role: 'user',
-              content: context ? `${context}\n\n${prompt}` : prompt
+              content: fullPrompt
             }
           ],
           temperature: 0.8,
@@ -254,8 +267,11 @@ class CopilotProvider implements AIProvider {
     this.apiKey = apiKey;
   }
 
-  async generateText(prompt: string, context?: string): Promise<string> {
+  async generateText(prompt: string, context?: string, language: SupportedLanguage = 'en'): Promise<string> {
     try {
+      const systemPrompt = baseSystemPrompts[language];
+      const fullPrompt = context ? `${context}\n\n${prompt}` : prompt;
+      
       // Copilot uses Azure OpenAI endpoint format
       const endpoint = process.env.COPILOT_ENDPOINT || 'https://api.copilot.microsoft.com/v1/chat/completions';
       const response = await axios.post(
@@ -265,11 +281,11 @@ class CopilotProvider implements AIProvider {
           messages: [
             {
               role: 'system',
-              content: 'You are a warm, empathetic spiritual guide. Your responses are deeply personal, emotionally intelligent, conversational, and unique. Always ask follow-up questions. Never use templates. Minimum 3 paragraphs for insights.'
+              content: systemPrompt
             },
             {
               role: 'user',
-              content: context ? `${context}\n\n${prompt}` : prompt
+              content: fullPrompt
             }
           ],
           temperature: 0.8,
@@ -301,9 +317,10 @@ class PerplexityProvider implements AIProvider {
     this.apiKey = apiKey;
   }
 
-  async generateText(prompt: string, context?: string): Promise<string> {
+  async generateText(prompt: string, context?: string, language: SupportedLanguage = 'en'): Promise<string> {
     try {
       const fullPrompt = context ? `${context}\n\n${prompt}` : prompt;
+      const systemPrompt = baseSystemPrompts[language];
       
       const response = await axios.post(
         'https://api.perplexity.ai/chat/completions',
@@ -312,7 +329,7 @@ class PerplexityProvider implements AIProvider {
           messages: [
             {
               role: 'user',
-              content: `You are a warm, empathetic spiritual guide. Your responses are deeply personal, emotionally intelligent, conversational, and unique. Always ask follow-up questions. Never use templates. Minimum 3 paragraphs for insights.\n\n${fullPrompt}`
+              content: `${systemPrompt}\n\n${fullPrompt}`
             }
           ],
           temperature: 0.8
@@ -343,7 +360,37 @@ class PerplexityProvider implements AIProvider {
 }
 
 // Fallback local response generator
-function generateLocalFallback(prompt: string): string {
+function generateLocalFallback(prompt: string, language: SupportedLanguage = 'en'): string {
+  if (language === 'tr') {
+    const fallbacks = [
+      "Soruşunda derin bir şeyler seziyorum. Bu anın etrafındaki ruhsal enerji, bir yol ayrımında olduğunu gösteriyor—seni farklı yollara çeken şeyleri keşfetmek ister misin?",
+      "Bu kozmik dokunun derinliklerine dokunuyor. Burada anlam katmanları algılıyorum. Son zamanlarda en güçlü duyguların neler oldu?",
+      "Evren birçok kanaldan fısıldıyor. Sorgun dönüşüm ve netlik temalarıyla rezonans yapıyor. Sezgilerin son zamanlarda seni nasıl yönlendiriyor?",
+      "Kelimelerinin altında ruhsal bir akım hissediyorum. Burada açılmak için bekleyen bir bilgelik var. Daha iyi keşfetmeyi veya anlamayı ne umuyorsun?",
+      "Bu gerçek bir arayışın ağırlığını taşıyor. Devredeki güçler seni anlamlı bir şeye yönlendiriyor gibi görünüyor. Bu soruyu tetikleyen şeyi paylaşabilir misin?"
+    ];
+
+    const baseResponse = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+    
+    if (prompt.includes('dream') || prompt.includes('rüya')) {
+      return `Rüyan sembolik ağırlık ve duygusal rezonans taşıyor. ${baseResponse} Rüyalar genellikle en derin korkularımızı ve arzularımızı yansıtır—sana en canlı görünen şey nedir?`;
+    }
+    
+    if (prompt.includes('horoscope') || prompt.includes('zodiac') || prompt.includes('burç')) {
+      return `Kozmik hizalama şu anda burcunla özellikle net konuşuyor. ${baseResponse} Son enerjiler günlük deneyimini nasıl etkiliyor?`;
+    }
+    
+    if (prompt.includes('compatible') || prompt.includes('love') || prompt.includes('aşk') || prompt.includes('uyumluluk')) {
+      return `Sorduğun bağlantı ilginç astrolojik boyutlar taşıyor. ${baseResponse} Bu kişide seni en derinden çeken nitelikler neler?`;
+    }
+    
+    if (prompt.includes('tarot') || prompt.includes('card') || prompt.includes('kart')) {
+      return `Kartlar durumuna özgü anlam katmanları ortaya koyuyor. ${baseResponse} Şu anda en çok hangi rehberliği umuyorsun?`;
+    }
+
+    return baseResponse;
+  }
+
   const fallbacks = [
     "I sense something profound in your question. The spiritual energy around this moment suggests you're at a crossroads—would you like to explore what's drawing you toward different paths?",
     "This touches something deep within the cosmic fabric. I'm perceiving layers of meaning here. What emotions have been strongest for you recently?",
@@ -415,10 +462,10 @@ export class AIRouter {
     }
   }
 
-  async generate(prompt: string, context?: string): Promise<string> {
+  async generate(prompt: string, context?: string, language: SupportedLanguage = 'en'): Promise<string> {
     if (this.providers.length === 0) {
       console.warn('⚠️ No AI providers configured, using local fallback');
-      return generateLocalFallback(prompt);
+      return generateLocalFallback(prompt, language);
     }
 
     // Try each provider in order: OpenAI → Gemini → Perplexity → (others if configured)
@@ -427,7 +474,7 @@ export class AIRouter {
       
       try {
         console.log(`🔄 Attempting with ${provider.name}...`);
-        const result = await provider.generateText(prompt, context);
+        const result = await provider.generateText(prompt, context, language);
         console.log(`✅ Success with ${provider.name}`);
         
         // Rotate provider index for next request (round-robin)
@@ -447,22 +494,22 @@ export class AIRouter {
 
     // All providers failed, use local fallback
     console.warn(`⚠️ All ${this.providers.length} AI provider(s) failed. Using intelligent local fallback.`);
-    return generateLocalFallback(prompt);
+    return generateLocalFallback(prompt, language);
   }
 
-  async generateWithMultiple(prompt: string, context?: string, count: number = 1): Promise<string[]> {
+  async generateWithMultiple(prompt: string, context?: string, language: SupportedLanguage = 'en', count: number = 1): Promise<string[]> {
     const results: string[] = [];
     
     for (let i = 0; i < count && i < this.providers.length; i++) {
       try {
-        const result = await this.generate(prompt, context);
+        const result = await this.generate(prompt, context, language);
         results.push(result);
       } catch (error) {
         console.error(`Failed to generate result ${i + 1}`);
       }
     }
 
-    return results.length > 0 ? results : [generateLocalFallback(prompt)];
+    return results.length > 0 ? results : [generateLocalFallback(prompt, language)];
   }
 }
 

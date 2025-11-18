@@ -1,5 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { aiRouter } from '../services/aiRouter';
+import { getLanguageFromRequest } from '../services/language';
+import { chatSystemPrompts, dailyGuidanceUserPrompt, spiritualAdviceUserPrompt } from '../services/prompts';
 
 const router = Router();
 
@@ -25,14 +27,30 @@ router.get('/test', async (req: Request, res: Response) => {
 router.post('/ask', async (req: Request, res: Response) => {
   try {
     const { message, conversationHistory = [], context } = req.body;
+    const language = getLanguageFromRequest(req);
 
     if (!message) {
-      return res.status(400).json({ error: 'Message required' });
+      const errorMsg = language === 'tr' ? 'Mesaj gerekli' : 'Message required';
+      return res.status(400).json({ error: errorMsg });
     }
 
+    console.log('[AI] Chat ask language =', language);
+
     // Base context
-    let fullContext = `
-You are Kismet, a warm, empathetic spiritual guide and advisor.
+    const systemContext = language === 'tr'
+      ? `Sen Kismet'sin, sıcak ve empatik bir ruhsal rehber ve danışmansın.
+Yanıtların duygusal olarak zeki, derinlemesine kişisel, şiirsel ve sohbet eder gibi.
+Her zaman bir takip sorusu sor.
+Asla şablon kullanma.
+En az 2–3 paragraf.
+Şunlarda uzmanlaşmışsın:
+- Rüya yorumlama
+- Astroloji
+- Tarot
+- Aşk rehberliği
+- Ruhsal danışmanlık
+- Enerjik hizalama`
+      : `You are Kismet, a warm, empathetic spiritual guide and advisor.
 Your responses are emotionally intelligent, deeply personal, poetic, and conversational.
 Always ask a follow-up question.
 Never use templates.
@@ -43,25 +61,33 @@ You specialize in:
 - Tarot
 - Love guidance
 - Spiritual counseling
-- Energetic alignment
-`;
+- Energetic alignment`;
+
+    let fullContext = systemContext;
 
     // Add custom user context
     if (context) {
-      fullContext += `\nUser Context: ${context}`;
+      const contextLabel = language === 'tr' ? 'Kullanıcı Bağlamı' : 'User Context';
+      fullContext += `\n${contextLabel}: ${context}`;
     }
 
     // Add conversation history
     if (conversationHistory.length > 0) {
-      fullContext += `\nRecent conversation:\n`;
+      const historyLabel = language === 'tr' ? 'Son konuşma' : 'Recent conversation';
+      fullContext += `\n${historyLabel}:\n`;
       conversationHistory.slice(-6).forEach(msg => {
-        fullContext += `${msg.role === 'user' ? 'User' : 'Kismet'}: ${msg.content}\n`;
+        fullContext += `${msg.role === 'user' ? (language === 'tr' ? 'Kullanıcı' : 'User') : 'Kismet'}: ${msg.content}\n`;
       });
     }
 
+    const userPrompt = language === 'tr' 
+      ? `Kullanıcıya ruhsal sıcaklık, içgörü ve merakla yanıt ver.\n\n${language === 'tr' ? 'Kullanıcı diyor' : 'User says'}: "${message}"`
+      : `Respond to the user with spiritual warmth, insight, and curiosity.\n\nUser says: "${message}"`;
+
     const response = await aiRouter.generate(
-      `Respond to the user with spiritual warmth, insight, and curiosity.`,
-      fullContext + `\n\nUser says: "${message}"`
+      userPrompt,
+      fullContext,
+      language
     );
 
     res.json({
@@ -81,22 +107,18 @@ You specialize in:
 router.post('/daily-guidance', async (req: Request, res: Response) => {
   try {
     const { sign, name, focus } = req.body;
+    const language = getLanguageFromRequest(req);
 
-    const context = `
-Generate personalized daily spiritual guidance${sign ? ` for ${sign}` : ''}${name ? ` for ${name}` : ''}.
-Focus: ${focus || 'General focus'}
+    console.log('[AI] Daily guidance language =', language);
 
-Include:
-1. Spiritual reflection
-2. Intention for the day
-3. Practical grounding suggestion
-4. Energetic insight
-5. One warm follow-up question
-`;
+    const systemPrompt = chatSystemPrompts[language];
+    const userPrompt = dailyGuidanceUserPrompt(language, sign, name, focus);
+    const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
 
     const guidance = await aiRouter.generate(
-      'Create a beautifully personal, uplifting, spiritually aligned message.',
-      context
+      fullPrompt,
+      undefined,
+      language
     );
 
     res.json({ guidance, date: new Date().toISOString() });
@@ -111,27 +133,23 @@ Include:
 router.post('/spiritual-advice', async (req: Request, res: Response) => {
   try {
     const { situation, question, context: userContext } = req.body;
+    const language = getLanguageFromRequest(req);
 
     if (!situation && !question) {
-      return res.status(400).json({ error: 'Situation or question required' });
+      const errorMsg = language === 'tr' ? 'Durum veya soru gerekli' : 'Situation or question required';
+      return res.status(400).json({ error: errorMsg });
     }
 
-    const context = `
-A person seeks guidance about: ${question || situation}
-${userContext ? `More context: ${userContext}` : ''}
+    console.log('[AI] Spiritual advice language =', language);
 
-Provide advice that:
-- Acknowledges emotional/spiritual state
-- Offers multi-tradition spiritual perspectives
-- Suggests rituals or practices
-- Connects to cosmic/energetic patterns
-- Encourages intuition
-- Asks one gentle follow-up question
-`;
+    const systemPrompt = chatSystemPrompts[language];
+    const userPrompt = spiritualAdviceUserPrompt(language, situation, question, userContext);
+    const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
 
     const advice = await aiRouter.generate(
-      'Provide deeply personal, spiritually grounded advice that feels like divine mentorship.',
-      context
+      fullPrompt,
+      undefined,
+      language
     );
 
     res.json({ advice, timestamp: new Date().toISOString() });

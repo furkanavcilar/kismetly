@@ -1,5 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { aiRouter } from '../services/aiRouter';
+import { getLanguageFromRequest } from '../services/language';
+import { dreamSystemPrompts, dreamUserPrompt } from '../services/prompts';
 
 const router = Router();
 
@@ -12,29 +14,23 @@ interface DreamRequest {
 router.post('/interpret', async (req: Request, res: Response) => {
   try {
     const { description, mood, date } = req.body as DreamRequest;
+    const language = getLanguageFromRequest(req);
 
     if (!description) {
-      return res.status(400).json({ error: 'Dream description required' });
+      const errorMsg = language === 'tr' ? 'Rüya açıklaması gerekli' : 'Dream description required';
+      return res.status(400).json({ error: errorMsg });
     }
 
-    const context = `You are interpreting a dream in a spiritually sensitive and psychologically aware manner.
-    
-Dream Description: ${description}
-${mood ? `Mood/Emotion upon waking: ${mood}` : ''}
-${date ? `Date of dream: ${date}` : ''}
+    console.log('[AI] Dream interpretation language =', language);
 
-Provide a rich, multi-layered interpretation that includes:
-1. Symbolic meanings and archetypes
-2. Psychological insights
-3. Emotional undertones
-4. Spiritual guidance
-5. One or two follow-up questions to deepen understanding
-
-Keep it deeply personal and conversational. Never use templates or generic interpretations.`;
+    const systemPrompt = dreamSystemPrompts[language];
+    const userPrompt = dreamUserPrompt(language, description, mood, date);
+    const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
 
     const interpretation = await aiRouter.generate(
-      'Provide a spiritually-guided dream interpretation that feels human and uniquely tailored to this person.',
-      context
+      fullPrompt,
+      undefined,
+      language
     );
 
     res.json({
@@ -51,12 +47,27 @@ Keep it deeply personal and conversational. Never use templates or generic inter
 router.post('/symbol-analysis', async (req: Request, res: Response) => {
   try {
     const { symbol, dreamContext } = req.body;
+    const language = getLanguageFromRequest(req);
 
     if (!symbol) {
-      return res.status(400).json({ error: 'Symbol required' });
+      const errorMsg = language === 'tr' ? 'Sembol gerekli' : 'Symbol required';
+      return res.status(400).json({ error: errorMsg });
     }
 
-    const context = `Analyze the symbolic meaning of "${symbol}" in the context of dream interpretation.
+    console.log('[AI] Symbol analysis language =', language);
+
+    const systemPrompt = dreamSystemPrompts[language];
+    const userPrompt = language === 'tr' 
+      ? `"${symbol}" sembolünün rüya yorumlama bağlamındaki sembolik anlamını analiz et.
+${dreamContext ? `Rüya Bağlamı: ${dreamContext}` : ''}
+
+Şunları kapsayan bir analiz yap:
+1. Evrensel sembolik anlamlar
+2. Kişisel psikolojik yorumlar
+3. Ruhsal önem
+4. Rüya görenin hayatına nasıl uygulanabileceği
+5. Daha derin keşif için takip sorusu`
+      : `Analyze the symbolic meaning of "${symbol}" in the context of dream interpretation.
 ${dreamContext ? `Dream Context: ${dreamContext}` : ''}
 
 Provide analysis covering:
@@ -66,9 +77,12 @@ Provide analysis covering:
 4. How it might apply to the dreamer's life
 5. Follow-up question for deeper exploration`;
 
+    const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
+
     const analysis = await aiRouter.generate(
-      'Provide a unique, personalized symbolic analysis that feels like guidance from a spiritual advisor.',
-      context
+      fullPrompt,
+      undefined,
+      language
     );
 
     res.json({
