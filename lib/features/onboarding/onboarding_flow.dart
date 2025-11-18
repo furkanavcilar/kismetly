@@ -111,9 +111,26 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       _showErrorSnackBar(errorMsg);
     } catch (e) {
       if (!mounted) return;
-      final errorMsg = e.toString().contains('timeout') || e.toString().contains('Timeout')
-          ? 'Giriş zaman aşımına uğradı. Lütfen internet bağlantınızı kontrol edin ve tekrar deneyin.'
-          : 'Google girişi başarısız oldu. Lütfen tekrar deneyin.';
+      
+      // Log detailed error for debugging
+      debugPrint('❌ Google Sign-In error in onboarding: $e');
+      debugPrint('❌ Error type: ${e.runtimeType}');
+      
+      String errorMsg;
+      if (e.toString().contains('timeout') || e.toString().contains('Timeout')) {
+        errorMsg = 'Giriş zaman aşımına uğradı. Lütfen internet bağlantınızı kontrol edin ve tekrar deneyin.';
+      } else if (e.toString().contains('network') || e.toString().contains('Network')) {
+        errorMsg = 'İnternet bağlantısı hatası. Lütfen bağlantınızı kontrol edin.';
+      } else if (e.toString().contains('Firebase başlatılamadı')) {
+        errorMsg = 'Firebase başlatılamadı. Lütfen uygulamayı yeniden başlatın.';
+      } else if (e.toString().contains('invalid') || e.toString().contains('Invalid')) {
+        errorMsg = 'Geçersiz giriş bilgileri. Lütfen tekrar deneyin.';
+      } else if (e.toString().contains('sign_in_failed') || e.toString().contains('SIGN_IN_FAILED')) {
+        errorMsg = 'Google girişi başarısız. Lütfen Google hesabınızın erişim izinlerini kontrol edin.';
+      } else {
+        errorMsg = 'Google girişi başarısız oldu. Hata: ${e.toString().split(':').last.trim()}';
+      }
+      
       setState(() {
         _signingIn = false;
         _error = errorMsg;
