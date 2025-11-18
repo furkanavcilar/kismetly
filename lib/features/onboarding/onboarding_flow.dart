@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart' as geo;
+import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:kismetly/services/weather_service.dart';
 import 'package:kismetly/services/location_autocomplete_service.dart';
@@ -56,10 +57,25 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   void _begin() => setState(() => _step = 1);
 
   Future<void> _signInWithGoogle() async {
-    setState(() => _signingIn = true);
+    if (_signingIn) return; // Prevent multiple simultaneous sign-ins
+    
+    setState(() {
+      _signingIn = true;
+      _error = null;
+    });
+    
     try {
-      final userCredential = await _googleAuth.signInWithGoogle();
-      if (userCredential?.user != null && mounted) {
+      final userCredential = await _googleAuth.signInWithGoogle()
+          .timeout(
+            const Duration(seconds: 90),
+            onTimeout: () {
+              throw TimeoutException('Giriş zaman aşımına uğradı. Lütfen tekrar deneyin.', const Duration(seconds: 90));
+            },
+          );
+      
+      if (!mounted) return;
+      
+      if (userCredential?.user != null) {
         final user = userCredential!.user!;
         // Pre-fill name from Google account
         if (user.displayName != null && _nameController.text.isEmpty) {
@@ -67,15 +83,69 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         }
         setState(() {
           _signingIn = false;
+          _error = null;
           _step = 1;
         });
-      } else if (mounted) {
-        setState(() => _signingIn = false);
+      } else {
+        // User canceled - not an error
+        setState(() {
+          _signingIn = false;
+          _error = null;
+        });
       }
+    } on TimeoutException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _signingIn = false;
+        _error = e.message;
+      });
+      _showErrorSnackBar(e.message);
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      final errorMsg = _getFirebaseErrorMessage(e.code);
+      setState(() {
+        _signingIn = false;
+        _error = errorMsg;
+      });
+      _showErrorSnackBar(errorMsg);
     } catch (e) {
-      if (mounted) {
-        setState(() => _signingIn = false);
-      }
+      if (!mounted) return;
+      final errorMsg = e.toString().contains('timeout') || e.toString().contains('Timeout')
+          ? 'Giriş zaman aşımına uğradı. Lütfen internet bağlantınızı kontrol edin ve tekrar deneyin.'
+          : 'Google girişi başarısız oldu. Lütfen tekrar deneyin.';
+      setState(() {
+        _signingIn = false;
+        _error = errorMsg;
+      });
+      _showErrorSnackBar(errorMsg);
+    }
+  }
+
+  void _showErrorSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 4),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      ),
+    );
+  }
+
+  String _getFirebaseErrorMessage(String code) {
+    switch (code) {
+      case 'network-request-failed':
+        return 'İnternet bağlantısı hatası. Lütfen bağlantınızı kontrol edin.';
+      case 'too-many-requests':
+        return 'Çok fazla deneme. Lütfen bir süre sonra tekrar deneyin.';
+      case 'user-disabled':
+        return 'Bu hesap devre dışı bırakılmış.';
+      case 'invalid-credential':
+        return 'Geçersiz giriş bilgileri. Lütfen tekrar deneyin.';
+      case 'operation-not-allowed':
+        return 'Google girişi şu anda etkin değil.';
+      default:
+        return 'Giriş başarısız oldu. Lütfen tekrar deneyin.';
     }
   }
 
@@ -367,6 +437,30 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
               Text(loc.translate('onboardingIntro'),
                   style: theme.textTheme.bodyLarge),
               const SizedBox(height: 48),
+              if (_error != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.errorContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error_outline, color: theme.colorScheme.onErrorContainer, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _error!,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onErrorContainer,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               ElevatedButton.icon(
                 onPressed: _signingIn ? null : _signInWithGoogle,
                 icon: _signingIn
