@@ -95,11 +95,12 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       }
     } on TimeoutException catch (e) {
       if (!mounted) return;
+      final errorMsg = e.message ?? 'Giriş zaman aşımına uğradı. Lütfen tekrar deneyin.';
       setState(() {
         _signingIn = false;
-        _error = e.message;
+        _error = errorMsg;
       });
-      _showErrorSnackBar(e.message);
+      _showErrorSnackBar(errorMsg);
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       final errorMsg = _getFirebaseErrorMessage(e.code);
