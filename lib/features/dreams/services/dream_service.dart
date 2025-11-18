@@ -43,11 +43,14 @@ class DreamService {
     }
 
     try {
-      final response = await _api.post('/api/dreams/interpret', body: {
-        'description': dreamText,
-        'mood': userContext?['mood'],
-        'date': DateTime.now().toIso8601String(),
-      });
+      final response = await _api.post('/api/dreams/interpret', 
+        body: {
+          'description': dreamText,
+          'mood': userContext?['mood'],
+          'date': DateTime.now().toIso8601String(),
+        },
+        language: language,
+      );
 
       final interpretation = response['interpretation'] as String?;
       if (interpretation == null || interpretation.isEmpty) {

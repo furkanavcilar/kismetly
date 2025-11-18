@@ -44,10 +44,13 @@ class TarotService {
     }
 
     try {
-      final response = await _api.post('/api/tarot/draw', body: {
-        'question': userContext?['question'] ?? 'General guidance',
-        'spreadType': spreadType,
-      });
+      final response = await _api.post('/api/tarot/draw', 
+        body: {
+          'question': userContext?['question'] ?? 'General guidance',
+          'spreadType': spreadType,
+        },
+        language: language,
+      );
 
       final reading = response['reading'] as String?;
       if (reading == null || reading.isEmpty) {

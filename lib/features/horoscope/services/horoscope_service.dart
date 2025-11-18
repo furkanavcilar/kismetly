@@ -17,10 +17,13 @@ class HoroscopeService {
     bool forceRefresh = false,
   }) async {
     try {
-      final response = await _api.post('/api/horoscope/generate', body: {
-        'sign': sign.toLowerCase(),
-        'timeframe': 'daily',
-      });
+      final response = await _api.post('/api/horoscope/generate', 
+        body: {
+          'sign': sign.toLowerCase(),
+          'timeframe': 'daily',
+        },
+        language: language,
+      );
 
       final horoscope = response['horoscope'] as String?;
       if (horoscope == null || horoscope.isEmpty) {

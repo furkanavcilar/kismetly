@@ -41,10 +41,13 @@ class CompatibilityService {
     }
 
     try {
-      final response = await _api.post('/api/compatibility/analyze', body: {
-        'sign1': firstSign.toLowerCase(),
-        'sign2': secondSign.toLowerCase(),
-      });
+      final response = await _api.post('/api/compatibility/analyze', 
+        body: {
+          'sign1': firstSign.toLowerCase(),
+          'sign2': secondSign.toLowerCase(),
+        },
+        language: language,
+      );
 
       final analysis = response['analysis'] as String?;
       if (analysis == null || analysis.isEmpty) {

@@ -78,11 +78,14 @@ class AiContentService {
     }
 
     try {
-      final response = await _api.post('/api/chat/daily-guidance', body: {
-        'sign': sunSign,
-        'name': '',
-        'focus': 'Daily insights for $sunSign with $risingSign rising',
-      });
+      final response = await _api.post('/api/chat/daily-guidance', 
+        body: {
+          'sign': sunSign,
+          'name': '',
+          'focus': 'Daily insights for $sunSign with $risingSign rising',
+        },
+        language: locale.languageCode,
+      );
 
       final guidance = response['guidance'] as String?;
       if (guidance == null || guidance.isEmpty) {
@@ -123,10 +126,13 @@ class AiContentService {
     bool forceRefresh = false,
   }) async {
     try {
-      final response = await _api.post('/api/compatibility/analyze', body: {
-        'sign1': firstSign.toLowerCase(),
-        'sign2': secondSign.toLowerCase(),
-      });
+      final response = await _api.post('/api/compatibility/analyze', 
+        body: {
+          'sign1': firstSign.toLowerCase(),
+          'sign2': secondSign.toLowerCase(),
+        },
+        language: locale.languageCode,
+      );
 
       final analysis = response['analysis'] as String?;
       if (analysis == null || analysis.isEmpty) {
@@ -168,10 +174,13 @@ class AiContentService {
     bool forceRefresh = false,
   }) async {
     try {
-      final response = await _api.post('/api/horoscope/generate', body: {
-        'sign': sign.toLowerCase(),
-        'timeframe': 'daily',
-      });
+      final response = await _api.post('/api/horoscope/generate', 
+        body: {
+          'sign': sign.toLowerCase(),
+          'timeframe': 'daily',
+        },
+        language: locale.languageCode,
+      );
 
       final horoscope = response['horoscope'] as String?;
       if (horoscope == null || horoscope.isEmpty) {
@@ -223,11 +232,14 @@ class AiContentService {
     Map<String, dynamic>? userContext,
   }) async {
     try {
-      final response = await _api.post('/api/dreams/interpret', body: {
-        'description': dreamText,
-        'mood': userContext?['mood'],
-        'date': DateTime.now().toIso8601String(),
-      });
+      final response = await _api.post('/api/dreams/interpret', 
+        body: {
+          'description': dreamText,
+          'mood': userContext?['mood'],
+          'date': DateTime.now().toIso8601String(),
+        },
+        language: locale.languageCode,
+      );
 
       final interpretation = response['interpretation'] as String?;
       if (interpretation == null || interpretation.isEmpty) {
